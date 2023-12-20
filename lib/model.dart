@@ -9,13 +9,13 @@ class Post {
   String? title;
   String description;
   String imageUrl;
-  List<Comment>? comments;
+  String? postId; // Change postKey to postId
 
   Post({
     this.title,
     required this.description,
     required this.imageUrl,
-    this.comments,
+    this.postId, // Change postKey to postId
   });
 
   Map<String, dynamic> toMap() {
@@ -23,23 +23,21 @@ class Post {
       'title': title,
       'description': description,
       'imageUrl': imageUrl,
-      'comments': comments?.map((comment) => comment.toMap()).toList(),
+      'postId': postId, // Change postKey to postId
     };
   }
 
   factory Post.fromMap(String key, Map<dynamic, dynamic>? map) {
     if (map == null) {
       // Handle the case where map is null (e.g., return a default Post object)
-      return Post(description: '', imageUrl: '', comments: []);
+      return Post(description: '', imageUrl: '', postId: ''); // Change postKey to postId
     }
 
     return Post(
       title: map['title'],
       description: map['description'],
       imageUrl: map['imageUrl'],
-      comments: (map['comments'] as List<dynamic>?)
-          ?.map((commentMap) => Comment.fromMap(commentMap))
-          .toList(),
+      postId: map['postId'], // Change postKey to postId
     );
   }
 }

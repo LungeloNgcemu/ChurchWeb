@@ -13,6 +13,7 @@ import 'package:master/model.dart';
 import 'package:master/comment_model.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:master/poster.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PostScreen extends StatefulWidget {
   const PostScreen({super.key});
@@ -22,6 +23,9 @@ class PostScreen extends StatefulWidget {
 }
 
 class _PostScreenState extends State<PostScreen> {
+  Stream<QuerySnapshot<Map<String, dynamic>>> documentStream =
+      FirebaseFirestore.instance.collection('Posts').snapshots();
+
   @override
   void initState() {
     super.initState();
@@ -120,8 +124,6 @@ class _PostScreenState extends State<PostScreen> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -196,7 +198,8 @@ class _PostScreenState extends State<PostScreen> {
                           child: CachedNetworkImage(
                             imageUrl:
                                 Provider.of<ProfileImageUrlProvider>(context)
-                                        .imageUrl?? "https://picsum.photos/seed/picsum",
+                                        .imageUrl ??
+                                    "https://picsum.photos/seed/picsum",
                             placeholder: (context, url) => const Center(
                               child: SizedBox(
                                 height: 40.0,
@@ -281,31 +284,30 @@ class _PostScreenState extends State<PostScreen> {
               height: 0.1,
             ),
           ),
-          StreamBuilder<List<Post>>(
-            stream: getPostsFromFirebase(),
-            builder: (context, AsyncSnapshot<List<Post>> snapshot) {
+          StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: documentStream,
+            builder: (context,
+                AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snapshot) {
               if (snapshot.connectionState == ConnectionState.active) {
                 if (snapshot.hasError) {
                   return Text('Error: ${snapshot.error}');
-                } else if (!snapshot.hasData || snapshot.data?.isEmpty == true) {
+                } else if (!snapshot.hasData ||
+                    snapshot.data?.docs.isEmpty == true) {
                   return Text('No posts available.');
                 } else {
-                  final posts = snapshot.data;
+                  final postsData = snapshot.data?.docs;
 
                   return SizedBox(
                     height: double.maxFinite,
                     child: ListView.builder(
-                      physics: new NeverScrollableScrollPhysics(),
-
-                      itemCount: posts?.length ?? 0,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount: postsData?.length ?? 0,
                       itemBuilder: (context, index) {
+                        final post = postsData?[index].data();
                         return SocialPost(
-                          description: posts?[index].description ?? '',
-                          imageUrl: posts?[index].imageUrl ?? '',
-                          comments: posts![index].comments,
-                          postId: "",
-
-                          // posts?[index].comments.toString ?? [],
+                          description: post?['description'] ?? '',
+                          imageUrl: post?['imageUrl'] ?? '',
+                          postId: post?['postId'] ?? '', // Pass the postId
                         );
                       },
                     ),
@@ -319,34 +321,6 @@ class _PostScreenState extends State<PostScreen> {
               }
             },
           )
-
-          // StreamBuilder<List<Post>>(
-          //   stream: getPostsFromFirebase(),
-          //   builder: (context, AsyncSnapshot<List<Post>> snapshot) {
-          //     if (snapshot.connectionState == ConnectionState.waiting) {
-          //       return CircularProgressIndicator();
-          //     } else if (snapshot.hasError) {
-          //       return Text('Error: ${snapshot.error}');
-          //     } else {
-          //       final posts = snapshot.data;
-          //
-          //       // Add a null check before accessing the length property
-          //       return SizedBox(height: 400.0,
-          //         child: ListView.builder(
-          //           itemCount: posts?.length ?? 0,
-          //           itemBuilder: (context, index) {
-          //             return SocialPost(
-          //               description: posts?[index].description ?? '',
-          //               imageUrl: posts?[index].imageUrl ?? '',
-          //               // post: posts?[index],
-          //             );
-          //           },
-          //         ),
-          //       );
-          //     }
-          //   },
-          // ),
-          // For list view&&&&&&&&&7777777777&&&&&&&&&&&&&&&&
         ],
       ),
     );
@@ -354,50 +328,77 @@ class _PostScreenState extends State<PostScreen> {
 }
 
 class SocialPost extends StatefulWidget {
-  SocialPost({this.description,
+  SocialPost({
+    this.description,
     required this.imageUrl,
-    this.comments,
-    required this.postId,
+    this.postId, // Add postId as a parameter
+    // this.comments = const [],
     Key? key,
   });
 
   String? description;
   String imageUrl;
-  final dynamic comments;
-  final String postId;
-
+  String? postId; // Declare postId as a field
+  // final List<dynamic> comments;
 
   @override
   State<SocialPost> createState() => _SocialPostState();
 }
 
 class _SocialPostState extends State<SocialPost> {
+  late PostIdProvider postIdProvider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    postIdProvider = Provider.of<PostIdProvider>(context, listen: false);
+  }
+
+  void uploadCommentFirestore(
+      String username, String text, String postId) async {
+    // Retrieve the current post ID from the PostIdProvider
+
+    if (postId.isNotEmpty) {
+      Comment newComment = Comment(
+        username: username,
+        text: text,
+        timestamp: DateTime.now(),
+      );
+
+      FirebaseFirestore.instance
+          .collection("Posts")
+          .doc(postId)
+          .collection("comments")
+          .add({
+        'username': newComment.username,
+        'text': newComment.text,
+        'timestamp': newComment.timestamp.toUtc().toIso8601String(),
+      }).then((commentRef) {
+        // Handle success if needed
+        print('Comment added successfully with ID: ${commentRef.id}');
+      }).catchError((error) {
+        // Handle error if needed
+        print('Error adding comment to Firestore: $error');
+      });
+    } else {
+      print('Error: Post ID is empty. Make sure to add a post first.');
+    }
+  }
+
   CommentService commentService = CommentService();
+
   // String getaLastComment() {
   //   return widget.comments.isNotEmpty ? widget.comments.last : 'No Comment Available yet';
   // }
-String user = "Amber";
+  String user = "Amber";
   String enteredText = '';
-  //List<String> comments = [];
+
   bool isTextFieldVisible = false;
   TextEditingController textEditingController = TextEditingController();
-  // final text = textEditingController?.text ?? '';
 
-  @override
-  void initState() {
-    super.initState();
-
-    // Subscribe to the comments stream from Firebase
-    commentService.getCommentsStream(widget.postId).listen((List<Comment> comments) {
-      setState(() {
-        widget.comments.clear();
-        widget.comments.addAll(comments);
-      });
-    });
-  }
   @override
   Widget build(BuildContext context) {
-   // String lastComment = getaLastComment();
+    // String lastComment = getaLastComment();
     return Padding(
       padding: const EdgeInsets.only(bottom: 15.0),
       child: Container(
@@ -438,11 +439,9 @@ String user = "Amber";
             Container(
               color: Colors.green,
               height: 200.0,
-              child:
-              CachedNetworkImage(
+              child: CachedNetworkImage(
                 // will setup post image provider.
-                imageUrl: widget.imageUrl!
-                    ,
+                imageUrl: widget.imageUrl!,
                 placeholder: (context, url) => const Center(
                   child: SizedBox(
                     height: 40.0,
@@ -475,7 +474,7 @@ String user = "Amber";
                       setState(() {
                         isTextFieldVisible = !isTextFieldVisible;
                         if (!isTextFieldVisible) {
-                          widget.comments.add(textEditingController.text);
+                          // widget.comments.add(textEditingController.text);
                           // Do something meaningful with the entered text, e.g., send it
                           // print("Entered Text: $enteredText");
                           // Clear the text field for the next input
@@ -503,6 +502,10 @@ String user = "Amber";
               children: [
                 Padding(
                   padding: EdgeInsets.all(8.0),
+                  child: FaIcon(FontAwesomeIcons.comments),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(8.0),
                   child: Text(
                     'Comments...',
                     style: TextStyle(
@@ -512,43 +515,43 @@ String user = "Amber";
                 ),
               ],
             ),
-            Row(
-              children: [
-                CommentBubble(lastComment: "lastComment"),
-              ],
-            ),
             Visibility(
               visible: isTextFieldVisible,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 5.0),
-                child: StreamBuilder<List<Comment>>(
-                  stream: getCommentsForPost(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.active) {
-                      if (snapshot.hasError) {
-                        return Text('Error: ${snapshot.error}');
-                      } else if (!snapshot.hasData || snapshot.data?.isEmpty == true) {
-                        return Text('No comments available.');
-                      } else {
-                        final comments = snapshot.data;
+                  padding: const EdgeInsets.symmetric(vertical: 5.0),
+                  child: StreamBuilder<List<Comment>>(
+                    stream: commentService.getCommentsStream(widget.postId!),
+                    builder: (context, AsyncSnapshot<List<Comment>?> snapshot) {
+                      if (snapshot.connectionState == ConnectionState.active) {
+                        if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        } else if (snapshot.data?.isEmpty == true) {
+                          return Text('No comments available.');
+                        } else {
+                          final comments = snapshot.data!;
+                          print(comments);
 
-                        // Display comments for the specific post
-                        return ListView.builder(
-                          itemCount: comments?.length ?? 0,
-                          itemBuilder: (context, index) {
-                            return CommentBubble(lastComment: comments![index]);
-                          },
+                          // Display comments for the specific post
+                          return SizedBox(
+                            height: 130.0,
+                            child: ListView.builder(
+                              itemCount: comments.length,
+                              itemBuilder: (context, index) {
+                                return CommentBubble(
+                                    lastComment:
+                                        comments[index].text.toString());
+                              },
+                            ),
+                          );
+                        }
+                      } else {
+                        return const Padding(
+                          padding: EdgeInsets.only(top: 100.0),
+                          child: CircularProgressIndicator(),
                         );
                       }
-                    } else {
-                      return const Padding(
-                        padding: EdgeInsets.only(top: 100.0),
-                        child: CircularProgressIndicator(),
-                      );
-                    }
-                  },
-                )
-              ),
+                    },
+                  )),
             ),
             Visibility(
               visible: isTextFieldVisible,
@@ -561,7 +564,7 @@ String user = "Amber";
                       child: TextField(
                         onSubmitted: (value) {
                           setState(() {
-                            widget.comments.add(value);
+                            // widget.comments.add(value);
                             isTextFieldVisible = false;
                             // Do something meaningful with the entered text, e.g., send it
                             print("Comment: $enteredText");
@@ -585,12 +588,16 @@ String user = "Amber";
                       child: IconButton(
                         onPressed: () {
                           setState(() {
-                            //widget.comments.add(textEditingController.text);
-                            uploadComment(user,textEditingController.text,postKey);
+                            // for comments
+                            final postIdProvider = Provider.of<PostIdProvider>(
+                                context,
+                                listen: false);
+                            final postId = postIdProvider.postId;
+                            uploadCommentFirestore(user,
+                                textEditingController.text, widget.postId!);
                             isTextFieldVisible = false;
                             // Clear the text field for the next input
                             textEditingController.clear();
-
                           });
                         },
                         icon: const Icon(Icons.send),
@@ -613,7 +620,7 @@ class CommentBubble extends StatelessWidget {
     required this.lastComment,
   });
 
-  final  lastComment;
+  final String lastComment;
 
   @override
   Widget build(BuildContext context) {
@@ -632,7 +639,7 @@ class CommentBubble extends StatelessWidget {
           color: Colors.blue,
           child: Padding(
             padding: const EdgeInsets.all(10.0),
-            child: Text('Angela: ${lastComment}'),
+            child: Text('${lastComment}'),
           ),
         ),
       ],

@@ -64,4 +64,15 @@ class PostImageUrlProvider extends ImageUrlBaseProvider {
 
 
 
+class PostIdProvider extends ChangeNotifier {
+  String _postId = '';
+
+  String get postId => _postId;
+
+  void updatePostId(String newPostId) {
+    _postId = newPostId;
+    notifyListeners();
+  }
+}
+
 

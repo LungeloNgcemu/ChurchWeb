@@ -1,25 +1,9 @@
 import 'package:flutter/material.dart';
 import '../componants/chips.dart' as MyChips;
+
 // import 'product_card.dart';
 import '../cards/product_selection.dart';
 import '../cards/editable_card.dart';
-// class ProductsServices extends StatefulWidget {
-//   const ProductsServices({super.key});
-//
-//   @override
-//   State<ProductsServices> createState() => _ProductsServicesState();
-// }
-//
-// class _ProductsServicesState extends State<ProductsServices> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: SafeArea(
-//         child:
-//       ),
-//     );
-//   }
-// }
 
 class ProductandServiveBody extends StatefulWidget {
   const ProductandServiveBody({super.key});
@@ -31,6 +15,7 @@ class ProductandServiveBody extends StatefulWidget {
 class _ProductandServiveBodyState extends State<ProductandServiveBody> {
   //  bool isSelected = true;
   String selectedOption = 'HairCut';
+
   // String? selectedOption;
   @override
   Widget build(BuildContext context) {
@@ -70,46 +55,24 @@ class _ProductandServiveBodyState extends State<ProductandServiveBody> {
                       ),
                     ],
                   ),
-                  
                 ],
               ),
-              
             ),
             const Row(
               children: [
                 Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8.0,vertical: 8.0),
-                            child: Text(
-                              '1. Select Product Type',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 23.0,
-                              ),
-                            ),
-                          ),
+                  padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                  child: Text(
+                    '1. Select Product Type',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 23.0,
+                    ),
+                  ),
+                ),
               ],
             ),
-            //  Padding(
-            //    padding: const EdgeInsets.only(left:8.0),
-            //    child: Row(
-            //      children: [
-            //        MaterialButton(
-            //                 elevation: 0,
-            //                 shape: const RoundedRectangleBorder(
-            //                   borderRadius: BorderRadius.all(
-            //                     Radius.circular(20.0),
-            //                   ),
-            //                 ),
-            //                 color: Colors.orange,
-            //                 onPressed: () {
-            //                   // Navigator.pushNamed(context, '/products');
-            //                 },
-            //                 child: const Text('Create Products',),
-            //               ),
-            //      ],
-            //    ),
-            //  ),
-            
+
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: SizedBox(
@@ -187,15 +150,15 @@ class _ProductandServiveBodyState extends State<ProductandServiveBody> {
             const Row(
               children: [
                 Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8.0,vertical: 8.0),
-                            child: Text(
-                              '2. Create Product',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 23.0,
-                              ),
-                            ),
-                          ),
+                  padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                  child: Text(
+                    '2. Create Product',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 23.0,
+                    ),
+                  ),
+                ),
               ],
             ),
             // ProductCard(),

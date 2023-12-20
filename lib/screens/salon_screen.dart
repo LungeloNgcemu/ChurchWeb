@@ -22,7 +22,6 @@ import 'package:provider/provider.dart';
 import 'package:master/url_provider.dart';
 import 'package:flutter/widgets.dart';
 
-
 String? selectedOption;
 
 class SalonScreen extends StatefulWidget {
@@ -33,23 +32,6 @@ class SalonScreen extends StatefulWidget {
 }
 
 class _SalonScreenState extends State<SalonScreen> {
-  // Future<String?> uploadImageToFirebase() async {
-  //   final picker = ImagePicker();
-  //   final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-  //   if (pickedFile != null) {
-  //     firebase_storage.Reference ref = firebase_storage.FirebaseStorage.instance
-  //         .ref()
-  //         .child('images/${DateTime.now().millisecondsSinceEpoch}.png');
-
-  //     await ref.putFile(File(pickedFile.path));
-
-  //     return await ref.getDownloadURL();
-  //   } else {
-  //     return null; // No image selected
-  //   }
-  // }
-
   final PageController controller = PageController();
   int visit = 0;
   bool isVisble = false;
@@ -132,13 +114,11 @@ class SalonBody extends StatefulWidget {
 }
 
 class _SalonBodyState extends State<SalonBody> {
-
   @override
   void initState() {
     super.initState();
     Provider.of<ImageUrlProvider>(context, listen: false).loadImageUrlLocally();
   }
-
 
   final ImagePicker _picker = ImagePicker();
   XFile? _image; // Change PickedFile to XFile
@@ -164,13 +144,15 @@ class _SalonBodyState extends State<SalonBody> {
             .child(fileName);
 
         var metadata = firebase_storage.SettableMetadata(
-          contentType: 'image/jpeg', // Set the correct content type based on your image type
+          contentType:
+              'image/jpeg', // Set the correct content type based on your image type
         );
 
         await ref.putFile(imageFile, metadata);
 
         imageUrl = await ref.getDownloadURL(); // Update state variable
-        Provider.of<ImageUrlProvider>(context, listen: false).imageUrl = imageUrl;
+        Provider.of<ImageUrlProvider>(context, listen: false).imageUrl =
+            imageUrl;
 
         print("Image uploaded to Firebase: $imageUrl");
 
@@ -192,7 +174,8 @@ class _SalonBodyState extends State<SalonBody> {
           Stack(
             children: [
               CachedNetworkImage(
-                imageUrl: Provider.of<ImageUrlProvider>(context).imageUrl ?? 'lib/images/hairs.jpg',
+                imageUrl: Provider.of<ImageUrlProvider>(context).imageUrl ??
+                    'lib/images/hairs.jpg',
                 placeholder: (context, url) => const Center(
                   child: SizedBox(
                     height: 40.0,
@@ -207,19 +190,6 @@ class _SalonBodyState extends State<SalonBody> {
                 height: 250,
                 width: double.maxFinite,
               ),
-              // Image.network(
-              //   imageUrl ??
-              //       'assets/default_image.jpg', // Use the image URL if available, otherwise use the default asset image
-              //   height: 250,
-              //   width: double.maxFinite,
-              //   fit: BoxFit.cover,
-              // ),
-              // Image.asset(
-              //   'lib/images/hairs.jpg',
-              //   fit: BoxFit.cover,
-              //   height: 250,
-              //   width: double.maxFinite,
-              // ),
               Positioned(
                 top: 210.0,
                 left: 375.0,

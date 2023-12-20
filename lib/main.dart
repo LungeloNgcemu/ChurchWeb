@@ -39,6 +39,9 @@ void main() async {
         ChangeNotifierProvider<PostImageUrlProvider>(
           create: (BuildContext context) => PostImageUrlProvider(),
         ),
+        ChangeNotifierProvider<PostIdProvider>(
+          create: (BuildContext context) => PostIdProvider(),
+        ),
 
 
       ],

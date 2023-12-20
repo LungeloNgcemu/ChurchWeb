@@ -24,6 +24,8 @@ import 'package:master/url_provider.dart';
 import 'dart:io';
 import 'package:master/model.dart';
 import 'comment_model.dart';
+import 'functions_for_cloud.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 // create_page and poster are linked
 String postKey = '';
 class Poster extends StatefulWidget {
@@ -39,6 +41,7 @@ class _PosterState extends State<Poster> {
   final ImagePicker _picker = ImagePicker();
 
   XFile? _image;
+  String? npostKey;
 
   // Change PickedFile to XFile
   String? postImageUrl;
@@ -58,24 +61,10 @@ class _PosterState extends State<Poster> {
     }
   }
 
-  Future<String> uploadImageToFirebaseStorage(File imageFile) async {
-    try {
-      firebase_storage.Reference ref = firebase_storage.FirebaseStorage.instance
-          .ref()
-          .child("images")
-          .child("${DateTime.now().millisecondsSinceEpoch}");
 
-      var metadata = firebase_storage.SettableMetadata(
-        contentType: 'image/jpeg',
-      );
 
-      await ref.putFile(imageFile, metadata);
-      return await ref.getDownloadURL();
-    } catch (e) {
-      print('Error uploading image to Firebase Storage: $e');
-      return ''; // Return an empty string or handle the error accordingly
-    }
-  }
+
+
 
   @override
   void initState() {
@@ -83,36 +72,88 @@ class _PosterState extends State<Poster> {
     getPostsFromFirebase();
   }
 
-  Future<String> addPostToFirebase(Post post) async {
+  void addId(String postId) async {
     try {
-      DatabaseReference reference =
-          FirebaseDatabase.instance.ref().child('posts');
+      // Reference to the post document
+      DocumentReference postDocRef = FirebaseFirestore.instance.collection("Posts").doc(postId);
 
-      // Upload image to Firebase Storage and get download URL
-      String postImageUrl =
-          await uploadImageToFirebaseStorage(File(_image!.path));
-      Provider.of<PostImageUrlProvider>(context, listen: false).imageUrl =
-          postImageUrl;
-      debugPrint("this is it :" + postImageUrl);
-
-      // Add post data to Firebase Realtime Database
-      await reference.push().set({
-        'title': post.title,
-        'description': post.description,
-        'imageUrl': postImageUrl,
-        'comments':post.comments,
+      // Update the post with the post ID
+      await postDocRef.update({
+        'postId': postId,
       });
-      final  newPostKey =
-          await FirebaseDatabase.instance.ref().child('posts').push().key;
 
-      print('Post added to Firebase successfully! ${newPostKey}',);
-
-      return newPostKey ?? "";
+      print('Post ID updated successfully!');
     } catch (e) {
-      print('Error adding post to Firebase: $e');
-      return "";
+      print('Error updating post ID: $e');
+      // Handle the error accordingly
     }
   }
+
+
+  Future<String> addPostToFirestore(Post post) async {
+
+try{
+    String postImageUrl =
+    await uploadImageToFirebaseStorage(File(_image!.path));
+    Provider.of<PostImageUrlProvider>(context, listen: false).imageUrl =
+        postImageUrl;
+    debugPrint("this is it :" + postImageUrl);
+
+    DocumentReference postRef = await FirebaseFirestore.instance.collection("Posts")
+        .add({
+      'title': post.title,
+      'description': post.description,
+      'imageUrl': postImageUrl,
+
+
+
+    });
+
+    final newPostKey = postRef.id;
+
+    print('Post added to Firestore successfully! ${newPostKey}');
+
+    return newPostKey;
+} catch(e) {
+  print('$e');
+  return "";
+}
+  }
+
+  // Future<String> addPostToFirebase(Post post) async {
+  //   try {
+  //     DatabaseReference reference =
+  //         FirebaseDatabase.instance.ref().child('posts');
+  //
+  //     // Upload image to Firebase Storage and get download URL
+  //     String postImageUrl =
+  //         await uploadImageToFirebaseStorage(File(_image!.path));
+  //     Provider.of<PostImageUrlProvider>(context, listen: false).imageUrl =
+  //         postImageUrl;
+  //     debugPrint("this is it :" + postImageUrl);
+  //     final postKey = FirebaseDatabase.instance.ref().child('posts').push().key;
+  //
+  //
+  //     // Add post data to Firebase Realtime Database
+  //     DatabaseReference rootRef = FirebaseDatabase.instance.ref();
+  //     DatabaseReference specificKeyRef = rootRef.child("posts/"+postKey!);
+  //     specificKeyRef.set({
+  //       'title': post.title,
+  //       'description': post.description,
+  //       'imageUrl': postImageUrl,
+  //       'postkey': postKey,
+  //           // FirebaseDatabase.instance.ref().child('posts').push().key.toString(),
+  //     });
+  //
+  //
+  //     print('Post added to Firebase successfully! ${postKey}',);
+  //
+  //     return postKey ?? "";
+  //   } catch (e) {
+  //     print('Error adding post to Firebase: $e');
+  //     return "";
+  //   }
+  // }
 
   TextEditingController titleController = TextEditingController();
 
@@ -187,7 +228,7 @@ class _PosterState extends State<Poster> {
                   //   imageUrl: Provider.of<ImageUrlProvider>(context).imageUrl ??
                   //       "", // Replace with your image URL or handle image upload separately
                   // );
-
+                 // final  npostKey = await getPostKey();
                   Post post = Post(
                     title: titleController.text,
                     description: descriptionController.text,
@@ -195,11 +236,17 @@ class _PosterState extends State<Poster> {
                                 listen: false)
                             .imageUrl ??
                         "https://picsum.photos/seed/picsum",
-                  comments: [],
+                    //postKey: postKey ?? "",
                   );
-                  // Call a function to upload the post data to Firebase
-                  final  neWPostKey = await addPostToFirebase(post);
-                  debugPrint("this is it again"+ neWPostKey.toString());
+                  // Call a function to upload the post data to
+                  final postIdProvider = Provider.of<PostIdProvider>(context, listen: false);
+                  final id = await addPostToFirestore(post);
+                  postIdProvider.updatePostId(id);
+                  addId(id);
+                  // final  postKey = await addPostToFirebase(post);
+                  // debugPrint("this is it again"+ postKey.toString());
+                  titleController.clear();
+                  descriptionController.clear();
                 },
               )),
             ],
