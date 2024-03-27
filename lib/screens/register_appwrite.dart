@@ -186,7 +186,7 @@ class _RegisterAppwriteState extends State<RegisterAppwrite> {
       print(error);
     }
   }
-
+i
 
   @override
   Widget build(BuildContext context) {
