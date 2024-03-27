@@ -1,22 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
 import '../componants/chips.dart';
 
 class CardBooked extends StatelessWidget {
   const CardBooked(
-      {this.cornerText, this.cornerColor, this.buttonChoice, super.key});
+      {this.cornerText,
+      this.cornerColor,
+      this.buttonChoice,
+      this.clientName,
+      this.productName,
+      this.date,
+      this.description,
+      this.duration,
+      this.productImage,
+      this.profileImage,
+      this.price,
+      this.slotTime,
+      this.onPressedCall,
+      this.onPressedChat,
+      super.key});
 
   final String? cornerText;
   final Color? cornerColor;
   final Widget? buttonChoice;
+  final String? clientName;
+  final String? productName;
+  final String? date;
+  final String? description;
+  final String? duration;
+  final String? profileImage;
+  final String? productImage;
+  final String? price;
+  final String? slotTime;
+  final VoidCallback? onPressedChat;
+  final VoidCallback? onPressedCall;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(
-        left: 10.0,
-        right: 10.0,
-        top: 30.0,
-      ),
+      padding:
+          const EdgeInsets.only(left: 10.0, right: 10.0, top: 10, bottom: 10.0),
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 0.0),
         decoration: BoxDecoration(
@@ -29,27 +53,47 @@ class CardBooked extends StatelessWidget {
                 blurRadius: 10.0,
               )
             ]),
-        height: 300.0,
+        height: 310.0,
         width: double.maxFinite,
         child: Column(
           children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
+                Row(
                   children: [
                     Padding(
-                      padding: EdgeInsets.all(5.0),
-                      child: CircleAvatar(
-                        maxRadius: 25,
-                        backgroundColor: Colors.red,
-                      ),
-                    ),
+                        padding: const EdgeInsets.all(5.0),
+                        child: Container(
+                          width: 50, // Adjust width as needed
+                          height: 50, // Adjust height as needed
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.red, // Optional background color
+                          ),
+                          child: ClipOval(
+                            child: CachedNetworkImage(
+                              imageUrl: profileImage ?? "",
+                              placeholder: (context, url) => const Center(
+                                child: SizedBox(
+                                  height: 40.0,
+                                  width: 40.0,
+                                  child: CircularProgressIndicator(
+                                    value: 1.0,
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) =>
+                                  Icon(Icons.error),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        )),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: Text(
-                        'Name Surname',
-                        style: TextStyle(
+                        clientName ?? "",
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -59,13 +103,13 @@ class CardBooked extends StatelessWidget {
                 Row(
                   children: [
                     IconButton(
-                      onPressed: () {},
+                      onPressed: onPressedCall ?? () {},
                       icon: const Icon(Icons.phone),
                     ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.message),
-                    ),
+                    // IconButton(
+                    //   onPressed: onPressedChat ?? () {},
+                    //   icon: const Icon(Icons.message),
+                    // ),
                   ],
                 ),
               ],
@@ -73,11 +117,11 @@ class CardBooked extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Padding(
-                  padding: EdgeInsets.only(left: 15.0),
+                Padding(
+                  padding: const EdgeInsets.only(left: 15.0),
                   child: Text(
-                    "December 23 9-12",
-                    style: TextStyle(
+                    date ?? "",
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -123,12 +167,32 @@ class CardBooked extends StatelessWidget {
                       ),
                       height: 100.0,
                       width: 100,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8.0),
+                        child: CachedNetworkImage(
+                          imageUrl: productImage! ?? "",
+                          placeholder: (context, url) => const Center(
+                            child: SizedBox(
+                              height: 40.0,
+                              width: 40.0,
+                              child: CircularProgressIndicator(
+                                value: 1.0,
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) =>
+                              Icon(Icons.error),
+                          fit: BoxFit.cover,
+                          //height: 250,
+                          //width: double.maxFinite,
+                        ),
+                      ),
                     ),
                   ),
-                  const Expanded(
+                  Expanded(
                     flex: 2,
                     child: Padding(
-                      padding: EdgeInsets.only(
+                      padding: const EdgeInsets.only(
                         top: 1.0,
                         left: 15.0,
                         right: 10.0,
@@ -137,24 +201,48 @@ class CardBooked extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Padding(
-                            padding: EdgeInsets.only(bottom: 8.0),
+                            padding:
+                                const EdgeInsets.only(bottom: 3.0, top: 3.0),
                             child: Text(
-                              'Product Title',
-                              style: TextStyle(
+                              productName ?? "",
+                              style: const TextStyle(
                                 fontSize: 15.0,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
-                          Text(
-                              'This is where we can describe the product and tell the client all they need to know. '),
                           Padding(
-                            padding: EdgeInsets.only(top: 8.0),
+                            padding: EdgeInsets.only(top: 3.0, bottom: 3.0),
                             child: Text(
-                              'Duration: 45 min',
+                              description ?? "",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(top: 3.0),
+                            child: Text(
+                              duration ?? "",
                               style: TextStyle(
-                                color: Colors.grey,
+                                color: Colors.black,
                               ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2.0),
+                            child: Text(
+                              slotTime ?? "",
+                              style: TextStyle(
+                                  color: Colors.redAccent,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(top: 3.0, bottom: 3.0),
+                            child: Text(
+                              'R $price' ?? "",
+                              style: TextStyle(
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
@@ -169,10 +257,11 @@ class CardBooked extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                      child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8.0),
-                    child: buttonChoice ?? Container(),
-                  )),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                      child: buttonChoice ?? Container(),
+                    ),
+                  ),
                 ],
               ),
             ),

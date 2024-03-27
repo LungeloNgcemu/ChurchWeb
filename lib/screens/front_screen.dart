@@ -59,7 +59,7 @@ class FrontScreen extends StatelessWidget {
           ),
           color: Colors.black,
           onPressed: () {
-            Navigator.pushNamed(context, '/login');
+            Navigator.pushNamed(context, '/appWriteLogin');
           },
           child: const Text(
             "Continue",

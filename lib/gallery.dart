@@ -1,63 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
 
 class Gallery extends StatefulWidget {
-  const Gallery({Key? key}) : super(key: key);
-
+ Gallery({this.images,this.grid, Key? key}) : super(key: key);
+  final List<String>? images;
+  final Widget? grid;
   @override
   State<Gallery> createState() => _GalleryState();
 }
 
 class _GalleryState extends State<Gallery> {
-  final List<String> localImagePaths = [
-    "hair1.jpg",
-    "hair2.jpg",
-    "hair3.jpg",
-    "hair4.jpg",
-    "hair5.jpg",
-    "hair6.jpg",
-    "hair7.jpg",
-    //"hair8.jpg",
-    "hair9.jpg",
-    // Add more local image paths as needed
-  ];
 
   @override
   Widget build(BuildContext context) {
+    final image = widget.images ?? [];
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
-      child: SizedBox(
-        height: 500.0,
-        child: GridView.custom(
-          gridDelegate: SliverQuiltedGridDelegate(
-            crossAxisCount: 4,
-            mainAxisSpacing: 4,
-            crossAxisSpacing: 4,
-            repeatPattern: QuiltedGridRepeatPattern.inverted,
-            pattern: const [
-              QuiltedGridTile(2, 2),
-              QuiltedGridTile(1, 1),
-              QuiltedGridTile(1, 1),
-              QuiltedGridTile(1, 2),
-            ],
-          ),
-          childrenDelegate: SliverChildBuilderDelegate(
-                (context, index) {
-              return Tile(imagePath: 'lib/images/hair pic2/${localImagePaths[index]}');
-            },
-            childCount: localImagePaths.length,
-          ),
-        ),
-      ),
+      child: widget.grid ?? Container(),
     );
   }
 }
 
 class Tile extends StatelessWidget {
-  final String imagePath;
 
-  const Tile({required this.imagePath});
+ Tile({required this.image});
 
+ final String? image;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -70,9 +40,22 @@ class Tile extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8.0),
-        child: Image.asset(
-          imagePath,
+        child: CachedNetworkImage(
+          imageUrl: image ?? "",
+          placeholder: (context, url) => const Center(
+            child: SizedBox(
+              height: 40.0,
+              width: 40.0,
+              child: CircularProgressIndicator(
+                value: 1.0,
+              ),
+            ),
+          ),
+          errorWidget: (context, url, error) =>
+              Icon(Icons.error),
           fit: BoxFit.cover,
+          //height: 250,
+          //width: double.maxFinite,
         ),
       ),
     );

@@ -3,15 +3,18 @@ import 'package:flutter/material.dart';
 import 'editable_card.dart';
 
 class Haircut extends StatelessWidget {
-  const Haircut({super.key});
+  Haircut({this.image,super.key});
+
+  String? image;
 
   @override
   Widget build(BuildContext context) {
-    return const SingleChildScrollView(
+    return SingleChildScrollView(
       child: Column(
         children: [
           EditableProductCard(
             tag: Colors.purple,
+            image: image!,
           ),
     
         ],
@@ -26,7 +29,7 @@ class HairWash extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SingleChildScrollView(
+    return SingleChildScrollView(
       child: Column(
         children: [
           EditableProductCard(
@@ -43,7 +46,7 @@ class Braids extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SingleChildScrollView(
+    return SingleChildScrollView(
       child: Column(
         children: [
           EditableProductCard(
@@ -60,7 +63,7 @@ class Face extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SingleChildScrollView(
+    return SingleChildScrollView(
       child: Column(
         children: [
          EditableProductCard(

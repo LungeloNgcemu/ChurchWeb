@@ -1,56 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'componants/buttonChip.dart';
-import 'model.dart';
-import 'package:path_provider/path_provider.dart';
-import 'url_provider.dart';
-import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_core/firebase_core.dart';
-
-import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../componants/text_input.dart';
-import 'package:readmore/readmore.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
-import 'package:path/path.dart' as path;
-import 'package:provider/provider.dart';
-import 'package:master/url_provider.dart';
-import 'dart:io';
-import 'package:master/model.dart';
-import 'comment_model.dart';
-import 'functions_for_cloud.dart';
 import 'componants/global_booking.dart';
+import 'poster.dart';
+import 'componants/buttonChip.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:provider/provider.dart';
+import 'package:path/path.dart' as path;
+import 'functions_for_cloud.dart';
+import 'specialist_modal.dart';
+import 'package:master/url_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+// THIS HAS TO BE UNIVERSAL!!!!!!
 
-
-// create_page and poster are linked
-String postKey = '';
-
-class Poster extends StatefulWidget {
-  Poster({
-    super.key,
-  });
+class EditPage extends StatefulWidget {
+  const EditPage({super.key});
 
   @override
-  State<Poster> createState() => _PosterState();
+  State<EditPage> createState() => _EditPageState();
 }
 
-class _PosterState extends State<Poster> {
+class _EditPageState extends State<EditPage> {
+  String? specialistId;
+  String image = '';
+
   bool isLoading = false;
+  TextEditingController workController = TextEditingController();
+  TextEditingController nameController = TextEditingController();
+
   final ImagePicker _picker = ImagePicker();
-
   XFile? _image;
-  String? npostKey;
-
-  // Change PickedFile to XFile
-  String? postImageUrl;
 
   Future<void> _pickImage() async {
     final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
@@ -61,37 +42,60 @@ class _PosterState extends State<Poster> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    getPostsFromFirebase();
-  }
-
-  void addId(String postId) async {
+  void addId(String specialistId) async {
     try {
       // Reference to the post document
       DocumentReference postDocRef =
-          FirebaseFirestore.instance.collection("Posts").doc(postId);
+          FirebaseFirestore.instance.collection("Specialist").doc(specialistId);
 
       // Update the post with the post ID
       await postDocRef.update({
-        'postId': postId,
+        'specialistId': specialistId,
       });
 
-      print('Post ID updated successfully!');
+      print('Specialist ID updated successfully!');
     } catch (e) {
       print('Error updating post ID: $e');
       // Handle the error accordingly
     }
   }
 
-  String? imageUrl;
-
- Future<void >_uploadImageToSuperbase(image) async {
+  Future<String> addPostToFirestore(Specialist special) async {
     try {
+      String postImageUrl =
+          await uploadImageToFirebaseStorage(File(_image!.path));
+      Provider.of<PostImageUrlProvider>(context, listen: false).imageUrl =
+          postImageUrl;
+      debugPrint("this is it :" + postImageUrl);
+
+      DocumentReference postRef =
+          await FirebaseFirestore.instance.collection("Specialist").add({
+        'name': special.name,
+        'work': special.work,
+        'image': postImageUrl,
+      });
+
+      final newPostKey = postRef.id;
+
+      print('Specialist added to Firestore successfully! ${newPostKey}');
+
+      return newPostKey;
+    } catch (e) {
+      print('$e');
+      return "";
+    }
+  }
+
+
+  Future<void> _uploadImageToSuperbase() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      await _pickImage();
       print('Image picked');
-      if (image != null) {
-        final imageFile = File(image!.path);
+      if (_image != null) {
+        final imageFile = File(_image!.path);
         final fileName = path.basename(imageFile.path);
         print('File picked: $fileName');
 
@@ -105,71 +109,42 @@ class _PosterState extends State<Poster> {
         await supabase.storage.from('SalonStorage').getPublicUrl(fileName);
         print('Public URL: $publicUrl');
 
+        setState(() {
+          image = publicUrl;
+          isLoading = false;
+        });
+        //Upload to the Image table
+        // await supabase.from('Manager').update({ 'ProfileImage': publicUrl }).match({ 'PhoneNumber': number });
+        print('Image Achieved');
+      } else {
 
         setState(() {
-          imageUrl = publicUrl;
+          isLoading = false;
         });
-      } else {
         print("No image selected");
-
       }
     } catch (e) {
       print("Error uploading image to Supabase: $e");
-
-    }
-  }
-
-
-
-  Future<String> addPostToFirestore(Post post) async {
-    try {
-      String postImageUrl =
-          await uploadImageToFirebaseStorage(File(_image!.path));
-      Provider.of<PostImageUrlProvider>(context, listen: false).imageUrl =
-          postImageUrl;
-      debugPrint("this is it :" + postImageUrl);
-
-      DocumentReference postRef =
-          await FirebaseFirestore.instance.collection("Posts").add({
-        'title': post.title,
-        'description': post.description,
-        'imageUrl': postImageUrl,
+      setState(() {
+        isLoading = false;
       });
-
-      final newPostKey = postRef.id;
-
-      print('Post added to Firestore successfully! ${newPostKey}');
-
-      return newPostKey;
-    } catch (e) {
-      print('$e');
-      return "";
     }
   }
 
-  void superbasePost(String Des, String img) async {
-    await supabase
-        .from('Posts')
-        .insert({'Description': Des, 'ImageUrl': img});
+
+ Future <void> uploadSpecialist(String name,String work,String image) async {
+    await supabase .from('Specialist')
+        .insert({'Name': name, 'Work': work,'Image': image,});
   }
-
-  TextEditingController titleController = TextEditingController();
-  TextEditingController descriptionController = TextEditingController();
-
-
 
   @override
   Widget build(BuildContext context) {
-    double h = MediaQuery.of(context).size.height;
-    return SingleChildScrollView(
-      scrollDirection: Axis.vertical,
-      child: Container(
-       // color: Colors.yellow,
-        height: h * 0.95,
+    return Scaffold(
+      body: SafeArea(
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+              padding: const EdgeInsets.all(8.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -186,7 +161,7 @@ class _PosterState extends State<Poster> {
                       const Padding(
                         padding: EdgeInsets.only(left: 8.0),
                         child: Text(
-                          'Create Post',
+                          'Create Specialsit',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 23.0,
@@ -195,27 +170,27 @@ class _PosterState extends State<Poster> {
                       ),
                     ],
                   ),
-                  // EnterText(
-                  //   height: 50.0,
-                  //   text: "Title",
-                  //   inText: "Enter Title",
-                  //   controller: titleController,
-                  // ),
                   EnterText(
                     height: 50.0,
-                    text: "Description",
-                    inText: "Enter description",
-                    controller: descriptionController,
+                    text: "Work Title",
+                    inText: "Enter Title",
+                    controller: workController,
+                  ),
+                  EnterText(
+                    height: 50.0,
+                    text: "Name and Surname",
+                    inText: " Enter Name and Surname",
+                    controller: nameController,
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       NewButton(
-                        inSideChip: "Load Image for Post",
-                        where: () {
-                          setState(() {
-                            _pickImage();
-                          });
+                        inSideChip: "Load Image",
+                        where: () async {
+
+                            await _uploadImageToSuperbase();
+
 
                           /// Update state variables here
                         },
@@ -229,7 +204,7 @@ class _PosterState extends State<Poster> {
                     children: [
                       Expanded(
                         child: NewButton(
-                          inSideChip: "Post",
+                          inSideChip: "Create Specialist",
                           where: () async {
                             // Show a loading overlay/modal with CircularProgressIndicator
 
@@ -239,18 +214,11 @@ class _PosterState extends State<Poster> {
                             });
 
                             try {
-                             await _uploadImageToSuperbase(_image);
-                              superbasePost(descriptionController.text, imageUrl ??
-                                  "https://picsum.photos/seed/picsum");
-
-                             setState(() {
-                               isLoading = false;
-                             });
-
+                        await uploadSpecialist( nameController.text,workController.text,image);
                             } finally {
                               // Clear text controllers and close the loading overlay/modal
-                              titleController.clear();
-                              descriptionController.clear();
+                              workController.clear();
+                              nameController.clear();
                               Navigator.of(context)
                                   .pop(); // Close the AlertDialog
                             }
@@ -354,7 +322,6 @@ class EnterText extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           Row(
             children: [
@@ -389,7 +356,7 @@ class EnterText extends StatelessWidget {
                           Radius.circular(10.0),
                         ),
                       ),
-                      // filled: true,
+                      //  filled: true,
                       hintText: inText ?? "",
                     ),
                   ),

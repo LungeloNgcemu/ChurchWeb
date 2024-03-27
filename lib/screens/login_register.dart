@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:master/componants/image_screen.dart';
 import '../componants/image_screen.dart';
 import '../componants/extrabutton.dart';
+import 'package:master/databases/database.dart';
+import 'package:appwrite/appwrite.dart';
 
 class RegisterLoginScreen extends StatefulWidget {
   const RegisterLoginScreen({super.key});
@@ -11,6 +13,28 @@ class RegisterLoginScreen extends StatefulWidget {
 }
 
 class _RegisterLoginScreenState extends State<RegisterLoginScreen> {
+
+  @override
+  void initState() {
+    activeSession();
+    // TODO: implement initState
+    super.initState();
+  }
+  // void signOut() async {
+  //   AppWriteDataBase connect = AppWriteDataBase();
+  //   await connect.account.deleteSessions();
+  //   print("Session Refreshed");
+  // }
+
+  void activeSession() async {
+    AppWriteDataBase connect = AppWriteDataBase();
+    final session = await connect.account.listSessions();
+    print(session.total);
+    if(session != null){
+      Navigator.pushNamed(context, '/salon');
+    }
+
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,7 +52,7 @@ class _RegisterLoginScreenState extends State<RegisterLoginScreen> {
           ),
         ),
         next: () {
-          Navigator.pushNamed(context, '/register');
+          Navigator.pushNamed(context, '/RegisterAppwrite');
         },
         writing: const Text(
           'Register',
@@ -39,7 +63,7 @@ class _RegisterLoginScreenState extends State<RegisterLoginScreen> {
         ),
         button: ExtraButton(
           skip: () {
-            Navigator.pushNamed(context, '/login');
+            Navigator.pushNamed(context, '/loginAppwrite');
           },
           writing2: const Text(
             'Login',

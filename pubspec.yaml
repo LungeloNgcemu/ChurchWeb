@@ -53,6 +53,23 @@ dependencies:
   shared_preferences: ^2.2.2
   cloud_firestore: ^4.13.5
   firebase_database: ^10.3.8
+  intl: ^0.18.1
+  simple_chips_input: ^1.2.0
+  backdrop: ^0.9.1
+  bottom_sheet: ^4.0.0
+  appwrite: ^11.0.1
+  uuid: ^4.3.3
+  flutter_chat_bubble: ^2.0.2
+  url_launcher: ^6.2.4
+  supabase_flutter: ^2.3.4
+  multi_image_picker_plus: ^0.0.3
+  flutter_map: ^6.1.0
+  google_fonts: ^6.1.0
+  badges: ^3.1.2
+  postgres: ^3.1.1
+  grouped_list: ^5.1.2
+  flutter_phone_direct_caller: ^2.1.1
+  another_flutter_splash_screen: ^1.2.0
   
 
 dev_dependencies:

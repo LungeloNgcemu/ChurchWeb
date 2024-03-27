@@ -22,6 +22,7 @@ class _ChipsState extends State<Chips> {
       padding: const EdgeInsets.only(top: 15.0, right: 10.0),
       child: ChoiceChip(
         label: SizedBox(
+
           width:  widget.stretch?? 60.0,
           height: 25.0,
           child: Center(

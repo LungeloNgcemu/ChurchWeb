@@ -3,13 +3,17 @@ import 'package:table_calendar/table_calendar.dart';
 import '../componants/text_input.dart';
 import '../componants/extrabutton.dart';
 import '../componants/chips.dart' as MyChips;
-import 'salon_screen.dart' ;
+import 'salon_screen.dart';
 import '../componants/buttonChip.dart';
+import 'package:intl/intl.dart';
+import 'package:master/componants/global_booking.dart';
+import 'package:master/databases/database.dart';
 
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:simple_chips_input/select_chips_input.dart';
 
-const bool isSelected = false;
+bool? isSelected = false;
 
 class BookingScreen extends StatefulWidget {
   const BookingScreen({super.key});
@@ -19,10 +23,45 @@ class BookingScreen extends StatefulWidget {
 }
 
 class _BookingScreenState extends State<BookingScreen> {
-  DateTime _selectedDay = DateTime.now();
-  DateTime _focusedDay = DateTime.now();
-  CalendarFormat _calendarFormat = CalendarFormat.month;
+  @override
+  void initState() {
+    //bookingTime = bookingTime1;
+    //currentList = selectedBookDday(selectedDay, bookingTime, setState);
+    // TODO: implement initState
+    super.initState();
+  }
+
+//  DateTime _selectedDay = DateTime.now();
+
   Map<DateTime, List<String>> _events = {};
+
+  Future airTimeList(List<String> list) {
+    AppWriteDataBase connect = AppWriteDataBase();
+
+    final result = connect.databases.updateDocument(
+      databaseId: '65c375bf12fca26c65db',
+      collectionId: '65c37bc7d33f2414cd49',
+      documentId: '65c37e6d8ea27e7117e4',
+      data: {'Time': list},
+    );
+    return result;
+  }
+
+  List<String> currentList = [];
+  List<String>? listx;
+  List<String> listP = [];
+
+  Future<void> updateList(selectedDay) async {
+    List<String> list = await getCurrentList(setState);
+    List<String> goodx = await matrixRevolution(selectedDay, list, setState);
+    setState(() {
+      listP = goodx;
+      listx = list;
+      isLoading = false;
+    });
+  }
+
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -68,13 +107,77 @@ class _BookingScreenState extends State<BookingScreen> {
                     bottom: 20.0,
                   ),
                   child: Text(
-                    '1. Select Booking Day',
+                    '1. Select Booking Time Period',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 20.0,
                     ),
                   ),
                 ),
+                //////////////////////////////////////////////////////////////////////////////////////////
+
+                Padding(
+                  padding: EdgeInsets.only(bottom: 10.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      MyChips.Chips(
+                        inchip: "30min",
+                        isSelected: selectedOption == "30min",
+                        onSelected: () async {
+                          await airTimeList(bookingTime30);
+                          List<String> list = await getCurrentList(setState);
+                          print("BANK BANK : $list");
+                          List<String> good = await matrixRevolution(
+                              selectedDay, list, setState);
+                          print("LISTX : $good");
+                          setState(() {
+                            selectedOption = "30min";
+
+                            // bookingTime = bookingTime30;
+                            listX = good;
+
+                            //this needs the current list
+                            // currentList = selectedBookDday(selectedDay, bookingTime ,setState);
+                          });
+                        },
+                      ),
+                      MyChips.Chips(
+                        inchip: "1 Hr",
+                        isSelected: selectedOption == "1 Hr",
+                        onSelected: () async {
+                          await airTimeList(bookingTime1);
+                          List<String> list = await getCurrentList(setState);
+                          List<String> good = await matrixRevolution(
+                              selectedDay, list, setState);
+                          setState(() {
+                            selectedOption = "1 Hr";
+                            // bookingTime = bookingTime1;
+                            listX = good;
+                            //  currentList = selectedBookDday(selectedDay, bookingTime,setState );
+                          });
+                        },
+                      ),
+                      MyChips.Chips(
+                        inchip: "1Hr 30min",
+                        isSelected: selectedOption == "1Hr 30min",
+                        onSelected: () async {
+                          await airTimeList(bookingTime1Hr30min);
+                          List<String> list = await getCurrentList(setState);
+                          List<String> good = await matrixRevolution(
+                              selectedDay, list, setState);
+                          setState(() {
+                            selectedOption = "1Hr 30min";
+                            listX = good;
+                            // bookingTime = bookingTime1Hr30min;
+                            //  currentList = selectedBookDday(selectedDay, bookingTime,setState );
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                /////////////////////////////////////////////////////////////////////////////////////////
                 Padding(
                   padding: const EdgeInsets.only(left: 3.0, right: 3.0),
                   child: Container(
@@ -93,39 +196,52 @@ class _BookingScreenState extends State<BookingScreen> {
                       lastDay: DateTime.utc(2030, 3, 14),
                       focusedDay: DateTime.now(),
                       selectedDayPredicate: (day) {
-                        return isSameDay(_selectedDay, day);
+                        return isSameDay(selectedDay, day);
                       },
-                      onDaySelected: (selectedDay, focusedDay) {
+                      onDaySelected: (sselectedDay, focusedDay) async {
                         setState(() {
-                          _selectedDay = selectedDay;
-                          _focusedDay = focusedDay;
+                          isLoading = true;
+                          selectedDay = sselectedDay;
+                          focusedDay = focusedDay;
                         });
+                        updateList(selectedDay);
                       },
-                      calendarFormat: _calendarFormat,
+                      calendarFormat: calendarFormat,
                       onFormatChanged: (format) {
                         setState(() {
-                          _calendarFormat = format;
+                          calendarFormat = format;
                         });
                       },
                     ),
                   ),
                 ),
-                
+
                 const Padding(
-                  padding: EdgeInsets.only(top: 15.0),
+                  padding: EdgeInsets.only(top: 15.0, bottom: 15.0),
                   child: Text(
-                    '2. Create Booking Period',
+                    '2.Booking Periods For Selection',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 20.0,
                     ),
                   ),
                 ),
-                BookingInput(
-                  onAddBookingSlot: _addBookingSlot,
-                ),
-                _buildBookingSlots(isSelected),
-               
+
+                // TODO this is where il have the booking Grid
+
+                // BookingInput(
+                //   onAddBookingSlot: _addBookingSlot,
+                // ),
+
+                isLoading
+                    ? SizedBox(
+                        height: 150,
+                        child: Center(child: CircularProgressIndicator()))
+                    : bookerBooker2(selectedDay, listP, isSelected!, booked,
+                        specificAll, setState),
+
+                // _buildBookingSlots(isSelected),
+
                 // const Padding(
                 //   padding: EdgeInsets.only(top: 15.0),
                 //   child: Text(
@@ -155,47 +271,47 @@ class _BookingScreenState extends State<BookingScreen> {
                 //     ),
                 //   ),
                 // ),
-            //     Padding(
-            //       padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-            //       child: Row(
-            //         mainAxisAlignment: MainAxisAlignment.center,
-            //         children: [
-            //           Expanded(
-            //             child: Padding(
-            //               padding: const EdgeInsets.symmetric(horizontal: 15.0),
-            //               child: OutlinedButton(
-            //                 //color: Colors.red,
-            //                 onPressed: () {
-            //                   Navigator.pop(context);
-            //                   () {
-              
-            // };
-            //                 },
+                //     Padding(
+                //       padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                //       child: Row(
+                //         mainAxisAlignment: MainAxisAlignment.center,
+                //         children: [
+                //           Expanded(
+                //             child: Padding(
+                //               padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                //               child: OutlinedButton(
+                //                 //color: Colors.red,
+                //                 onPressed: () {
+                //                   Navigator.pop(context);
+                //                   () {
 
-            //                 style: OutlinedButton.styleFrom(
-            //                   padding: const EdgeInsets.symmetric(
-            //                       horizontal: 8.0, vertical: 4.0),
-            //                   shape: RoundedRectangleBorder(
-            //                     borderRadius: BorderRadius.circular(20.0),
-            //                   ),
-            //                   backgroundColor: Colors.white,
-            //                   side: const BorderSide(
-            //                     color: Colors.red,
-            //                     width: 2.0,
-            //                   ),
-            //                 ),
-            //                 child: const Text(
-            //                   'Create Booking',
-            //                   style: TextStyle(
-            //                     color: Colors.black,
-            //                   ),
-            //                 ),
-            //               ),
-            //             ),
-            //           ),
-            //         ],
-            //       ),
-            //     ),
+                // };
+                //                 },
+
+                //                 style: OutlinedButton.styleFrom(
+                //                   padding: const EdgeInsets.symmetric(
+                //                       horizontal: 8.0, vertical: 4.0),
+                //                   shape: RoundedRectangleBorder(
+                //                     borderRadius: BorderRadius.circular(20.0),
+                //                   ),
+                //                   backgroundColor: Colors.white,
+                //                   side: const BorderSide(
+                //                     color: Colors.red,
+                //                     width: 2.0,
+                //                   ),
+                //                 ),
+                //                 child: const Text(
+                //                   'Create Booking',
+                //                   style: TextStyle(
+                //                     color: Colors.black,
+                //                   ),
+                //                 ),
+                //               ),
+                //             ),
+                //           ),
+                //         ],
+                //       ),
+                //     ),
               ],
             ),
           ),
@@ -205,28 +321,38 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   _buildBookingSlots(isSelected) {
-    List<String> bookingSlots = _events[_selectedDay] ?? [];
+    List<String> bookingSlots = _events[selectedDay] ?? [];
 
     return bookingSlots.isEmpty
         ? const Padding(
             padding: EdgeInsets.only(top: 8.0),
             child: Center(child: Text('Booking periods will appear shortly.')),
           )
-        : SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
+        : SizedBox(
+            height: 250.0,
+            child: GridView(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisExtent: 45,
+                mainAxisSpacing: 20,
+                crossAxisSpacing: 20,
+              ),
+              scrollDirection: Axis.vertical,
               children: bookingSlots.map((slot) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: NewButton(
-                    where: () {
-                      setState(() {
-                        isSelected = isSelected!;
-                        colour = Colors.red;
-                      });
-                    },
-                    tapColor: Colors.red ,
-                    inSideChip: slot,
+                  child: Container(
+                    width: 200,
+                    child: NewButton(
+                      where: () {
+                        setState(() {
+                          isSelected = isSelected!;
+                          colour = Colors.red;
+                        });
+                      },
+                      tapColor: Colors.red,
+                      inSideChip: slot,
+                    ),
                   ),
                 );
               }).toList(),
@@ -241,7 +367,7 @@ class _BookingScreenState extends State<BookingScreen> {
         return AlertDialog(
           title: Text('Booking Confirmation'),
           content:
-              Text('You have booked a slot at $bookingSlot on $_selectedDay'),
+              Text('You have booked a slot at $bookingSlot on $selectedDay'),
           actions: [
             TextButton(
               onPressed: () {
@@ -258,7 +384,7 @@ class _BookingScreenState extends State<BookingScreen> {
   // Method to add a booking slot for the selected day
   void _addBookingSlot(String slotTime) {
     setState(() {
-      _events[_selectedDay] = [...(_events[_selectedDay] ?? []), slotTime];
+      _events[selectedDay] = [...(_events[selectedDay] ?? []), slotTime];
     });
   }
 }

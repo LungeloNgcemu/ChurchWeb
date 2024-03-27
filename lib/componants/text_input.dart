@@ -14,11 +14,13 @@ class ForTextInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 10.0),
       child: TextField(
         controller: controller, 
         onChanged: onChanged?? (String){},
         decoration: InputDecoration(
+          isDense: true,                      // Added this
+          contentPadding: EdgeInsets.all(8),
           prefixIcon:Padding(
             padding: EdgeInsets.only(left: 18.0, right: 5.0),
             child: Icon(con ?? Icons.lock_open_sharp),
