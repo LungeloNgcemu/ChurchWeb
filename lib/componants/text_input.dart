@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class ForTextInput extends StatelessWidget {
   ForTextInput({
-    this.label,this.text,this.con,this.onChanged,this.controller,
+    this.label,this.text,this.con,this.onChanged,this.controller, this.keyboard
   });
 
    final String? label;
@@ -10,12 +10,14 @@ class ForTextInput extends StatelessWidget {
    final IconData? con;
    Function(String)? onChanged;
    final TextEditingController? controller;
+   final TextInputType? keyboard;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
       child: TextField(
+        keyboardType: keyboard ?? TextInputType.number,
         controller: controller, 
         onChanged: onChanged?? (String){},
         decoration: InputDecoration(
@@ -31,7 +33,7 @@ class ForTextInput extends StatelessWidget {
             ),
           ),
           labelText: label ?? 'Input',
-          hintText: text ?? 'Input',
+          hintText: text ?? 'Enter',
         ),
       ),
     );

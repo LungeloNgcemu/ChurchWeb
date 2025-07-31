@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
-import 'text_input.dart';
-import 'extrabutton.dart';
+import 'package:master/classes/church_init.dart';
+import 'package:provider/provider.dart';
 
-import '../screens/salon_screen.dart';
-import '../screens/booking_screen.dart';
+import '../providers/url_provider.dart';
 
 Color colour = Colors.white;
 
@@ -28,11 +25,12 @@ class NewButton extends StatefulWidget {
 
 class _NewButtonState extends State<NewButton> {
   bool isSelected = false;
+
+  ChurchInit churchStart = ChurchInit();
   
   @override
   Widget build(BuildContext context) {
     return OutlinedButton(
-
       onPressed: widget.where?? () {},
       style: OutlinedButton.styleFrom(
         elevation: 5.0,        
@@ -42,13 +40,12 @@ class _NewButtonState extends State<NewButton> {
           borderRadius: BorderRadius.circular(20.0),
         ),
         backgroundColor: Colors.white,
-        side:  const BorderSide(
-          color: Colors.red,
+        side:   BorderSide(
+          color:   Color(Provider.of<christProvider>(context, listen: false).myMap['Project']?['Color'] ?? '0xFF000000'),
           width: 2.0,
         ),
         
       ),
-
       child: Text(
         widget.inSideChip,
         style: TextStyle(color: isSelected ? Colors.black : Colors.black),

@@ -8,6 +8,7 @@ class ImageScreen extends StatelessWidget {
     this.next,
     this.skip,
     this.button,
+    this.button2,
     this.writing,
   });
   final Image? picture;
@@ -15,6 +16,7 @@ class ImageScreen extends StatelessWidget {
   final VoidCallback? next;
   final VoidCallback? skip;
   final Widget? button;
+  final Widget? button2;
   final Text? writing;
 
 
@@ -59,6 +61,7 @@ class ImageScreen extends StatelessWidget {
                 ],
               ),
               button?? Container(),
+              button2?? Container(),
             ],
           ),
         ),

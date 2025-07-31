@@ -1,7 +1,6 @@
 import 'package:appwrite/appwrite.dart';
-import 'package:uuid/uuid.dart';
-import 'package:appwrite/models.dart';
 import 'package:postgres/postgres.dart';
+
 
 class AppWriteDataBase {
   late Client client;
@@ -15,7 +14,7 @@ class AppWriteDataBase {
       client = Client();
       client
           .setEndpoint('https://cloud.appwrite.io/v1')
-          .setProject('65bc947456c1c0100060')
+          .setProject('663e70370012ecbb3ba5')
           .setSelfSigned(status: true);
       account = Account(client);
       databases = Databases(client);

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
 class ExtraButton extends StatelessWidget {
-  const ExtraButton({
+ExtraButton({
     super.key,
     required this.skip,
     this.writing2,
+  this.color,
   });
 
   final VoidCallback? skip;
   final Text? writing2;
+  Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +23,7 @@ class ExtraButton extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20.0),
               ),
-              color: Colors.black,
+              color: color ?? Colors.black,
               onPressed: skip??(){},
               child:writing2?? Container(),
             ),

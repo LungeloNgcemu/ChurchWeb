@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../screens/salon_screen.dart';
-
+import 'package:provider/provider.dart';
+import '../classes/church_init.dart';
+import '../providers/url_provider.dart';
+//TOdo change color
 class Chips extends StatefulWidget {
   const Chips({this.inchip, this.isSelected, this.onSelected,this.stretch, super.key});
 
@@ -15,6 +17,8 @@ class Chips extends StatefulWidget {
 
 class _ChipsState extends State<Chips> {
   String? selectedOption;
+
+  ChurchInit churchStart = ChurchInit();
 
   @override
   Widget build(BuildContext context) {
@@ -44,9 +48,9 @@ class _ChipsState extends State<Chips> {
           }
         },
         disabledColor: Colors.white,
-        selectedColor: Colors.red,
-        side: const BorderSide(
-          color: Colors.red,
+        selectedColor: Color(0xFFA9A9A9)      ,
+        side: BorderSide(
+          color:Color(0xFFA9A9A9) ,
           width: 3.0,
         ),
       ),

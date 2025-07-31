@@ -5,10 +5,13 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   cloud_firestore
+  desktop_webview_window
   file_selector_windows
   firebase_auth
   firebase_core
   firebase_storage
+  flutter_inappwebview_windows
+  geolocator_windows
   url_launcher_windows
   window_to_front
 )

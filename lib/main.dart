@@ -1,62 +1,32 @@
-import 'package:flutter/material.dart';
-import 'package:master/profile_screen.dart';
-import 'screens/message_screen.dart';
-//import 'screens/login_screen.dart';
-import 'screens/front_screen.dart';
-import 'screens/login_register.dart';
-import 'screens/salon_screen.dart';
-import 'profile_screen.dart';
-import 'screens/product_service_screen.dart';
-import 'screens/booking_screen.dart';
-import 'create_page.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'package:provider/provider.dart';
-import 'url_provider.dart';
-import 'edit_page.dart';
-import 'package:master/Product_poster.dart';
 import 'package:appwrite/appwrite.dart';
-import 'screens/login_appwrite.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:master/providers/user_data_provider.dart';
+import 'package:master/screens/home/church_screen.dart';
+import 'package:master/screens/auth/register/create_account.dart';
+import 'package:master/screens/auth/cross_road.dart';
+import 'package:master/screens/splash/splash_screen.dart';
+import 'constants/constants.dart';
+import 'screens/home/create_minister.dart';
+import 'screens/prayer/create_prayer.dart';
+import 'screens/chat/message_screen.dart';
+import 'extra/booking_screen.dart';
+import 'extra/create_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'util/firebase_options.dart';
+import 'package:provider/provider.dart';
+import 'providers/url_provider.dart';
+import 'screens/auth/login/login_appwrite.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/register_appwrite.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
+import 'screens/auth/register/register_leader.dart';
+import 'screens/auth/register/register_member.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'screens/code.dart';
-import 'screens/splash_screen.dart';
-
-
-
-const supabaseUrl = 'https://subejxnzdnqyovwhinle.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1YmVqeG56ZG5xeW92d2hpbmxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDg1NDI5NTMsImV4cCI6MjAyNDExODk1M30.hDMsQXcPhdq-ZE126aPOYMIZVmnU6xOQjeLwxOijHrs';
+import 'screens/auth/otp/code.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Supabase.initialize(
-    url:supabaseUrl,
-    anonKey:supabaseKey,
-    // headers:
-  );
-
-
-
-
-  // final wsUrl = Uri.parse(
-  //     'ws://cloud.appwrite.io/v1/realtime?project=65bc947456c1c0100060&channels%5B%5D=databases.65c375bf12fca26c65db.collections.65d0612a901236115ecc.documents');
-  // late final channel = WebSocketChannel.connect(wsUrl);
-  //
-  //
-  //   await channel.ready;
-  //
-  //   channel.stream.listen((message) {
-  //     print("Connected to server");
-  //    // channel.sink.add('received!');
-  //
-  //     print("MESSAGE : $message");
-  //     channel.sink.close();
-  //   });
-
-
+  await Supabase.initialize(url: Keys.supabaseUrl, anonKey: Keys.supabaseKey);
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -66,11 +36,14 @@ void main() async {
       .setEndpoint('https://cloud.appwrite.io/v1')
       .setProject('65bc947456c1c0100060')
       .setSelfSigned(status: true);
-  Account account = Account(client);
+  Account(client);
+
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
 
   ImageUrlProvider imageUrlProvider = ImageUrlProvider();
 
-  // Load the image URL from local storage
   await imageUrlProvider.loadImageUrlLocally();
   runApp(
     MultiProvider(
@@ -96,26 +69,51 @@ void main() async {
         ChangeNotifierProvider<CurrentRoomIdProvider>(
           create: (BuildContext context) => CurrentRoomIdProvider(),
         ),
-        ChangeNotifierProvider< CurrentUserImageProvider>(
-          create: (BuildContext context) =>  CurrentUserImageProvider(),
+        ChangeNotifierProvider<CurrentUserImageProvider>(
+          create: (BuildContext context) => CurrentUserImageProvider(),
         ),
-        ChangeNotifierProvider< ClientImageProvider>(
-          create: (BuildContext context) =>  ClientImageProvider(),
+        ChangeNotifierProvider<ClientImageProvider>(
+          create: (BuildContext context) => ClientImageProvider(),
         ),
-        ChangeNotifierProvider< ItemProvider>(
-          create: (BuildContext context) =>  ItemProvider(),
+        ChangeNotifierProvider<ItemProvider>(
+          create: (BuildContext context) => ItemProvider(),
         ),
-        ChangeNotifierProvider< tockenProvider>(
-          create: (BuildContext context) =>  tockenProvider(),
+        ChangeNotifierProvider<tockenProvider>(
+          create: (BuildContext context) => tockenProvider(),
         ),
-
-        ChangeNotifierProvider< ClientNameProvider>(
-          create: (BuildContext context) =>  ClientNameProvider(),
+        ChangeNotifierProvider<ClientNameProvider>(
+          create: (BuildContext context) => ClientNameProvider(),
         ),
-        ChangeNotifierProvider< ClientNumberProvider>(
-          create: (BuildContext context) =>  ClientNumberProvider(),
+        ChangeNotifierProvider<ClientNumberProvider>(
+          create: (BuildContext context) => ClientNumberProvider(),
         ),
-
+        ChangeNotifierProvider<churchProvider>(
+          create: (BuildContext context) => churchProvider(),
+        ),
+        ChangeNotifierProvider<christProvider>(
+          create: (BuildContext context) => christProvider(),
+        ),
+        ChangeNotifierProvider<VisibilityProvider>(
+          create: (BuildContext context) => VisibilityProvider(),
+        ),
+        ChangeNotifierProvider<IdProvider>(
+          create: (BuildContext context) => IdProvider(),
+        ),
+        ChangeNotifierProvider<RoleProvider>(
+          create: (BuildContext context) => RoleProvider(),
+        ),
+        ChangeNotifierProvider<SelectedDateProvider>(
+          create: (BuildContext context) => SelectedDateProvider(),
+        ),
+        ChangeNotifierProvider<SelectedChurchProvider>(
+          create: (BuildContext context) => SelectedChurchProvider(),
+        ),
+        ChangeNotifierProvider<SelectedGenderProvider>(
+          create: (BuildContext context) => SelectedGenderProvider(),
+        ),
+        ChangeNotifierProvider<UserDataProvider>(
+          create: (BuildContext context) => UserDataProvider(),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -127,37 +125,31 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return MaterialApp(
-
       theme: ThemeData(
         useMaterial3: false,
         textTheme: GoogleFonts.racingSansOneTextTheme(
           Theme.of(context).textTheme.apply(
-            fontSizeFactor: 0.8,
-          )
+                fontSizeFactor: 0.8,
+              ),
         ),
-
-        // ...
       ),
       debugShowCheckedModeBanner: false,
       initialRoute: '/splash',
       routes: {
-
-        '/splash' : (context) => SplashScreen(),
+        '/splash': (context) => const SplashScreen(),
+        '/crossRoad': (context) => const CrossRoad(),
+        '/RegisterLeader': (context) => const RegisterLeader(),
+        '/RegisterMember': (context) => const RegisterMember(),
+        '/church': (context) => const ChurchScreen(),
         '/loginAppwrite': (context) => LoginAppwrite(),
-        '/code': (context)=> CodeAppwrite(),
-       '/RegisterAppwrite': (context) => RegisterAppwrite(),
-
-        '/login&register': (context) => const RegisterLoginScreen(),
-        '/profile': (context) => const ProfileScreen(),
-       // '/login': (context) => const LoginScreen(),
-        '/salon': (context) => const SalonScreen(),
+        '/code': (context) => const CodeAppwrite(),
         '/booking': (context) => const BookingScreen(),
         '/create': (context) => const CreatePage(),
-        '/edit': (context) => const EditPage(),
-        '/productPoster': (context) => ProductPoster(),
-        '/messageScreen': (context) => MessageScreen(),
+        '/createMinister': (context) => const CreateMinister(),
+        '/createPrayer': (context) => CreatePrayer(),
+        '/messageScreen': (context) => const MessageScreen(),
+        '/createAccount': (context) => const CreateAccount(),
       },
     );
   }
