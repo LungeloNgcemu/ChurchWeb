@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart%20';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/church_class.dart';
 import 'package:master/componants/extrabutton.dart';

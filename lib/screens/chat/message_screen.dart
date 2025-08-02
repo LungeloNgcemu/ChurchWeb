@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart%20';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:master/classes/authentication/authenticate.dart';

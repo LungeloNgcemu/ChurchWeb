@@ -1,7 +1,6 @@
 import 'package:animated_snack_bar/animated_snack_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart%20';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/church_init.dart';
 import 'package:master/classes/home_class.dart';
