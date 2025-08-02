@@ -33,7 +33,7 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: FlutterSplashScreen.fadeIn(
-        // animationDuration: Duration(milliseconds: 2000),
+        //animationDuration: Duration(milliseconds: 2000),
         backgroundColor: Colors.white,
         onInit: () {
           debugPrint("On Init");
@@ -52,13 +52,10 @@ class _SplashScreenState extends State<SplashScreen> {
             await Future.delayed(const Duration(seconds: 5));
 
             AppWriteDataBase connect = AppWriteDataBase();
-            SqlDatabase sql = SqlDatabase();
 
-            String church = await sql.getChurchName();
+            final session = await connect.account.get();
 
-            // final session = await connect.account.get();
-
-            if (church.isNotEmpty && context.mounted) {
+            if (session.phone != null && context.mounted) {
               await _initChurch();
 
               Navigator.of(context).pushNamedAndRemoveUntil(
