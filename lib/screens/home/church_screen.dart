@@ -191,10 +191,10 @@ class _ChurchScreenState extends State<ChurchScreen>
       icon: Icons.mic,
       title: 'Media',
     ),
-    TabItem(
-      icon: Icons.campaign_sharp,
-      title: 'Events',
-    ),
+    // TabItem(
+    //   icon: Icons.campaign_sharp,
+    //   title: 'Events',
+    // ),
     TabItem(
       icon: Icons.people_alt_outlined,
       title: 'Bible-Chat',
@@ -241,7 +241,7 @@ class _ChurchScreenState extends State<ChurchScreen>
     HomeScreen(),
     PostScreen(),
     MediaScreen(),
-    EventScreen(),
+    // EventScreen(),
     // PrayerScreen(),
     ContactScreen(),
     // ChatScreen(),
