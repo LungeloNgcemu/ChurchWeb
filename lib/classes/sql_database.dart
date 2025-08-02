@@ -8,14 +8,14 @@ class SqlDatabase {
   SharedPreferences? _prefs;
 
   // Initialize SharedPreferences
-  Future<void> initializeDatabase() async {
-    _prefs = await SharedPreferences.getInstance();
-    _isInitialized = true;
-  }
+  // Future<void> initializeDatabase() async {
+  //   _prefs = await SharedPreferences.getInstance();
+  //   _isInitialized = true;
+  // }
 
   // Simulate database insert
   void insertChurchName({required String churchName}) async {
-    if (!_isInitialized) await initializeDatabase();
+    _prefs = await SharedPreferences.getInstance();
 
     try {
       await _prefs?.setString(_churchKey, churchName);
@@ -27,8 +27,7 @@ class SqlDatabase {
 
   // Simulate database query
   Future<String> getChurchName() async {
-    if (!_isInitialized) await initializeDatabase();
-
+    _prefs = await SharedPreferences.getInstance();
     try {
       final name = _prefs?.getString(_churchKey) ?? "";
       return name;
@@ -40,7 +39,7 @@ class SqlDatabase {
 
   // Simulate delete all churches
   Future<void> deleteAllChurches() async {
-    if (!_isInitialized) await initializeDatabase();
+    _prefs = await SharedPreferences.getInstance();
 
     try {
       await _prefs?.remove(_churchKey);
@@ -52,7 +51,7 @@ class SqlDatabase {
 
   // Simulate database deletion (clearing all data)
   Future<void> deleteBase() async {
-    if (!_isInitialized) await initializeDatabase();
+  _prefs = await SharedPreferences.getInstance();
 
     try {
       await _prefs?.clear();

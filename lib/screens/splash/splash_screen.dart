@@ -20,7 +20,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     // _initChurch();
-    sql.initializeDatabase();
+    // sql.initializeDatabase();
     super.initState();
   }
 
@@ -56,7 +56,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
             String church = await sql.getChurchName();
 
-            final session = await connect.account.get();
+            // final session = await connect.account.get();
 
             if (church.isNotEmpty && context.mounted) {
               await _initChurch();
