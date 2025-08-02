@@ -52,10 +52,13 @@ class _SplashScreenState extends State<SplashScreen> {
             await Future.delayed(const Duration(seconds: 5));
 
             AppWriteDataBase connect = AppWriteDataBase();
+              SqlDatabase sql = SqlDatabase();
+
+              String church = await sql.getChurchName();
 
             final session = await connect.account.get();
 
-            if ( session.phoneVerification && context.mounted) {
+            if ( church != null  && church != "" && context.mounted) {
               await _initChurch();
 
               Navigator.of(context).pushNamedAndRemoveUntil(
