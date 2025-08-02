@@ -18,7 +18,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.4'
+          flutter-version: '3.22.1'
           channel: 'stable'
           cache: true
           cache-key: 'flutter-pub-cache'
@@ -33,8 +33,9 @@ jobs:
           flutter config --enable-web
           flutter build web \
             --release \
-            --base-href="/KhulekaniPWA/" \
-            --dart-define=FLUTTER_WEB_CANVASKIT_URL=/KhulekaniPWA/canvaskit/
+            --base-href="/NewFlutterApp/" \
+            --dart-define=FLUTTER_WEB_CANVASKIT_URL=/NewFlutterApp/canvaskit/
+
 
       - name: Verify build output
         run: |
