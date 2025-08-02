@@ -23,9 +23,9 @@ class _LoadingScreenState extends State<LoadingScreen> {
     AppWriteDataBase connect = AppWriteDataBase();
 
       final session = await connect.account.listSessions();
-      print(session.total);
-    print('Sessions : ${session.total}');
+
       if( session != null && context.mounted){
+        
         Navigator.pushNamed(context, '/salon');
       }else if(context.mounted){
         Navigator.pushNamed(context, '/RegisterAppwrite');

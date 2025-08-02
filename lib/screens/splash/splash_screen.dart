@@ -27,14 +27,13 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _initChurch() async {
     churchStart = ChurchInit();
     await churchStart.init(context);
-    print("${churchStart.ChurchName}");
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: FlutterSplashScreen.fadeIn(
-        //animationDuration: Duration(milliseconds: 2000),
+        animationDuration: Duration(milliseconds: 2000),
         backgroundColor: Colors.white,
         onInit: () {
           debugPrint("On Init");
@@ -50,12 +49,13 @@ class _SplashScreenState extends State<SplashScreen> {
         onAnimationEnd: () => debugPrint("On Fade In End"),
         asyncNavigationCallback: () async {
           try {
-            await Future.delayed(const Duration(seconds: 3));
+            await Future.delayed(const Duration(seconds: 5));
 
             AppWriteDataBase connect = AppWriteDataBase();
+
             final session = await connect.account.get();
 
-            if (session.phone != null && context.mounted) {
+            if ( session.phoneVerification && context.mounted) {
               await _initChurch();
 
               Navigator.of(context).pushNamedAndRemoveUntil(

@@ -128,7 +128,6 @@ class ChurchInit {
     await getRole(context);
 
     if (churchData.isEmpty) {
-      print('No church data found');
       return;
     }
 
@@ -191,7 +190,6 @@ class ChurchInit {
 
       await updateProjects(context, projects);
       sql.deleteAllChurches();
-      print('Project cleared successfully');
     } catch (error) {
       print('Error clearing project: $error');
       throw error;
