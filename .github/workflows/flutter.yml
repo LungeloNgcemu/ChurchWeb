@@ -1,0 +1,52 @@
+name: Build and Deploy Flutter Web to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # or your default branch
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for peaceiris/actions-gh-pages to get branch info
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.6'
+          channel: 'stable'
+          cache: true
+          cache-key: 'flutter-pub-cache'
+
+      - name: Install dependencies
+        run: |
+          flutter pub get
+          
+
+      - name: Build Flutter Web
+        run: |
+          flutter config --enable-web
+          flutter build web \
+            --release \
+            --base-href="/KhulekaniPWA/" \
+            --dart-define=FLUTTER_WEB_CANVASKIT_URL=/KhulekaniPWA/canvaskit/
+
+      - name: Verify build output
+        run: |
+          ls -la build/web
+          [ -f build/web/index.html ] || exit 1
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
+          publish_branch: gh-pages  # The branch GitHub Pages uses
+          force_orphan: true  # Keeps history clean
+          keep_files: false   # Remove old files
+          enable_jekyll: false  # Important for Flutter web apps
