@@ -10,7 +10,6 @@ import '../../classes/on_create_class.dart';
 import '../../componants/chips.dart' as MyChips;
 import '../../componants/buttonChip.dart';
 import 'package:master/cards/product_card.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:master/providers/url_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:bottom_sheet/bottom_sheet.dart';
@@ -61,13 +60,7 @@ class _EventScreenState extends State<EventScreen> with AutomaticKeepAliveClient
   }
 
 
-  Stream<QuerySnapshot> getProductsStream(a) {
-    return FirebaseFirestore.instance
-        .collection("Products")
-        .doc(a)
-        .collection("Item")
-        .snapshots();
-  }
+
 
   Color selectedOp(String selectedOption) {
     if (selectedOption == 'Upcoming') {

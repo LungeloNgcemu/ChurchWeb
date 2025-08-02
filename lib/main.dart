@@ -12,7 +12,6 @@ import 'screens/prayer/create_prayer.dart';
 import 'screens/chat/message_screen.dart';
 import 'extra/booking_screen.dart';
 import 'extra/create_page.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'util/firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'providers/url_provider.dart';
@@ -28,9 +27,9 @@ void main() async {
 
   await Supabase.initialize(url: Keys.supabaseUrl, anonKey: Keys.supabaseKey);
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // await Firebase.initializeApp(
+  //   options: DefaultFirebaseOptions.currentPlatform,
+  // );
 
   Client client = Client()
       .setEndpoint('https://cloud.appwrite.io/v1')

@@ -27,7 +27,8 @@ class MediaScreen extends StatefulWidget {
   State<MediaScreen> createState() => _MediaScreenState();
 }
 
-class _MediaScreenState extends State<MediaScreen> with AutomaticKeepAliveClientMixin {
+class _MediaScreenState extends State<MediaScreen>
+    with AutomaticKeepAliveClientMixin {
   CreateClass create = CreateClass();
   ChurchInit visibility = ChurchInit();
   ScrollController _scrollController = ScrollController();
@@ -39,6 +40,7 @@ class _MediaScreenState extends State<MediaScreen> with AutomaticKeepAliveClient
     super.initState();
   }
 
+  bool modelOpen = false;
   final ScrollController scrollController = ScrollController();
   DraggableScrollableController controller = DraggableScrollableController();
   YouTube youTube = YouTube();
@@ -164,7 +166,7 @@ class _MediaScreenState extends State<MediaScreen> with AutomaticKeepAliveClient
   }
 
   @override
-   bool get wantKeepAlive => true;
+  bool get wantKeepAlive => true;
   Widget build(BuildContext context) {
     String selectedOption =
         context.watch<SelectedOptionProvider>().selectedOption;
@@ -175,193 +177,224 @@ class _MediaScreenState extends State<MediaScreen> with AutomaticKeepAliveClient
 //stream product
 
     return SafeArea(
-      child: CustomScrollView(
-        scrollDirection: Axis.vertical,
-        slivers: [
-          SliverAppBar(
-            automaticallyImplyLeading: false,
-            backgroundColor: Colors.white54,
-            expandedHeight:
-                visibility.visibilityToggle(context) == false ? 140 : 200,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Column(
-                children: [
-                  TittleHead(
-                    title: 'Media',
-                  ),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SizedBox(
-                      height: 60.0,
-                      child: Row(
-                        children: [
-                          MyChips.Chips(
-                            inchip: 'Sermon',
-                            isSelected:
-                                Provider.of<SelectedOptionProvider>(context)
-                                        .selectedOption ==
-                                    'Sermon',
-                            onSelected: () {
-                              setState(() {
-                                Provider.of<SelectedOptionProvider>(context,
-                                        listen: false)
-                                    .updateSelectedOption('Sermon', Colors.red);
-                              });
-                            },
-                          ),
-                          MyChips.Chips(
-                            inchip: 'Study ',
-                            isSelected:
-                                Provider.of<SelectedOptionProvider>(context)
-                                        .selectedOption ==
-                                    'Study',
-                            onSelected: () {
-                              setState(() {
-                                Provider.of<SelectedOptionProvider>(context,
-                                        listen: false)
-                                    .updateSelectedOption(
-                                        'Study', Colors.black);
-                              });
-                            },
-                          ),
-                          MyChips.Chips(
-                            stretch: 70.0,
-                            inchip: 'Live',
-                            isSelected:
-                                Provider.of<SelectedOptionProvider>(context)
-                                        .selectedOption ==
-                                    'Live',
-                            onSelected: () {
-                              setState(() {
-                                Provider.of<SelectedOptionProvider>(context,
-                                        listen: false)
-                                    .updateSelectedOption('Live', Colors.green);
-                              });
-                            },
-                          ),
-                          MyChips.Chips(
-                            inchip: 'Special',
-                            isSelected:
-                                Provider.of<SelectedOptionProvider>(context)
-                                        .selectedOption ==
-                                    'Special',
-                            onSelected: () {
-                              setState(() {
-                                Provider.of<SelectedOptionProvider>(context,
-                                        listen: false)
-                                    .updateSelectedOption(
-                                        'Special', Colors.grey);
-                              });
-                            },
-                          ),
-                        ],
+      child: Stack(
+        children: [
+          CustomScrollView(
+            scrollDirection: Axis.vertical,
+            slivers: [
+              SliverAppBar(
+                automaticallyImplyLeading: false,
+                backgroundColor: Colors.white54,
+                expandedHeight:
+                    visibility.visibilityToggle(context) == false ? 140 : 200,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Column(
+                    children: [
+                      TittleHead(
+                        title: 'Media',
                       ),
-                    ),
-                  ),
-                  Visibility(
-                    visible: Provider.of<christProvider>(context, listen: false)
-                            .myMap['Project']?['Expire'] ??
-                        false,
-                    child: Visibility(
-                      visible: visibility.visibilityToggle(context),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: NewButton(
-                                where: () {
-                                  create.sheeting(context, MediaPoster());
-
-                                  //  Navigator.pushNamed(context, '/mediaPoster');
-                                  // Optionally clear the text field after adding
-                                  // (You might choose to leave it as-is)
-                                  setState(() {});
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SizedBox(
+                          height: 60.0,
+                          child: Row(
+                            children: [
+                              MyChips.Chips(
+                                inchip: 'Sermon',
+                                isSelected:
+                                    Provider.of<SelectedOptionProvider>(context)
+                                            .selectedOption ==
+                                        'Sermon',
+                                onSelected: () {
+                                  setState(() {
+                                    Provider.of<SelectedOptionProvider>(context,
+                                            listen: false)
+                                        .updateSelectedOption(
+                                            'Sermon', Colors.red);
+                                  });
                                 },
-                                inSideChip: 'Create Video Content',
                               ),
-                            ),
-                          ],
+                              MyChips.Chips(
+                                inchip: 'Study ',
+                                isSelected:
+                                    Provider.of<SelectedOptionProvider>(context)
+                                            .selectedOption ==
+                                        'Study',
+                                onSelected: () {
+                                  setState(() {
+                                    Provider.of<SelectedOptionProvider>(context,
+                                            listen: false)
+                                        .updateSelectedOption(
+                                            'Study', Colors.black);
+                                  });
+                                },
+                              ),
+                              MyChips.Chips(
+                                stretch: 70.0,
+                                inchip: 'Live',
+                                isSelected:
+                                    Provider.of<SelectedOptionProvider>(context)
+                                            .selectedOption ==
+                                        'Live',
+                                onSelected: () {
+                                  setState(() {
+                                    Provider.of<SelectedOptionProvider>(context,
+                                            listen: false)
+                                        .updateSelectedOption(
+                                            'Live', Colors.green);
+                                  });
+                                },
+                              ),
+                              MyChips.Chips(
+                                inchip: 'Special',
+                                isSelected:
+                                    Provider.of<SelectedOptionProvider>(context)
+                                            .selectedOption ==
+                                        'Special',
+                                onSelected: () {
+                                  setState(() {
+                                    Provider.of<SelectedOptionProvider>(context,
+                                            listen: false)
+                                        .updateSelectedOption(
+                                            'Special', Colors.grey);
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                      Visibility(
+                        visible:
+                            Provider.of<christProvider>(context, listen: false)
+                                    .myMap['Project']?['Expire'] ??
+                                false,
+                        child: Visibility(
+                          visible: visibility.visibilityToggle(context),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: NewButton(
+                                    where: () async {
+                                      setState(() {
+                                        modelOpen = true;
+                                      });
+
+                                      await create.sheeting(
+                                          context, MediaPoster());
+                                    },
+                                    inSideChip: 'Create Video Content',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ),
+              // Provider.of<SelectedOptionProvider>(context).selectedOption
+              StreamBuilder(
+                stream: supabase
+                    .from('Media')
+                    .stream(primaryKey: ['id'])
+                    .eq(
+                        "Church",
+                        Provider.of<christProvider>(context, listen: false)
+                                .myMap['Project']?['ChurchName'] ??
+                            "")
+                    .order('id', ascending: false),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.active) {
+                    if (snapshot.hasError) {
+                      return SliverToBoxAdapter(
+                          child: Text('Error: ${snapshot.error}'));
+                    } else if (!snapshot.hasData ||
+                        snapshot.data?.isEmpty == true) {
+                      return SliverToBoxAdapter(
+                          child: Center(child: Text('No posts available.')));
+                    } else {
+                      // below is data available
+
+                      final MediaList =
+                          optionMedia(selectedOption, snapshot.data ?? []);
+                      // final MediaList = snapshot.data;
+
+                      print('List:$MediaList');
+
+                      return SliverPadding(
+                        padding: EdgeInsets.all(20),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            childCount: MediaList?.length,
+                            (context, index) {
+                              final linkId = youTube
+                                  .convertVideo(MediaList?[index]['URL']);
+                              idProvider.changeID(linkId);
+                              return GestureDetector(
+                                onLongPress: () {
+                                  if (visibility.visibilityToggle(context) ==
+                                      true) {
+                                    const message = "Delete Video?";
+                                    //delete by id
+                                    alertDelete(context, message, () async {
+                                      deleteVideo(MediaList?[index]['id']);
+                                    });
+                                  }
+                                },
+                                child: youTube.displayYoutubeOnly(linkId,
+                                        MediaList?[index]['Title'] ?? "",
+                                        MediaList?[index]['Description'] ?? "",
+                                        context,)
+
+
+                                // modelOpen
+                                //     ? youTube.displayYoutubeOnly(linkId,
+                                //         MediaList?[index]['Title'] ?? "",
+                                //         MediaList?[index]['Description'] ?? "",
+                                //         context,)
+                                //     :
+                                //      youTube.playYoutube(
+                                //         linkId,
+                                //         MediaList?[index]['Title'] ?? "",
+                                //         MediaList?[index]['Description'] ?? "",
+                                //         context,
+                                //       ),
+
+
+                              );
+                            },
+                          ),
+                        ),
+                      );
+                    }
+                  } else {
+                    return const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.only(top: 100.0),
+                        child: Center(child: Text("Loading...")),
+                      ),
+                    ); // Replace with your custom loading widget
+                  }
+                },
+              ),
+            ],
+          ),
+          Visibility(
+            visible: modelOpen,
+            child: GestureDetector(
+              onTap: () => setState(() {
+                modelOpen = false;
+              }),
+              child: Container(
+                color: Colors.transparent,
               ),
             ),
-          ),
-          // Provider.of<SelectedOptionProvider>(context).selectedOption
-          StreamBuilder(
-            stream: supabase
-                .from('Media')
-                .stream(primaryKey: ['id'])
-                .eq(
-                    "Church",
-                    Provider.of<christProvider>(context, listen: false)
-                            .myMap['Project']?['ChurchName'] ??
-                        "")
-                .order('id', ascending: false),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.active) {
-                if (snapshot.hasError) {
-                  return SliverToBoxAdapter(
-                      child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData ||
-                    snapshot.data?.isEmpty == true) {
-                  return SliverToBoxAdapter(
-                      child: Center(child: Text('No posts available.')));
-                } else {
-                  // below is data available
-
-                  final MediaList =
-                      optionMedia(selectedOption, snapshot.data ?? []);
-                  // final MediaList = snapshot.data;
-
-                  print('List:$MediaList');
-
-                  return SliverPadding(
-                    padding: EdgeInsets.all(20),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        childCount: MediaList?.length,
-                        (context, index) {
-                          final linkId =
-                              youTube.convertVideo(MediaList?[index]['URL']);
-                          idProvider.changeID(linkId);
-                          print('here:$linkId');
-                          return GestureDetector(
-                            onLongPress: () {
-                              if (visibility.visibilityToggle(context) ==
-                                  true) {
-                                const message = "Delete Video?";
-                                //delete by id
-                                alertDelete(context, message, () async {
-                                  deleteVideo(MediaList?[index]['id']);
-                                });
-                              }
-                            },
-                            child: youTube.playYoutube(
-                              linkId,
-                              MediaList?[index]['Title'] ?? "",
-                              MediaList?[index]['Description'] ?? "",
-                              context,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  );
-                }
-              } else {
-                return const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 100.0),
-                    child: Center(child: Text("Loading...")),
-                  ),
-                ); // Replace with your custom loading widget
-              }
-            },
-          ),
+          )
         ],
       ),
     );

@@ -10,7 +10,7 @@ class OtpAuth {
         phone: number,
       );
     } catch (error) {
-      log('Error creating code for number :$error');
+      print('Error creating code for number :$error');
     }
   }
 
@@ -26,7 +26,7 @@ class OtpAuth {
 
       user = res.user;
     } catch (error) {
-      log('User auth error');
+      print('User auth error');
     }
 
     return user;

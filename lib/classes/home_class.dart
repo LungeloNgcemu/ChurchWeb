@@ -1,10 +1,12 @@
 //import 'dart:html';
+import 'dart:typed_data';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:master/classes/sql_database.dart';
-import 'package:multi_image_picker_plus/multi_image_picker_plus.dart';
+import 'package:master/util/image_picker_custom.dart';
 import 'package:path/path.dart' as path;
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -16,23 +18,21 @@ import 'dart:io';
 class HomeClass {
   Stream? gallery;
   Stream? minister;
-  XFile? _image; // Change PickedFile to XFile
+  Uint8List? _image; // Change PickedFile to XFile
   String? imageUrl;
   bool isLoading = false;
-  List<Asset> images = <Asset>[];
+  // List<Asset> images = <Asset>[];
   String _error = 'No Error Dectected';
 
-  final ImagePicker _picker = ImagePicker();
+  final ImagePickerCustom _picker = ImagePickerCustom();
 
   SqlDatabase sql = SqlDatabase();
 
   Future<void> _pickImage() async {
-    _image = await _picker.pickImage(source: ImageSource.gallery) as XFile?;
-    // Handle the picked image as needed
+    _image = await _picker.pickImageToByte();
   }
 
   Future<String> getName() async {
-
     var name = sql.getChurchName();
 
     return name;
@@ -46,156 +46,11 @@ class HomeClass {
   }
 
   specail(context) {
-
-
-    return supabase
-        .from('Minister')
-        .stream(primaryKey: ['id']).eq("Church", Provider.of<christProvider>(context, listen: false).myMap['Project']
-                    ?['ChurchName'] );
+    return supabase.from('Minister').stream(primaryKey: ['id']).eq(
+        "Church",
+        Provider.of<christProvider>(context, listen: false).myMap['Project']
+            ?['ChurchName']);
   }
-
-//   Future<void> _loadAssetsLoop(BuildContext context) async {
-//     print("Pressed");
-//     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-//
-//     List<Asset> resultList = <Asset>[];
-//     String error = 'No Error Dectected';
-//     try {
-//       resultList = await MultiImagePicker.pickImages(
-//         selectedAssets: images,
-//         cupertinoOptions: CupertinoOptions(
-//           doneButton:
-//           UIBarButtonItem(title: 'Confirm', tintColor: colorScheme.primary),
-//           cancelButton:
-//           UIBarButtonItem(title: 'Cancel', tintColor: colorScheme.primary),
-//           albumButtonColor: Theme.of(context).colorScheme.primary,
-//         ),
-//         materialOptions: const MaterialOptions(
-//           maxImages: 10,
-//           enableCamera: true,
-//           actionBarColor: Colors.blue,
-//           actionBarTitle: "Example App",
-//           allViewTitle: "All Photos",
-//           useDetailsView: false,
-//           selectCircleStrokeColor: Colors.grey,
-//         ),
-//       );
-//     } on Exception catch (e) {
-//       error = e.toString();
-//     }
-//
-//     List<String> urls = [];
-//     for (var item in resultList) {
-//       final url = await upLoadImage(item);
-//       await uploadToGallaryCollection(url);
-//     }
-//     //TODO push ur umages to an online collection
-//
-//     if (!mounted) return;
-// //TODO dont use set state
-//     print("Done");
-//   }
-//
-
-  // Future<void> _loadAssets(BuildContext context) async {
-  //
-  //   final ColorScheme colorScheme = Theme.of(context).colorScheme;
-  //
-  //   List<Asset> resultList = <Asset>[];
-  //   String error = 'No Error Dectected';
-  //
-  //   const AlbumSetting albumSetting = AlbumSetting(
-  //     fetchResults: {
-  //       PHFetchResult(
-  //         type: PHAssetCollectionType.smartAlbum,
-  //         subtype: PHAssetCollectionSubtype.smartAlbumUserLibrary,
-  //       ),
-  //       PHFetchResult(
-  //         type: PHAssetCollectionType.smartAlbum,
-  //         subtype: PHAssetCollectionSubtype.smartAlbumFavorites,
-  //       ),
-  //       PHFetchResult(
-  //         type: PHAssetCollectionType.album,
-  //         subtype: PHAssetCollectionSubtype.albumRegular,
-  //       ),
-  //       PHFetchResult(
-  //         type: PHAssetCollectionType.smartAlbum,
-  //         subtype: PHAssetCollectionSubtype.smartAlbumSelfPortraits,
-  //       ),
-  //       PHFetchResult(
-  //         type: PHAssetCollectionType.smartAlbum,
-  //         subtype: PHAssetCollectionSubtype.smartAlbumPanoramas,
-  //       ),
-  //       PHFetchResult(
-  //         type: PHAssetCollectionType.smartAlbum,
-  //         subtype: PHAssetCollectionSubtype.smartAlbumVideos,
-  //       ),
-  //     },
-  //   );
-  //   const SelectionSetting selectionSetting = SelectionSetting(
-  //     min: 0,
-  //     max: 3,
-  //     unselectOnReachingMax: true,
-  //   );
-  //   const DismissSetting dismissSetting = DismissSetting(
-  //     enabled: true,
-  //     allowSwipe: true,
-  //   );
-  //   final ThemeSetting themeSetting = ThemeSetting(
-  //     backgroundColor: colorScheme.background,
-  //     selectionFillColor: colorScheme.primary,
-  //     selectionStrokeColor: colorScheme.onPrimary,
-  //     previewSubtitleAttributes: const TitleAttribute(fontSize: 12.0),
-  //     previewTitleAttributes: TitleAttribute(
-  //       foregroundColor: colorScheme.primary,
-  //     ),
-  //     albumTitleAttributes: TitleAttribute(
-  //       foregroundColor: colorScheme.primary,
-  //     ),
-  //   );
-  //   const ListSetting listSetting = ListSetting(
-  //     spacing: 5.0,
-  //     cellsPerRow: 4,
-  //   );
-  //   final CupertinoSettings iosSettings = CupertinoSettings(
-  //     fetch: const FetchSetting(album: albumSetting),
-  //     theme: themeSetting,
-  //     selection: selectionSetting,
-  //     dismiss: dismissSetting,
-  //     list: listSetting,
-  //   );
-  //
-  //   try {
-  //     resultList = await MultiImagePicker.pickImages(
-  //       selectedAssets: images,
-  //       materialOptions: MaterialOptions(
-  //           maxImages: 10,
-  //           enableCamera: true,
-  //           actionBarColor: colorScheme.surface,
-  //           actionBarTitleColor: colorScheme.onSurface,
-  //           statusBarColor: colorScheme.surface,
-  //           actionBarTitle: "Select Photo",
-  //           allViewTitle: "All Photos",
-  //           useDetailsView: false,
-  //           selectCircleStrokeColor: colorScheme.primary,
-  //           backButtonDrawable: 'Back',
-  //           okButtonDrawable: "Done"),
-  //     );
-  //   } on Exception catch (e) {
-  //     error = e.toString();
-  //   }
-  //
-  //   // If the widget was removed from the tree while the asynchronous platform
-  //   // message was in flight, we want to discard the reply rather than calling
-  //   // setState to update our non-existent appearance.
-  //   if (!mounted) return;
-  //   print("PRESSED");
-  //   setState(() {
-  //     images = resultList;
-  //     _error = error;
-  //   });
-  // }
-  //
 
   Stream getImage() {
     return supabase.from('Gallery').stream(primaryKey: ['id']);
@@ -256,16 +111,15 @@ class HomeClass {
   void uploadImageToSuperbase(String where, BuildContext context) async {
     try {
       await _pickImage();
-      print('Image picked');
+
       if (_image != null) {
-        final imageFile = File(_image!.path);
-        final fileName = path.basename(imageFile.path);
-        print('File picked: $fileName');
+
+              final fileName = 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
         final String pathv = await supabase.storage
             .from(Provider.of<christProvider>(context, listen: false)
                 .myMap['Project']?['Bucket'])
-            .upload('$fileName', imageFile,
+            .updateBinary(fileName, _image!,
                 fileOptions:
                     const FileOptions(cacheControl: '3600', upsert: false));
         print('Uploaded image path: $pathv');
@@ -303,32 +157,18 @@ class HomeClass {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.active) {
           if (snapshot.hasError) {
-            // Handle errors
-            print("Error: ${snapshot.error}");
             return Text("Error: ${snapshot.error}");
           }
 
           final imageUrl = snapshot.data[0]?['$path'];
-          print('URL HERE>>> $imageUrl');
-          https: //subejxnzdnqyovwhinle.supabase.co/storage/v1/object/public/projects['Project']?['Bucket']/public/IMG_20240322_135240.jpg
-
+        
           return Container(
             height: h * 0.3,
-            child: CachedNetworkImage(
-              imageUrl: imageUrl ?? 'https://picsum.photos/seed/picsum/200/300',
-              placeholder: (context, url) => const Center(
-                child: SizedBox(
-                  height: 40.0,
-                  width: 40.0,
-                  child: CircularProgressIndicator(
-                    value: 1.0,
-                  ),
-                ),
-              ),
-              errorWidget: (context, url, error) => Icon(Icons.error),
+            child: Image.network(
+              imageUrl,
+              height: 40.0,
+              width: 40.0,
               fit: BoxFit.fill,
-              height: 250,
-              width: double.maxFinite,
             ),
           );
         }
@@ -341,19 +181,6 @@ class HomeClass {
     await supabase.from(what).delete().match({'id': id});
   }
 
-  // final ImagePicker _pickerx = ImagePicker();
-  //
-  //
-  //
-  // Future<void> _pickImagex() async {
-  //   final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
-  //   if (pickedImage != null) {
-  //     setState(() {
-  //       _image = pickedImage;
-  //     });
-  //   }
-  // }
-
   void galleryInsert(
       BuildContext context, Function(void Function()) setState) async {
     setState(() {
@@ -361,37 +188,34 @@ class HomeClass {
     });
     try {
       await _pickImage();
-      print('Image picked');
+
       if (_image != null) {
-        final imageFile = File(_image!.path);
-        final fileName = path.basename(imageFile.path);
-        print('File picked: $fileName');
+
+
+        final fileName = 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
         final String pathv = await supabase.storage
             .from(Provider.of<christProvider>(context, listen: false)
                 .myMap['Project']?['Bucket'])
-            .upload('$fileName', imageFile,
+            .uploadBinary('$fileName', _image!,
                 fileOptions:
                     const FileOptions(cacheControl: '3600', upsert: false));
-        print('Uploaded image path: $pathv');
-
+  
         final publicUrl = await supabase.storage
             .from(Provider.of<christProvider>(context, listen: false)
                 .myMap['Project']?['Bucket'])
             .getPublicUrl(fileName);
-        print('Public URL: $publicUrl');
 
         await supabase.from('Gallery').insert({
           'Picture': publicUrl,
           'Church': Provider.of<christProvider>(context, listen: false)
               .myMap['Project']?['ChurchName']
         });
-        print('Image Achieved');
       } else {
         setState(() {
           isLoading = false;
         });
-        print("No image selected");
+
       }
     } catch (e) {
       print("Error uploading image to Supabase: $e");

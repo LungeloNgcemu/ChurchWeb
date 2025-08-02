@@ -19,7 +19,6 @@ class CreateMinister extends StatefulWidget {
 class _CreateMinisterState extends State<CreateMinister> {
   String? specialistId;
 
-
   bool isLoading = false;
   TextEditingController workController = TextEditingController();
   TextEditingController nameController = TextEditingController();
@@ -30,117 +29,121 @@ class _CreateMinisterState extends State<CreateMinister> {
   Widget build(BuildContext context) {
     final h = MediaQuery.of(context).size.height;
     return Stack(
-        children: [
-          Container(
-            color: Colors.white,
-            height: h *0.75,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Align(
-                        alignment: Alignment.center,
-                        child: const Text("Create Minister",style: TextStyle(fontSize: 30.0),)),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
+      children: [
+        Container(
+          color: Colors.white,
+          height: h * 0.75,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        "Create Minister",
+                        style: TextStyle(fontSize: 30.0),
+                      )),
+                ),
+                Container(
+                  decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10.0),
-                      color: Colors.grey[100]
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 30.0),
-                      child: Column(
-                        children: [
-                          EnterText(
-                            height: 50.0,
-                            text: "Ministery Work",
-                            inText: "Enter Title",
-                            controller: workController,
-                          ),
-                          EnterText(
-                            height: 50.0,
-                            text: "Name and Surname",
-                            inText: " Enter Name and Surname",
-                            controller: nameController,
-                          ),
-                        ],
-                      ),
+                      color: Colors.grey[100]),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 30.0),
+                    child: Column(
+                      children: [
+                        EnterText(
+                          height: 50.0,
+                          text: "Ministery Work",
+                          inText: "Enter Title",
+                          controller: workController,
+                        ),
+                        EnterText(
+                          height: 50.0,
+                          text: "Name and Surname",
+                          inText: " Enter Name and Surname",
+                          controller: nameController,
+                        ),
+                      ],
                     ),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      NewButton(
-                        inSideChip: "Load Image",
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    NewButton(
+                      inSideChip: "Load Image",
+                      where: () async {
+                        await ministerClass.uploadImageToSuperbase(
+                            context, setState);
+
+                        /// Update state variables here
+                      },
+                    ),
+                    ImageFrame(
+                      image: ministerClass.xImage,
+                    )
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: NewButton(
+                        inSideChip: "Create Minister",
                         where: () async {
-                  
-                            await ministerClass.uploadImageToSuperbase(context,setState);
-                  
-                  
-                          /// Update state variables here
+                          // Show a loading overlay/modal with CircularProgressIndicator
+
+                          // Rebuild the widget to show CircularProgressIndicator
+                          setState(() {
+                            isLoading = true;
+                          });
+
+                          try {
+                            await ministerClass.uploadMinister(
+                                nameController.text,
+                                workController.text,
+                                ministerClass.image,
+                                context);
+                          } finally {
+                            // Clear text controllers and close the loading overlay/modal
+                            workController.clear();
+                            nameController.clear();
+                            Navigator.of(context)
+                                .pop(); // Close the AlertDialog
+                          }
                         },
                       ),
-                      ImageFrame(
-                        image: ministerClass.xImage,
-                      )
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: NewButton(
-                          inSideChip: "Create Minister",
-                          where: () async {
-                            // Show a loading overlay/modal with CircularProgressIndicator
-                  
-                            // Rebuild the widget to show CircularProgressIndicator
-                            setState(() {
-                              isLoading = true;
-                            });
-                  
-                            try {
-                        await ministerClass.uploadMinister( nameController.text,workController.text,ministerClass.image,context);
-                            } finally {
-                              // Clear text controllers and close the loading overlay/modal
-                              workController.clear();
-                              nameController.clear();
-                              Navigator.of(context)
-                                  .pop(); // Close the AlertDialog
-                            }
-                          },
-                        ),
-                      ),
-                    ],
-                  )
-                ],
-              ),
+                    ),
+                  ],
+                )
+              ],
             ),
           ),
-          if (isLoading)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black.withOpacity(0.5),
-                // Semi-transparent overlay
-                child: const Center(
-                  child: SizedBox(
-                    height: 100.0,
-                    width: 100.0,
-                    child: CircularProgressIndicator(),
-                  ),
+        ),
+        if (isLoading)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.5),
+              // Semi-transparent overlay
+              child: const Center(
+                child: SizedBox(
+                  height: 100.0,
+                  width: 100.0,
+                  child: CircularProgressIndicator(),
                 ),
               ),
             ),
-        ],
-      );
-   
+          ),
+      ],
+    );
   }
 }
 
 class ImageFrame extends StatefulWidget {
-  ImageFrame({this.image, Key? key}) : super(key: key);
+  const ImageFrame({this.image, Key? key}) : super(key: key);
 
   final dynamic image;
 
@@ -170,15 +173,8 @@ class _ImageFrameState extends State<ImageFrame> {
       return Container(); // You can use a placeholder here
     }
 
-    if (image is XFile) {
-      return Image.file(
-        File(image.path),
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: 250.0,
-      );
-    } else if (image is File) {
-      return Image.file(
+    if (image != null) {
+      return Image.memory(
         image,
         fit: BoxFit.cover,
         width: double.infinity,

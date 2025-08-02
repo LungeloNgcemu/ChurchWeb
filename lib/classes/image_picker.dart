@@ -1,5 +1,9 @@
+import "dart:developer";
+
+import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:image_picker/image_picker.dart";
+import "package:master/util/image_picker_custom.dart";
 import "package:path/path.dart";
 import "package:supabase_flutter/supabase_flutter.dart";
 import 'package:master/componants/global_booking.dart';
@@ -7,14 +11,13 @@ import 'dart:io' as file;
 import "church_init.dart";
 
 class ImagePicked {
-  final ImagePicker _picked = ImagePicker();
+  final ImagePickerCustom _picked = ImagePickerCustom();
   ChurchInit churchStart = ChurchInit();
 
-  XFile? _image;
+  Uint8List? _image;
 
   Future<void> _pickImage() async {
-    _image = await _picked.pickImage(source: ImageSource.gallery) as XFile?;
-    // Handle the picked image as needed
+    _image = await _picked.pickImageToByte();
   }
 
   Future _uploadImageToSuperbase() async {
@@ -22,31 +25,27 @@ class ImagePicked {
       await _pickImage();
 
       if (_image != null) {
-        final imageFile = file.File(_image!.path);
-        String fileName = basename(imageFile.path);
+        final fileName = 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
         final String path = await supabase.storage
             .from(churchStart.projects['Project']?['Bucket'])
-            .upload(
+            .uploadBinary(
               'public/frontImage.png',
-              imageFile,
+              _image!,
               fileOptions:
                   const FileOptions(cacheControl: '3600', upsert: false),
             );
 
-//get Url
         final String publicUrl = supabase.storage
             .from(churchStart.projects['Project']?['Bucket'])
             .getPublicUrl('frontImage.png');
 
-        //Upload to the Image table
         await supabase.from('DisplayImages').insert({'FrontImage': publicUrl});
       } else {
-        print("No image selected");
         return "";
       }
     } catch (e) {
-      print("Error uploading image to Supabase: $e");
+      log("Error uploading image to Supabase: $e");
       return "";
     }
   }

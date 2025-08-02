@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/snack_bar.dart';
 import 'package:master/componants/tittle_head.dart';
 import 'package:master/util/alerts.dart';
+import 'package:master/util/image_picker_custom.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../classes/calender_class.dart';
 import '../../classes/church_init.dart';
@@ -39,11 +41,11 @@ class _CreateEventState extends State<CreateEvent> {
 
   MessageClass userClass = MessageClass();
   Calender calenderClass = Calender();
-  final ImagePicker _picker = ImagePicker();
+  final ImagePickerCustom _picker = ImagePickerCustom();
   SnackBarNotice snack = SnackBarNotice();
   Authenticate auth = Authenticate();
 
-  XFile? _image;
+  Uint8List? _image;
   String? npostKey;
   String? imageUrl;
   bool isGood = false;
@@ -51,7 +53,7 @@ class _CreateEventState extends State<CreateEvent> {
   String? postImageUrl;
 
   Future<void> _pickImage() async {
-    final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
+    final pickedImage = await _picker.pickImageToByte();
     if (pickedImage != null) {
       setState(() {
         _image = pickedImage;
@@ -63,23 +65,19 @@ class _CreateEventState extends State<CreateEvent> {
     try {
       print('Image picked');
       if (image != null) {
-        final imageFile = File(image!.path);
-        final fileName = path.basename(imageFile.path);
-        print('File picked: $fileName');
+        final fileName = 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
         final String pathv = await supabase.storage
             .from(Provider.of<christProvider>(context, listen: false)
                 .myMap['Project']?['Bucket'])
-            .upload('$fileName', imageFile,
+            .uploadBinary(fileName, image,
                 fileOptions:
                     const FileOptions(cacheControl: '3600', upsert: false));
-        print('Uploaded image path: $pathv');
 
         final publicUrl = await supabase.storage
             .from(Provider.of<christProvider>(context, listen: false)
                 .myMap['Project']?['Bucket'])
             .getPublicUrl(fileName);
-        print('Public URL: $publicUrl');
 
         await Future.delayed(const Duration(seconds: 2), () {
           setState(() {
@@ -87,14 +85,7 @@ class _CreateEventState extends State<CreateEvent> {
             isGood = true;
           });
         });
-
-        //  setState(() {
-        //     imageUrl = publicUrl;
-        //     isGood = true;
-        //   });
-        print("isGood : $isGood");
       } else {
-        print("No image selected");
         const message = "No image selected";
         snack.snack(context, message);
       }
@@ -309,8 +300,8 @@ class _CreateEventState extends State<CreateEvent> {
                               final tittle = tittleController.text;
                               final description = descriptionController.text;
 
-
-                              print(" title : $tittle,  description : $description");
+                              print(
+                                  " title : $tittle,  description : $description");
 
                               try {
                                 if (_image == null) {
@@ -321,11 +312,10 @@ class _CreateEventState extends State<CreateEvent> {
                                       isLoading = false;
                                     });
                                   });
-                                } else if (tittle == "" ||
-                                    description ==  "") {
+                                } else if (tittle == "" || description == "") {
                                   const message = "Please fill in everything";
                                   alertSuccess(context, message);
-                                   Future.delayed(Duration(seconds: 1), () {
+                                  Future.delayed(Duration(seconds: 1), () {
                                     setState(() {
                                       isLoading = false;
                                     });
@@ -333,7 +323,7 @@ class _CreateEventState extends State<CreateEvent> {
                                 } else if (month == null) {
                                   const message = "Please select a day";
                                   alertSuccess(context, message);
-                                   Future.delayed(Duration(seconds: 1), () {
+                                  Future.delayed(Duration(seconds: 1), () {
                                     setState(() {
                                       isLoading = false;
                                     });
@@ -371,11 +361,11 @@ class _CreateEventState extends State<CreateEvent> {
                                 const message =
                                     "Please refresh page and try again";
                                 alertSuccess(context, message);
-                                 Future.delayed(Duration(seconds: 1), () {
-                                    setState(() {
-                                      isLoading = false;
-                                    });
+                                Future.delayed(Duration(seconds: 1), () {
+                                  setState(() {
+                                    isLoading = false;
                                   });
+                                });
                               } // Close the AlertDialog
                             },
                           ),
@@ -453,8 +443,7 @@ class _ImageFrameState extends State<ImageFrame> {
         height: 250.0,
       );
     } else {
-      return Image.network(
-          "https://picsum.photos/seed/picsum/200/300"); // Handle other cases if needed
+      return SizedBox(); // Handle other cases if needed
     }
   }
 }

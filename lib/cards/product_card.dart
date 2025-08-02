@@ -71,22 +71,11 @@ class _ProductCardState extends State<ProductCard> {
                       width: double.maxFinite,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8.0),
-                        child: CachedNetworkImage(
-                          imageUrl:
+                        child: Image.network(
                           widget.productImage ?? "",
-                          placeholder: (context, url) => const Center(
-                            child: SizedBox(
-                              height: 40.0,
-                              width: 40.0,
-                              child: CircularProgressIndicator(
-                                value: 1.0,
-                              ),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Icon(Icons.error),
+                          errorBuilder: (context, error, stackTrace) =>
+                              Icon(Icons.error),
                           fit: BoxFit.cover,
-                          //height: 250,
-                          //width: double.maxFinite,
                         ),
                       ),
                     ),
@@ -111,7 +100,7 @@ class _ProductCardState extends State<ProductCard> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Padding(
-                          padding: const EdgeInsets.only(left: 8.0,right: 8.0),
+                          padding: const EdgeInsets.only(left: 8.0, right: 8.0),
                           child: Text(
                             widget.title ?? "",
                             style: const TextStyle(
@@ -131,7 +120,9 @@ class _ProductCardState extends State<ProductCard> {
                       child: Row(
                         children: [
                           Text(
-                            widget.description ?? "", style: TextStyle(color: Colors.black, fontSize: 15.0),
+                            widget.description ?? "",
+                            style:
+                                TextStyle(color: Colors.black, fontSize: 15.0),
                           ),
                         ],
                       ),
@@ -141,7 +132,9 @@ class _ProductCardState extends State<ProductCard> {
                       child: Row(
                         children: [
                           Text(
-                            widget.price ?? "", style: TextStyle(color: Colors.black, fontSize: 15.0),
+                            widget.price ?? "",
+                            style:
+                                TextStyle(color: Colors.black, fontSize: 15.0),
                           ),
                         ],
                       ),
@@ -151,13 +144,13 @@ class _ProductCardState extends State<ProductCard> {
                       child: Row(
                         children: [
                           Text(
-                            widget.duration ?? "", style: TextStyle(color: Colors.black, fontSize: 15.0),
+                            widget.duration ?? "",
+                            style:
+                                TextStyle(color: Colors.black, fontSize: 15.0),
                           ),
                         ],
                       ),
                     ),
-
-
                   ],
                 ),
               ),
@@ -168,7 +161,6 @@ class _ProductCardState extends State<ProductCard> {
     );
   }
 }
-
 
 ////////////////////////////////////////////////////////////////old
 

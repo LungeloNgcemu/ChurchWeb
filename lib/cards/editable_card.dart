@@ -1,10 +1,12 @@
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart%20';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:master/componants/buttonChip.dart';
+import 'package:master/util/image_picker_custom.dart';
 
 bool isSelected = false;
 
@@ -33,13 +35,11 @@ class EditableProductCard extends StatefulWidget {
 }
 
 class _EditableProductCardState extends State<EditableProductCard> {
-  final ImagePicker _picker = ImagePicker();
-  XFile? _productImage; // Change PickedFile to XFile
+  final ImagePickerCustom _picker = ImagePickerCustom();
+  Uint8List? _productImage; // Change PickedFile to XFile
 
   Future<void> _productPickImage() async {
-    _productImage =
-        await _picker.pickImage(source: ImageSource.gallery) as XFile?;
-    // Handle the picked image as needed
+    _productImage = await _picker.pickImageToByte();
   }
 
   void sheeting2() {
@@ -115,22 +115,10 @@ class _EditableProductCardState extends State<EditableProductCard> {
                                 borderRadius: const BorderRadius.only(
                                     topRight: Radius.circular(10.0),
                                     topLeft: Radius.circular(10.0)),
-                                child: CachedNetworkImage(
-                                  imageUrl: widget.image! ?? "",
-                                  placeholder: (context, url) => const Center(
-                                    child: SizedBox(
-                                      height: 40.0,
-                                      width: 40.0,
-                                      child: CircularProgressIndicator(
-                                        value: 1.0,
-                                      ),
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) =>
+                                child: Image.network(
+                                  widget.image! ?? "",
+                                  errorBuilder: (context, url, error) =>
                                       Icon(Icons.error),
-                                  fit: BoxFit.cover,
-                                  //height: 250,
-                                  //width: double.maxFinite,
                                 ),
                               ),
                             ),

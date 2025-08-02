@@ -9,6 +9,7 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../../classes/youtube.dart';
 import '../../componants/global_booking.dart';
 import '../../providers/url_provider.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart' as p;
 
 class FulllSceen extends StatefulWidget {
   FulllSceen({this.url, this.description, this.id, this.tittle, super.key});
@@ -25,59 +26,65 @@ class FulllSceen extends StatefulWidget {
 class _FulllSceenState extends State<FulllSceen> {
   YouTube youTube = YouTube();
   IdProvider? idProvider;
-  YoutubePlayerController? controller;
 
   @override
   void initState() {
-   // TODO: implement initState
+    // final idProvider = Provider.of<IdProvider>(context, listen: false);
 
-
-    final  idProvider = Provider.of<IdProvider>(context,listen: false);
-
-   controller = YoutubePlayerController(
-      initialVideoId: idProvider!.id!,
-      flags: YoutubePlayerFlags(
-        disableDragSeek: false,
-        autoPlay: false,
-        mute: false,
-        hideControls: false,
-        showLiveFullscreenButton: false
-      ),
-    );
-
+    // controller = p.YoutubePlayerController.fromVideoId(
+    //   videoId: idProvider!.id!,
+    //   autoPlay: false,
+    //   params: const p.YoutubePlayerParams(showFullscreenButton: true),
+    // );
 
     super.initState();
   }
 
-  @override
-  void dispose() {
+  p.YoutubePlayerController? controller;
 
-    controller?.dispose();
-    // TODO: implement dispose
-    super.dispose();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (controller == null) {
+      final idProvider = Provider.of<IdProvider>(context, listen: false);
+      controller = p.YoutubePlayerController.fromVideoId(
+        videoId: idProvider.id!,
+        autoPlay: false,
+
+        params: const p.YoutubePlayerParams(showFullscreenButton: true),
+      );
+    }
   }
 
+  // @override
+  // void dispose() {
+  //   controller?.dispose();
+  //   super.dispose();
+  // }
 
-  // final linkId = youTube.convertVideo(MediaList?[index]['URL']);
   @override
   Widget build(BuildContext context) {
-   final  idProvider = Provider.of<IdProvider>(context,listen: false);
-    // Call the toggleVisibility method when the button is pressed
+    final idProvider = Provider.of<IdProvider>(context, listen: false);
 
     return Align(
       alignment: Alignment.center,
-      child: Column(
-        children:[ Expanded(
-          child: Container(
-            child: ClipRRect(
-              borderRadius: BorderRadius.only(topRight:Radius.circular(15.0),topLeft: Radius.circular(15.0) ),
-              child: youTube.xplayYoutube(idProvider.id!, widget.tittle ?? "",
-                  widget.description ?? "", context,controller!),
+      child: Column(children: [
+        Expanded(
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(15.0),
+                topLeft: Radius.circular(15.0)),
+            child: RotatedBox(
+              quarterTurns: 1,
+              child: p.YoutubePlayer(
+                controller: controller!,
+                aspectRatio: 16 / 9,
+              ),
             ),
           ),
         ),
       ]),
     );
-
   }
 }

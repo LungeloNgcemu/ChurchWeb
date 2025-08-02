@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart%20';
@@ -8,18 +9,17 @@ import 'package:master/classes/snack_bar.dart';
 import 'package:master/constants/constants.dart';
 import 'package:master/providers/url_provider.dart';
 import 'package:master/util/alerts.dart';
+import 'package:master/util/image_picker_custom.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../classes/church_init.dart';
 import '../../classes/on_create_class.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:path/path.dart' as path;
 import 'package:provider/provider.dart';
 import 'dart:io';
 import 'package:master/models/comment_model.dart';
 import 'package:master/componants/global_booking.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'create_post.dart';
 
@@ -38,22 +38,24 @@ StreamBuilder xbuildStreamBuilder(context, String path) {
           print("Error: ${snapshot.error}");
           Container(
             height: h * 0.3,
-            child: CachedNetworkImage(
-              imageUrl: Assets.placeholder,
-              placeholder: (context, url) => const Center(
-                child: SizedBox(
-                  height: 40.0,
-                  width: 40.0,
-                  child: CircularProgressIndicator(
-                    value: 1.0,
-                  ),
-                ),
-              ),
-              errorWidget: (context, url, error) => Icon(Icons.error),
-              fit: BoxFit.cover,
-              height: 250,
-              width: double.maxFinite,
-            ),
+            child: Image.network(Assets.placeholder),
+
+            // CachedNetworkImage(
+            //   imageUrl: Assets.placeholder,
+            //   placeholder: (context, url) => const Center(
+            //     child: SizedBox(
+            //       height: 40.0,
+            //       width: 40.0,
+            //       child: CircularProgressIndicator(
+            //         value: 1.0,
+            //       ),
+            //     ),
+            //   ),
+            //   errorWidget: (context, url, error) => Icon(Icons.error),
+            //   fit: BoxFit.cover,
+            //   height: 250,
+            //   width: double.maxFinite,
+            // ),
           );
         }
 
@@ -67,90 +69,26 @@ StreamBuilder xbuildStreamBuilder(context, String path) {
 
         return Container(
           height: h * 0.3,
-          child: CachedNetworkImage(
-            imageUrl: imageUrl,
-            placeholder: (context, url) => const Center(
-              child: SizedBox(
-                height: 40.0,
-                width: 40.0,
-                child: CircularProgressIndicator(
-                  value: 1.0,
-                ),
-              ),
-            ),
-            errorWidget: (context, url, error) => Icon(Icons.error),
-            fit: BoxFit.cover,
-            height: 250,
-            width: double.maxFinite,
-          ),
+          child: Image.network(imageUrl),
+          // CachedNetworkImage(
+          //   imageUrl: imageUrl,
+          //   placeholder: (context, url) => const Center(
+          //     child: SizedBox(
+          //       height: 40.0,
+          //       width: 40.0,
+          //       child: CircularProgressIndicator(
+          //         value: 1.0,
+          //       ),
+          //     ),
+          //   ),
+          //   errorWidget: (context, url, error) => Icon(Icons.error),
+          //   fit: BoxFit.cover,
+          //   height: 250,
+          //   width: double.maxFinite,
+          // ),
         );
       }
       return SizedBox();
-    },
-  );
-}
-
-Future<void> uploadForSalon(String path, image) async {
-  try {
-    await FirebaseFirestore.instance.collection(path).add({
-      'image': image,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-    print("image loaded to firebase forsestore");
-  } catch (error) {
-    print(error);
-  }
-}
-
-Stream<String?> getForSalon(String collectionPath) {
-  return FirebaseFirestore.instance
-      .collection(collectionPath)
-      .orderBy('timestamp',
-          descending:
-              true) // Replace 'timestamp' with your actual timestamp field
-      .snapshots()
-      .map((querySnapshot) {
-    final List<String?> imageUrlList =
-        querySnapshot.docs.map((doc) => doc['image'] as String?).toList();
-
-    return imageUrlList.isNotEmpty ? imageUrlList.first : null;
-  });
-}
-
-StreamBuilder<String?> buildStreamBuilder(context, String collectionPath) {
-  double h = MediaQuery.of(context).size.height;
-
-  return StreamBuilder<String?>(
-    stream: getForSalon(collectionPath),
-    builder: (context, AsyncSnapshot<String?> snapshot) {
-      if (snapshot.hasError) {
-        // Handle errors
-        print("Error: ${snapshot.error}");
-        return Text("Error: ${snapshot.error}");
-      }
-
-      final imageUrl = snapshot.data ?? "https://picsum.photos";
-      print("This is the image: $imageUrl");
-
-      return Container(
-        height: h * 0.3,
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          placeholder: (context, url) => const Center(
-            child: SizedBox(
-              height: 40.0,
-              width: 40.0,
-              child: CircularProgressIndicator(
-                value: 1.0,
-              ),
-            ),
-          ),
-          errorWidget: (context, url, error) => Icon(Icons.error),
-          fit: BoxFit.cover,
-          height: 250,
-          width: double.maxFinite,
-        ),
-      );
     },
   );
 }
@@ -190,9 +128,6 @@ class _PostScreenState extends State<PostScreen>
         .order('id', ascending: false);
   }
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> documentStream =
-      FirebaseFirestore.instance.collection('Posts').snapshots();
-
   @override
   void initState() {
     super.initState();
@@ -203,190 +138,26 @@ class _PostScreenState extends State<PostScreen>
         .loadImageUrlLocally();
   }
 
-  final ImagePicker _picker = ImagePicker();
-  XFile? _profileImage;
-  XFile? _backImage; // Change PickedFile to XFile
+  final ImagePickerCustom _picker = ImagePickerCustom();
+  Uint8List? _profileImage;
+  Uint8List? _backImage;
   String? profileImageUrl;
   String? backImageUrl;
 
   Future<void> _profilePickImage() async {
-    _profileImage =
-        await _picker.pickImage(source: ImageSource.gallery) as XFile?;
-    // Handle the picked image as needed
+    _profileImage = await _picker.pickImageToByte();
   }
 
   Future<void> _backPickImage() async {
-    _backImage = await _picker.pickImage(source: ImageSource.gallery) as XFile?;
-    // Handle the picked image as needed
+    _backImage = await _picker.pickImageToByte();
   }
 
-  Future<String> _uploadProfileImageToFirebase() async {
-    try {
-      await _profilePickImage();
-
-      if (_profileImage != null) {
-        File imageFile = File(_profileImage!.path);
-        String fileName = path.basename(imageFile.path);
-
-        firebase_storage.Reference ref = firebase_storage
-            .FirebaseStorage.instance
-            .ref()
-            .child("images")
-            .child(fileName);
-
-        var metadata = firebase_storage.SettableMetadata(
-          contentType:
-              'image/jpeg', // Set the correct content type based on your image type
-        );
-
-        await ref.putFile(imageFile, metadata);
-
-        profileImageUrl = await ref.getDownloadURL(); // Update state variable
-        // Provider.of<ProfileImageUrlProvider>(context, listen: false).imageUrl =
-        //   profileImageUrl;
-
-        print("Image uploaded to Firebase: $_profileImage");
-
-        return profileImageUrl!;
-      } else {
-        print("No image selected");
-        return "";
-      }
-    } catch (e) {
-      return "";
-      print("Error uploading image to Firebase: $e");
-    }
-  }
-
-  Future<String> _uploadBackImageToFirebase() async {
-    try {
-      await _backPickImage();
-
-      if (_backImage != null) {
-        File imageFile = File(_backImage!.path);
-        String fileName = path.basename(imageFile.path);
-
-        firebase_storage.Reference ref = firebase_storage
-            .FirebaseStorage.instance
-            .ref()
-            .child("images")
-            .child(fileName);
-
-        var metadata = firebase_storage.SettableMetadata(
-          contentType: 'image/jpeg',
-        );
-
-        await ref.putFile(imageFile, metadata);
-
-        backImageUrl = await ref.getDownloadURL(); // Update state variable
-        // Provider.of<BackImageUrlProvider>(context, listen: false).imageUrl =
-        //   backImageUrl;
-        return backImageUrl!;
-
-        print("Image uploaded to Firebase: $backImageUrl");
-
-        setState(() {}); // Trigger a rebuild to update the UI
-      } else {
-        return "";
-        print("No image selected");
-      }
-    } catch (e) {
-      return "";
-      print("Error  uploading image to Firebase: $e");
-    }
-  }
-
-  // Stream<QuerySnapshot> getForSalon (String path) {
-  //   return FirebaseFirestore.instance
-  //       .collection(path)
-  //       .snapshots();
-  // }
-
-  // StreamBuilder<String> buildStreamBuilder(String collectionPath) {
-  //   return StreamBuilder<String>(
-  //     stream: getForSalon(collectionPath),
-  //     builder: (context, snapshot) {
-  //       if (snapshot.hasData) {
-  //         return snapshot.data!;
-  //       } else if (snapshot.hasError) {
-  //         return Text('Error: ${snapshot.error}');
-  //       } else {
-  //         return Text('Loading...');
-  //       }
-  //     },
-  //   );
-  // }
-  //
-  //
-  // Stream<String> myStreamBuilder(String collectionPath) {
-  //   return FirebaseFirestore.instance.collection(collectionPath).snapshots().map(
-  //         (QuerySnapshot snapshot) {
-  //       if (snapshot.docs.isNotEmpty) {
-  //         return snapshot.docs.first['image'] ?? 'No image found';
-  //       } else {
-  //         return 'No documents found';
-  //       }
-  //     },
-  //   );
-  // }
-
-  XFile? _image;
+  Uint8List? _image;
   String? imageUrl;
 
   Future<void> _pickImage() async {
-    _image = await _picker.pickImage(source: ImageSource.gallery) as XFile?;
+    _image = await _picker.pickImageToByte();
   }
-
-  // void _uploadImageToSuperbase(String where) async {
-  //   try {
-  //     await _pickImage();
-  //     const message1 = "Display Image Updating...";
-  //     snack.snack(context, message1);
-  //     print('Image picked');
-  //     if (_image != null) {
-  //       final imageFile = File(_image!.path);
-  //       final fileName = path.basename(imageFile.path);
-  //       print('File picked: $fileName');
-  //
-  //       final String pathv = await supabase.storage
-  //           .from(Provider.of<christProvider>(context, listen: false)
-  //                   .myMap['Project']?['Bucket'] ??
-  //               "")
-  //           .upload('$fileName', imageFile,
-  //               fileOptions:
-  //                   const FileOptions(cacheControl: '3600', upsert: false));
-  //
-  //       print('Uploaded image path: $pathv');
-  //
-  //       final publicUrl = await supabase.storage
-  //           .from(Provider.of<christProvider>(context, listen: false)
-  //                   .myMap['Project']?['Bucket'] ??
-  //               "")
-  //           .getPublicUrl(fileName);
-  //
-  //       print('Public URL: $publicUrl');
-  //
-  //       final response = await supabase.from('DisplayImages').upsert({
-  //         'Church': Provider.of<christProvider>(context, listen: false)
-  //             .myMap['Project']?['ChurchName'],
-  //         '$where': publicUrl,
-  //         'updated_at': DateTime.now().toIso8601String(),
-  //       });
-  //
-  //       const message = "Display Image Updated";
-  //       alertComplete(context, message);
-  //       setState(() {});
-  //     } else {
-  //       print("No image selected");
-  //       const message1 = "No Image Selected";
-  //       snack.snack(context, message1);
-  //     }
-  //   } catch (e) {
-  //     print("Error uploading image to Supabase: $e");
-  //     const message2 = "Try Change the name of the Image";
-  //     alertSuccess(context, message2);
-  //   }
-  // }
 
   Future<void> _uploadImageToSuperbase(String where) async {
     try {
@@ -400,19 +171,14 @@ class _PostScreenState extends State<PostScreen>
         final bucket = provider.myMap['Project']?['Bucket'] ?? "";
         final churchName = provider.myMap['Project']?['ChurchName'];
 
-        final imageFile = File(_image!.path);
-        final fileName = path.basename(imageFile.path);
-        print('File picked: $fileName');
+        final fileName = 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
-        // 1. First try to delete existing image from storage
         try {
           await supabase.storage.from(bucket).remove([fileName]);
-          print('Existing image deleted from storage');
         } catch (e) {
-          print('No existing image to delete or deletion failed: $e');
+          log('No existing image to delete or deletion failed: $e');
         }
 
-        // 2. Delete existing database row if it exists
         try {
           await supabase
               .from('DisplayImages')
@@ -423,21 +189,16 @@ class _PostScreenState extends State<PostScreen>
           print('No existing database row to delete: $e');
         }
 
-        // 3. Upload new image (with upsert:false as in original)
-        final String pathv = await supabase.storage.from(bucket).upload(
-            fileName, imageFile,
+        final String pathv = await supabase.storage.from(bucket).uploadBinary(
+            fileName, _image!,
             fileOptions:
                 const FileOptions(cacheControl: '3600', upsert: false));
 
-        print('Uploaded image path: $pathv');
-
-        // 4. Get public URL
         final publicUrl =
             await supabase.storage.from(bucket).getPublicUrl(fileName);
 
         print('Public URL: $publicUrl');
 
-        // 5. Insert new row
         final response = await supabase.from('DisplayImages').insert({
           'Church': churchName,
           where: publicUrl,
@@ -447,12 +208,12 @@ class _PostScreenState extends State<PostScreen>
         alertComplete(context, message);
         setState(() {});
       } else {
-        print("No image selected");
+        log("No image selected");
         const message1 = "No Image Selected";
         snack.snack(context, message1);
       }
     } catch (e) {
-      print("Error uploading image to Supabase: $e");
+      log("Error uploading image to Supabase: $e");
       const message2 = "Try Change the name of the Image";
       alertSuccess(context, message2);
     }
@@ -739,45 +500,7 @@ class _SocialPostState extends State<SocialPost> {
     postIdProvider = Provider.of<PostIdProvider>(context, listen: false);
   }
 
-  void delete(postId) {
-    FirebaseFirestore.instance.collection("Posts").doc(postId).delete().then(
-          (doc) => print("Document deleted"),
-          onError: (e) => print("Error updating document $e"),
-        );
-  }
-
-  void uploadCommentFirestore(
-      String username, String text, String postId) async {
-    // Retrieve the current post ID from the PostIdProvider
-
-    if (postId.isNotEmpty) {
-      Comment newComment = Comment(
-        username: username,
-        text: text,
-        timestamp: DateTime.now(),
-      );
-
-      FirebaseFirestore.instance
-          .collection("Posts")
-          .doc(postId)
-          .collection("comments")
-          .add({
-        'username': newComment.username,
-        'text': newComment.text,
-        'timestamp': newComment.timestamp.toUtc().toIso8601String(),
-      }).then((commentRef) {
-        // Handle success if needed
-        print('Comment added successfully with ID: ${commentRef.id}');
-      }).catchError((error) {
-        // Handle error if needed
-        print('Error adding comment to Firestore: $error');
-      });
-    } else {
-      print('Error: Post ID is empty. Make sure to add a post first.');
-    }
-  }
-
-  CommentService commentService = CommentService();
+  // CommentService commentService = CommentService();
 
   String user = "Amber";
   String enteredText = '';
@@ -844,23 +567,24 @@ class _SocialPostState extends State<SocialPost> {
             Container(
               color: Colors.grey[100],
               height: 280.0,
-              child: CachedNetworkImage(
-                // will setup post image provider.
-                imageUrl: widget.imageUrl!,
-                placeholder: (context, url) => const Center(
-                  child: SizedBox(
-                    height: 40.0,
-                    width: 40.0,
-                    child: CircularProgressIndicator(
-                      value: 1.0,
-                    ),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Icon(Icons.error),
-                fit: BoxFit.cover,
-                // height: 250,
-                width: double.maxFinite,
-              ),
+              child: Image.network(widget.imageUrl!),
+              // CachedNetworkImage(
+              //   // will setup post image provider.
+              //   imageUrl: widget.imageUrl!,
+              //   placeholder: (context, url) => const Center(
+              //     child: SizedBox(
+              //       height: 40.0,
+              //       width: 40.0,
+              //       child: CircularProgressIndicator(
+              //         value: 1.0,
+              //       ),
+              //     ),
+              //   ),
+              //   errorWidget: (context, url, error) => Icon(Icons.error),
+              //   fit: BoxFit.cover,
+              //   // height: 250,
+              //   width: double.maxFinite,
+              // ),
             ),
             Row(
               children: [

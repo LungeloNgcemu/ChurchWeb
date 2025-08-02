@@ -1,5 +1,6 @@
 //import 'dart:html';
 
+import 'dart:developer';
 import 'dart:io' as f;
 
 import 'package:flutter/material.dart';
@@ -15,7 +16,7 @@ import 'package:master/databases/database.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:master/util/alerts.dart';
-import 'package:multi_image_picker_plus/multi_image_picker_plus.dart';
+import 'package:master/util/image_picker_custom.dart';
 import 'package:path/path.dart' as path;
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -40,7 +41,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     xgetUser();
-    // TODO: implement initState
     super.initState();
   }
 
@@ -103,14 +103,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  List<Asset> images = <Asset>[];
   String _error = 'No Error Dectected';
 
-  final ImagePicker _picker = ImagePicker();
-  XFile? _image;
+  final ImagePickerCustom _picker = ImagePickerCustom();
+  Uint8List? _image;
 
   Future<void> _pickImage() async {
-    final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
+    final pickedImage = await _picker.pickImageToByte();
     if (pickedImage != null) {
       setState(() {
         _image = pickedImage;
@@ -124,43 +123,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
     try {
       await _pickImage();
-      print('Image picked');
+
       if (_image != null) {
-        final imageFile = f.File(_image!.path);
-        final fileName = path.basename(imageFile.path);
-        print('File picked: $fileName');
+        final fileName = 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
         final String pathv = await supabase.storage
             .from(Provider.of<christProvider>(context, listen: false)
                     .myMap['Project']?['Bucket'] ??
                 "")
-            .upload('$fileName', imageFile,
+            .updateBinary(fileName, _image!,
                 fileOptions:
                     const FileOptions(cacheControl: '3600', upsert: false));
-        print('Uploaded image path: $pathv');
 
         final publicUrl = await supabase.storage
             .from(Provider.of<christProvider>(context, listen: false)
                     .myMap['Project']?['Bucket'] ??
                 "")
             .getPublicUrl(fileName);
-        print('Public URL: $publicUrl');
 
         setState(() {
           image = publicUrl;
           isLoading = false;
         });
-        //Upload to the Image table
-        // await supabase.from('Manager').update({ 'ProfileImage': publicUrl }).match({ 'PhoneNumber': number });
-        print('Image Achieved');
+
+        log('Image Achieved');
       } else {
         setState(() {
           isLoading = false;
         });
-        print("No image selected");
+        log("No image selected");
       }
     } catch (e) {
-      print("Error uploading image to Supabase: $e");
+      log("Error uploading image to Supabase: $e");
       setState(() {
         isLoading = false;
       });
@@ -241,13 +235,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 isLoading = true;
                               });
 
-
                               alertLogout(context, 'Logout?');
 
                               setState(() {
                                 isLoading = false;
                               });
-
                             },
                           ),
                         ],
@@ -283,24 +275,28 @@ class CircleProfile extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(80.0),
-            child: CachedNetworkImage(
-              imageUrl: profileImage ?? "",
-              placeholder: (context, url) => const Center(
-                child: SizedBox(
-                  height: 40.0,
-                  width: 40.0,
-                  child: CircularProgressIndicator(
-                    value: 1.0,
-                  ),
-                ),
+              borderRadius: BorderRadius.circular(80.0),
+              child: Image.network(
+                profileImage ?? "",
+              )
+
+              //  CachedNetworkImage(
+              //   imageUrl: profileImage ?? "",
+              //   placeholder: (context, url) => const Center(
+              //     child: SizedBox(
+              //       height: 40.0,
+              //       width: 40.0,
+              //       child: CircularProgressIndicator(
+              //         value: 1.0,
+              //       ),
+              //     ),
+              //   ),
+              //   errorWidget: (context, url, error) => Icon(Icons.error),
+              //   fit: BoxFit.cover,
+              //   //height: 250,
+              //   //width: double.maxFinite,
+              // ),
               ),
-              errorWidget: (context, url, error) => Icon(Icons.error),
-              fit: BoxFit.cover,
-              //height: 250,
-              //width: double.maxFinite,
-            ),
-          ),
         ),
         Padding(
           padding: const EdgeInsets.all(5.0),

@@ -199,14 +199,14 @@ class _HomeScreenState extends State<HomeScreen>
                             return SizedBox();
                           case ConnectionState.active:
                             if (snapshot.hasError) {
-                              print('Has Error');
+                             
                             } else if (!snapshot.hasData) {
-                              print('NO data here');
+                            
                             } else if (snapshot.hasData) {
-                              // List<dynamic> specs = [];
+                           
 
                               final specs = snapshot.data;
-                              print('THIS ministers $specs');
+                             
 
                               return SizedBox(
                                 height: 150.0,

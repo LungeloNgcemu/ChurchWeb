@@ -371,23 +371,26 @@ class MessageBubbleLeft extends StatelessWidget {
                             color: Colors.grey, shape: BoxShape.circle),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(50.0),
-                          child: CachedNetworkImage(
-                            imageUrl: image ?? "",
-                            placeholder: (context, url) => const Center(
-                              child: SizedBox(
-                                height: 40.0,
-                                width: 40.0,
-                                child: CircularProgressIndicator(
-                                  value: 1.0,
-                                ),
-                              ),
-                            ),
-                            errorWidget: (context, url, error) =>
-                                Icon(Icons.error),
-                            fit: BoxFit.cover,
-                            //height: 250,
-                            //width: double.maxFinite,
-                          ),
+                          child: 
+                          Image.network(image ?? ""),
+                          
+                          // CachedNetworkImage(
+                          //   imageUrl: image ?? "",
+                          //   placeholder: (context, url) => const Center(
+                          //     child: SizedBox(
+                          //       height: 40.0,
+                          //       width: 40.0,
+                          //       child: CircularProgressIndicator(
+                          //         value: 1.0,
+                          //       ),
+                          //     ),
+                          //   ),
+                          //   errorWidget: (context, url, error) =>
+                          //       Icon(Icons.error),
+                          //   fit: BoxFit.cover,
+                          //   //height: 250,
+                          //   //width: double.maxFinite,
+                          // ),
                         ),
                       ),
                     ],
@@ -526,22 +529,24 @@ class _MessageBubbleRightState extends State<MessageBubbleRight> {
                         color: Colors.grey, shape: BoxShape.circle),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(50.0),
-                      child: CachedNetworkImage(
-                        imageUrl: widget.image ?? "",
-                        placeholder: (context, url) => const Center(
-                          child: SizedBox(
-                            height: 40.0,
-                            width: 40.0,
-                            child: CircularProgressIndicator(
-                              value: 1.0,
-                            ),
-                          ),
-                        ),
-                        errorWidget: (context, url, error) => Icon(Icons.error),
-                        fit: BoxFit.cover,
-                        //height: 250,
-                        //width: double.maxFinite,
-                      ),
+                      child: Image.network( widget.image ?? "")
+                      
+                      // CachedNetworkImage(
+                      //   imageUrl: widget.image ?? "",
+                      //   placeholder: (context, url) => const Center(
+                      //     child: SizedBox(
+                      //       height: 40.0,
+                      //       width: 40.0,
+                      //       child: CircularProgressIndicator(
+                      //         value: 1.0,
+                      //       ),
+                      //     ),
+                      //   ),
+                      //   errorWidget: (context, url, error) => Icon(Icons.error),
+                      //   fit: BoxFit.cover,
+                      //   //height: 250,
+                      //   //width: double.maxFinite,
+                      // ),
                     ),
                   ),
                 ),
@@ -606,24 +611,28 @@ class HeaderMessage extends StatelessWidget {
                     color: Colors.grey, shape: BoxShape.circle),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(50.0),
-                  child: CachedNetworkImage(
-                    imageUrl:
-                        Provider.of<ClientImageProvider>(context, listen: false)
-                            .clientImage,
-                    placeholder: (context, url) => const Center(
-                      child: SizedBox(
-                        height: 40.0,
-                        width: 40.0,
-                        child: CircularProgressIndicator(
-                          value: 1.0,
-                        ),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Icon(Icons.error),
-                    fit: BoxFit.cover,
-                    //height: 250,
-                    //width: double.maxFinite,
-                  ),
+                  child: 
+                  Image.network(Provider.of<ClientImageProvider>(context, listen: false)
+                            .clientImage),
+                  
+                  // CachedNetworkImage(
+                  //   imageUrl:
+                  //       Provider.of<ClientImageProvider>(context, listen: false)
+                  //           .clientImage,
+                  //   placeholder: (context, url) => const Center(
+                  //     child: SizedBox(
+                  //       height: 40.0,
+                  //       width: 40.0,
+                  //       child: CircularProgressIndicator(
+                  //         value: 1.0,
+                  //       ),
+                  //     ),
+                  //   ),
+                  //   errorWidget: (context, url, error) => Icon(Icons.error),
+                  //   fit: BoxFit.cover,
+                  //   //height: 250,
+                  //   //width: double.maxFinite,
+                  // ),
                 ),
               ),
               Padding(

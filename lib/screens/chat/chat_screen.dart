@@ -329,7 +329,7 @@ bool isLoading = false;
           .eq('PhoneNumber', digits)
           .single();
 
-      String  managerImage = image['ProfileImage'] ?? 'https://picsum.photos/200/300/?blur';
+      String  managerImage = image['ProfileImage'] ;
 
       context.read<CurrentUserImageProvider>().updatecCurrentRoomId(newValue: managerImage);
       print('Manager List : $managerItem');
@@ -665,7 +665,7 @@ bool isLoading = false;
                         if(snap.hasError){
                           print(snap.error);
                         }else if(!snap.hasData){
-                          print('Print NO Data');
+                          print('print NO Data');
                         }else if(snap.hasData){
                           fetchData();
                          //  Future.delayed(Duration(seconds: 0),(){
@@ -729,8 +729,7 @@ bool isLoading = false;
                                       // Assuming ChatBox is a widget to handle chat interactions
                                       ChatBox2(
                                         dataList[index]?['UserName'] ?? '',
-                                        dataList[index]?['ProfileImage'] ??
-                                            'https://picsum.photos/id/237/200/300',
+                                        dataList[index]?['ProfileImage'],
                                         dataList[index]?['PhoneNumber'] ??
                                             'No number Yet',
                                       );
@@ -838,21 +837,9 @@ class _ClientStripState extends State<ClientStrip> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(50.0),
-                child: CachedNetworkImage(
-                  imageUrl: widget.profileImage ?? "",
-                  placeholder: (context, url) => const Center(
-                    child: SizedBox(
-                      height: 40.0,
-                      width: 40.0,
-                      child: CircularProgressIndicator(
-                        value: 1.0,
-                      ),
-                    ),
-                  ),
-                  errorWidget: (context, url, error) => Icon(Icons.error),
-                  fit: BoxFit.cover,
-                  //height: 250,
-                  //width: double.maxFinite,
+                child: 
+                Image.network(
+                  widget.profileImage ?? ""
                 ),
               ),
             ),

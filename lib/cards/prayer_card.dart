@@ -75,28 +75,21 @@ class PrayerCard extends StatelessWidget {
                                 height: 50, // Adjust height as needed
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.grey[100], // Optional background color
+                                  color: Colors
+                                      .grey[100], // Optional background color
                                 ),
                                 child: ClipOval(
-                                  child: CachedNetworkImage(
-                                    imageUrl: profileImage ?? "",
-                                    placeholder: (context, url) => const Center(
-                                      child: SizedBox(
-                                        height: 40.0,
-                                        width: 40.0,
-                                        child: CircularProgressIndicator(
-                                          value: 1.0,
-                                        ),
-                                      ),
-                                    ),
-                                    errorWidget: (context, url, error) =>
-                                        Icon(Icons.error),
-                                    fit: BoxFit.cover,
+                                  child: Image.network(
+                                    profileImage ?? "",
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            Icon(Icons.error),
                                   ),
                                 ),
                               )),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
                             child: Text(
                               clientName ?? "",
                               style: const TextStyle(
@@ -106,7 +99,7 @@ class PrayerCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                     const Row(
+                      const Row(
                         children: [
                           // IconButton(
                           //   onPressed: onPressedCall ?? () {},
@@ -186,7 +179,8 @@ class PrayerCard extends StatelessWidget {
                               child: Container(
                                 color: Colors.white54,
                                 child: Padding(
-                                  padding: EdgeInsets.only(top: 3.0, bottom: 3.0),
+                                  padding:
+                                      EdgeInsets.only(top: 3.0, bottom: 3.0),
                                   child: Text(
                                     description ?? "",
                                     style: TextStyle(color: Colors.grey),
@@ -198,7 +192,6 @@ class PrayerCard extends StatelessWidget {
                         ],
                       ),
                     ),
-
                   ),
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: 10.0),
@@ -216,12 +209,9 @@ class PrayerCard extends StatelessWidget {
                 ],
               ),
             ),
-
           ],
         ),
       ),
     );
   }
 }
-
-

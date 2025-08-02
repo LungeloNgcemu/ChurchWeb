@@ -1,106 +1,64 @@
-import 'dart:io';
-
-import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SqlDatabase {
-  late Database database;
+  static const String _churchKey = "churchName";
+
   bool _isInitialized = false;
-  final String dbName = 'church.db';
+  SharedPreferences? _prefs;
 
-  Future<void> createDatabase() async {
-    var databasesPath = await getDatabasesPath();
-    String path = join(databasesPath, dbName);
-
-    database = await openDatabase(path, version: 1,
-        onCreate: (Database db, int version) async {
-      // When creating the db, create the table
-      await db.execute(
-          'CREATE TABLE church (id INTEGER PRIMARY KEY, churchName TEXT)');
-    });
-
+  // Initialize SharedPreferences
+  Future<void> initializeDatabase() async {
+    _prefs = await SharedPreferences.getInstance();
     _isInitialized = true;
   }
 
-//check if it exist
-  Future<void> initializeDatabase() async {
-    var databasesPath = await getDatabasesPath();
-    String path = join(databasesPath, dbName);
-
-    if (await _databaseExists(path)) {
-      // Database exists, open it
-      database = await openDatabase(path);
-    } else {
-      // Database does not exist, create it
-      await createDatabase();
-    }
-  }
-
-  Future<bool> _databaseExists(String path) async {
-    return File(path).exists();
-  }
-
-  void insertChurchName({churchName}) async {
-    if (!_isInitialized)await initializeDatabase(); // Ensure the database is initialized
+  // Simulate database insert
+  void insertChurchName({required String churchName}) async {
+    if (!_isInitialized) await initializeDatabase();
 
     try {
-      await database.transaction((txn) async {
-        int id1 = await txn.rawInsert(
-            'INSERT INTO church (churchName) VALUES (?)', [churchName]);
-        print('inserted1: $id1');
-      });
+      await _prefs?.setString(_churchKey, churchName);
+      print('Inserted church name: $churchName');
     } catch (error) {
-      print("Church not inserted");
+      print("Church not inserted: $error");
     }
   }
 
+  // Simulate database query
   Future<String> getChurchName() async {
-    if (!_isInitialized)await initializeDatabase(); // Ensure the database is initialized
+    if (!_isInitialized) await initializeDatabase();
 
     try {
-      List<Map> list = await database.rawQuery('SELECT * FROM church');
-
-      final name = list[0]["churchName"].toString();
-
+      final name = _prefs?.getString(_churchKey) ?? "";
       return name;
     } catch (error) {
-      print("Somethimg went wrong getting church name");
+      print("Something went wrong getting church name");
       return "";
     }
   }
 
+  // Simulate delete all churches
   Future<void> deleteAllChurches() async {
     if (!_isInitialized) await initializeDatabase();
 
     try {
-      await database.transaction((txn) async {
-        int count = await txn.rawDelete('DELETE FROM church');
-        print('Deleted $count church records');
-      });
+      await _prefs?.remove(_churchKey);
+      print('Deleted church name');
     } catch (error) {
-      print("Error deleting churches: $error");
-      rethrow; // Optional: rethrow if you want calling code to handle the error
+      print("Error deleting church name: $error");
     }
   }
 
+  // Simulate database deletion (clearing all data)
   Future<void> deleteBase() async {
-    var databasesPath = await getDatabasesPath();
-    String path = join(databasesPath, dbName);
+    if (!_isInitialized) await initializeDatabase();
 
     try {
-      // Check if the database exists
-      if (await _databaseExists(path)) {
-        // Close the database before deleting it
-        await database.close();
-        // Delete the database file
-        await deleteDatabase(path);
-        print('Database deleted successfully');
-      } else {
-        print('Database does not exist');
-      }
+      await _prefs?.clear();
+      print('All preferences deleted successfully');
     } catch (error) {
-      print("Error deleting database: $error");
+      print("Error clearing shared preferences: $error");
     }
   }
 }

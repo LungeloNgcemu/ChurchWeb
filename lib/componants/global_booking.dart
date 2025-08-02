@@ -788,7 +788,7 @@ Future<List<Map<String, dynamic>>> getBookings() async {
       bookings.add(item);
     }
 
-    // Print out the entire list of bookings after the loop has completed
+    // print out the entire list of bookings after the loop has completed
     print(bookings);
   } else {
     print("No bookings found");

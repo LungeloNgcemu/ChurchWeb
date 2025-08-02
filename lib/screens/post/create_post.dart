@@ -1,6 +1,10 @@
+import 'dart:developer';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/util/alerts.dart';
+import 'package:master/util/image_picker_custom.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../classes/church_init.dart';
 import '../../componants/buttonChip.dart';
@@ -12,18 +16,12 @@ import '../../providers/url_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_core/firebase_core.dart';
-
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../componants/text_input.dart';
 import 'package:readmore/readmore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:path/path.dart' as path;
 import 'package:provider/provider.dart';
 import 'package:master/providers/url_provider.dart';
@@ -32,7 +30,6 @@ import 'package:master/models/model.dart';
 import '../../models/comment_model.dart';
 import '../../util/functions_for_cloud.dart';
 import '../../componants/global_booking.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 // create_page and poster are linked
 String postKey = '';
@@ -48,18 +45,18 @@ class Poster extends StatefulWidget {
 
 class _PosterState extends State<Poster> {
   bool isLoading = false;
-  final ImagePicker _picker = ImagePicker();
+  final ImagePickerCustom _picker = ImagePickerCustom();
   ChurchInit churchStart = ChurchInit();
   Authenticate auth = Authenticate();
 
-  XFile? _image;
+  Uint8List? _image;
   String? npostKey;
 
   // Change PickedFile to XFile
   String? postImageUrl;
 
   Future<void> _pickImage() async {
-    final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
+    final pickedImage = await _picker.pickImageToByte();
     if (pickedImage != null) {
       setState(() {
         _image = pickedImage;
@@ -70,25 +67,6 @@ class _PosterState extends State<Poster> {
   @override
   void initState() {
     super.initState();
-    getPostsFromFirebase();
-  }
-
-  void addId(String postId) async {
-    try {
-      // Reference to the post document
-      DocumentReference postDocRef =
-          FirebaseFirestore.instance.collection("Posts").doc(postId);
-
-      // Update the post with the post ID
-      await postDocRef.update({
-        'postId': postId,
-      });
-
-      print('Post ID updated successfully!');
-    } catch (e) {
-      print('Error updating post ID: $e');
-      // Handle the error accordingly
-    }
   }
 
   String? imageUrl;
@@ -97,58 +75,26 @@ class _PosterState extends State<Poster> {
     try {
       print('Image picked');
       if (image != null) {
-        final imageFile = File(image!.path);
-        final fileName = path.basename(imageFile.path);
-        print('File picked: $fileName');
+        final fileName = 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
         final String pathv = await supabase.storage
             .from(Provider.of<christProvider>(context, listen: false)
                 .myMap['Project']?['Bucket'])
-            .upload('$fileName', imageFile,
+            .uploadBinary(fileName, image,
                 fileOptions:
                     const FileOptions(cacheControl: '3600', upsert: false));
-        print('Uploaded image path: $pathv');
 
         final publicUrl = await supabase.storage
             .from(Provider.of<christProvider>(context, listen: false)
                 .myMap['Project']?['Bucket'])
             .getPublicUrl(fileName);
-        print('Public URL: $publicUrl');
 
         setState(() {
           imageUrl = publicUrl;
         });
-      } else {
-        print("No image selected");
-      }
+      } else {}
     } catch (e) {
-      print("Error uploading image to Supabase: $e");
-    }
-  }
-
-  Future<String> addPostToFirestore(Post post) async {
-    try {
-      String postImageUrl =
-          await uploadImageToFirebaseStorage(File(_image!.path));
-      Provider.of<PostImageUrlProvider>(context, listen: false).imageUrl =
-          postImageUrl;
-      debugPrint("this is it :" + postImageUrl);
-
-      DocumentReference postRef =
-          await FirebaseFirestore.instance.collection("Posts").add({
-        'title': post.title,
-        'description': post.description,
-        'imageUrl': postImageUrl,
-      });
-
-      final newPostKey = postRef.id;
-
-      print('Post added to Firestore successfully! ${newPostKey}');
-
-      return newPostKey;
-    } catch (e) {
-      print('$e');
-      return "";
+      log("Error uploading image to Supabase: $e");
     }
   }
 
@@ -180,11 +126,11 @@ class _PosterState extends State<Poster> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(20.0),
+                  const Padding(
+                    padding: EdgeInsets.all(20.0),
                     child: Align(
                         alignment: Alignment.center,
-                        child: const Text(
+                        child: Text(
                           "Create Post",
                           style: TextStyle(fontSize: 30.0),
                         )),
@@ -212,8 +158,6 @@ class _PosterState extends State<Poster> {
                           setState(() {
                             _pickImage();
                           });
-
-                          /// Update state variables here
                         },
                       ),
                       ImageFrame(
@@ -246,19 +190,17 @@ class _PosterState extends State<Poster> {
                                   });
                                 });
                               } else if (description == "") {
-                                const message = "Please fill in the description";
+                                const message =
+                                    "Please fill in the description";
                                 alertSuccess(context, message);
-                                 Future.delayed(Duration(seconds: 1), () {
+                                Future.delayed(Duration(seconds: 1), () {
                                   setState(() {
                                     isLoading = false;
                                   });
                                 });
                               } else {
                                 await _uploadImageToSuperbase(_image);
-                                superbasePost(
-                                    description,
-                                    imageUrl ??
-                                        "https://picsum.photos/seed/picsum");
+                                superbasePost(description, imageUrl!);
 
                                 Future.delayed(Duration(seconds: 1), () {
                                   setState(() {
@@ -273,13 +215,13 @@ class _PosterState extends State<Poster> {
                             } catch (error) {
                               // Clear text controllers and close the loading overlay/modal
                               // Close the AlertDialog
-                                 const message = "Something went wrong";
-                                alertSuccess(context, message);
-                                 Future.delayed(Duration(seconds: 1), () {
-                                  setState(() {
-                                    isLoading = false;
-                                  });
+                              const message = "Something went wrong";
+                              alertSuccess(context, message);
+                              Future.delayed(Duration(seconds: 1), () {
+                                setState(() {
+                                  isLoading = false;
                                 });
+                              });
                             }
                           },
                         ),
@@ -311,7 +253,7 @@ class _PosterState extends State<Poster> {
 }
 
 class ImageFrame extends StatefulWidget {
-  ImageFrame({this.image, Key? key}) : super(key: key);
+  const ImageFrame({this.image, Key? key}) : super(key: key);
 
   final dynamic image;
 
@@ -341,23 +283,16 @@ class _ImageFrameState extends State<ImageFrame> {
       return Container(); // You can use a placeholder here
     }
 
-    if (image is XFile) {
-      return Image.file(
-        File(image.path),
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: 250.0,
-      );
-    } else if (image is File) {
-      return Image.file(
+    if (image != null) {
+      return Image.memory(
         image,
         fit: BoxFit.cover,
         width: double.infinity,
         height: 250.0,
       );
+    
     } else {
-      return Image.network(
-          "https://picsum.photos/seed/picsum/200/300"); // Handle other cases if needed
+      return SizedBox(); 
     }
   }
 }

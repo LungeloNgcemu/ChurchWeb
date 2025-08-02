@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-
 class Gallery extends StatefulWidget {
- Gallery({this.images,this.grid, Key? key}) : super(key: key);
+  Gallery({this.images, this.grid, Key? key}) : super(key: key);
   final List<String>? images;
   final Widget? grid;
   @override
@@ -12,7 +11,6 @@ class Gallery extends StatefulWidget {
 }
 
 class _GalleryState extends State<Gallery> {
-
   @override
   Widget build(BuildContext context) {
     final image = widget.images ?? [];
@@ -24,10 +22,9 @@ class _GalleryState extends State<Gallery> {
 }
 
 class Tile extends StatelessWidget {
+  Tile({required this.image});
 
- Tile({required this.image});
-
- final String? image;
+  final String? image;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -39,25 +36,30 @@ class Tile extends StatelessWidget {
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(8.0),
-        child: CachedNetworkImage(
-          imageUrl: image ?? "",
-          placeholder: (context, url) => const Center(
-            child: SizedBox(
-              height: 40.0,
-              width: 40.0,
-              child: CircularProgressIndicator(
-                value: 1.0,
-              ),
-            ),
+          borderRadius: BorderRadius.circular(8.0),
+          child: Image.network(image ?? "",
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.error))
+
+          // CachedNetworkImage(
+          //   imageUrl: image ?? "",
+          //   placeholder: (context, url) => const Center(
+          //     child: SizedBox(
+          //       height: 40.0,
+          //       width: 40.0,
+          //       child: CircularProgressIndicator(
+          //         value: 1.0,
+          //       ),
+          //     ),
+          //   ),
+          //   errorWidget: (context, url, error) =>
+          //       Icon(Icons.error),
+          //   fit: BoxFit.cover,
+          //   //height: 250,
+          //   //width: double.maxFinite,
+          // ),
           ),
-          errorWidget: (context, url, error) =>
-              Icon(Icons.error),
-          fit: BoxFit.cover,
-          //height: 250,
-          //width: double.maxFinite,
-        ),
-      ),
     );
   }
 }

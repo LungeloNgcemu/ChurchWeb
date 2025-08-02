@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-
 class Minister extends StatelessWidget {
   Minister({
     this.name,
@@ -42,34 +41,22 @@ class Minister extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 0.0),
                 child: Row(
-                  
                   children: [
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
-                         
                           color: Colors.grey[100],
                           borderRadius: BorderRadius.circular(20.0),
                         ),
                         height: 70.0,
-                    
                         child: ClipRRect(
-                           borderRadius: BorderRadius.only(topRight: Radius.circular(20.0), topLeft: Radius.circular(20.0)),
-                          child: CachedNetworkImage(
-                            imageUrl: image ?? "",
-                            placeholder: (context, url) => const Center(
-                              child: SizedBox(
-                                height: 40.0,
-                                width: 40.0,
-                                child: CircularProgressIndicator(
-                                  value: 1.0,
-                                ),
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => Icon(Icons.error),
+                          borderRadius: const BorderRadius.only(
+                              topRight: Radius.circular(20.0),
+                              topLeft: Radius.circular(20.0)),
+                          child: Image.network(
+                            image ?? "",
                             fit: BoxFit.cover,
-                            //height: 250,
-                            //width: double.maxFinite,
+                            errorBuilder: (context, url, error) => const Icon(Icons.error),
                           ),
                         ),
                       ),
@@ -92,7 +79,6 @@ class Minister extends StatelessWidget {
               ),
             ],
           ),
-          
         ),
       ),
     );

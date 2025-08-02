@@ -27,7 +27,7 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _initChurch() async {
     churchStart = ChurchInit();
     await churchStart.init(context);
-    log("${churchStart.ChurchName}");
+    print("${churchStart.ChurchName}");
   }
 
   @override

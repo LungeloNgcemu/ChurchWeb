@@ -6,7 +6,9 @@ list(APPEND FLUTTER_PLUGIN_LIST
   desktop_webview_window
   file_selector_linux
   gtk
+  media_kit_video
   url_launcher_linux
+  volume_controller
   window_to_front
 )
 
