@@ -1,5 +1,5 @@
 import 'dart:developer';
-import 'package:flutter/material.dart ';
+import 'package:flutter/material.dart';
 import 'package:another_flutter_splash_screen/another_flutter_splash_screen.dart';
 import 'package:master/classes/church_init.dart';
 import 'package:master/classes/sql_database.dart';
