@@ -63,14 +63,19 @@
     firebase.initializeApp(firebaseConfig);
 
     if ('serviceWorker' in navigator) {
-
-            navigator.serviceWorker.register('/ChurchWeb/firebase-messaging-sw.js');
-      window.addEventListener('flutter-first-frame', function () {
-        // navigator.serviceWorker.register('flutter_service_worker.js?v=1417913520');
-        // navigator.serviceWorker.register('flutter_service_worker.js');
-  
-      });
-    }
+  window.addEventListener('flutter-first-frame', function() {
+    navigator.serviceWorker.register('/ChurchWeb/firebase-messaging-sw.js', {
+      scope: '/ChurchWeb/'
+    })
+    .then(registration => {
+      console.log('ServiceWorker registration successful:', registration);
+      // Initialize Firebase Messaging here if needed
+    })
+    .catch(err => {
+      console.error('ServiceWorker registration failed:', err);
+    });
+  });
+}
     window.addEventListener('load', function (ev) {
       entrypointUrl: "/main.dart.js",
         _flutter.loader.loadEntrypoint({

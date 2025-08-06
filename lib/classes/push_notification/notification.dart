@@ -58,6 +58,8 @@ class PushNotifications {
       FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
       FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessageHandler);
 
+   
+
       getFCMToken();
     } catch (e) {
       debugPrint('Error initializing push notifications: $e');
