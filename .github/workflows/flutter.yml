@@ -31,7 +31,10 @@ jobs:
       - name: Build Flutter Web
         run: |
           flutter config --enable-web
-          flutter build web --release 
+          flutter build web \
+            --release \
+            --base-href="/ChurchWeb/" \
+            --dart-define=FLUTTER_WEB_CANVASKIT_URL=/ChurchWeb/canvaskit/
 
 
       - name: Verify build output
