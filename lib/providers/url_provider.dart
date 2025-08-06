@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:master/Model/church_data_model.dart';
 import 'package:path_provider/path_provider.dart' as pp;
 import 'dart:io';
 import 'package:path/path.dart' as path;
@@ -23,7 +24,8 @@ abstract class ImageUrlBaseProvider extends ChangeNotifier {
 
   Future<String> _saveImageToLocalDirectory(File imageFile) async {
     Directory appDirectory = await pp.getApplicationDocumentsDirectory();
-    String imagePath = '${appDirectory.path}/images/${path.basename(imageFile.path)}';
+    String imagePath =
+        '${appDirectory.path}/images/${path.basename(imageFile.path)}';
     await imageFile.copy(imagePath);
     return imagePath;
   }
@@ -62,9 +64,6 @@ class PostImageUrlProvider extends ImageUrlBaseProvider {
   String getImageUrlKey() => 'postImageUrl';
 }
 
-
-
-
 class PostIdProvider extends ChangeNotifier {
   String _postId = '';
 
@@ -75,8 +74,6 @@ class PostIdProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
-
-
 
 class SelectedOptionProvider extends ChangeNotifier {
   String _selectedOption = "Other";
@@ -89,104 +86,104 @@ class SelectedOptionProvider extends ChangeNotifier {
     _selectedOption = newOption;
     _color = newColor;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-       notifyListeners();
+      notifyListeners();
     });
     return _color;
   }
 }
 
 class CurrentRoomIdProvider extends ChangeNotifier {
-  String currentRoomId ;
+  String currentRoomId;
 
   CurrentRoomIdProvider({this.currentRoomId = ''});
 
- void updatecCurrentRoomId ({required String newValue}) async {
-   currentRoomId = newValue;
+  void updatecCurrentRoomId({required String newValue}) async {
+    currentRoomId = newValue;
     notifyListeners();
   }
 }
 
 class CurrentUserImageProvider extends ChangeNotifier {
-  String currentUserImage ;
+  String currentUserImage;
 
   CurrentUserImageProvider({this.currentUserImage = ''});
 
-  void updatecCurrentRoomId ({required String newValue}) async {
+  void updatecCurrentRoomId({required String newValue}) async {
     currentUserImage = newValue;
     notifyListeners();
   }
 }
+
 /////////////////////
 class ClientImageProvider extends ChangeNotifier {
-  String clientImage ;
+  String clientImage;
 
   ClientImageProvider({this.clientImage = ''});
 
-  void updateClientImage ({required String newValue}) async {
+  void updateClientImage({required String newValue}) async {
     clientImage = newValue;
     notifyListeners();
   }
 }
 
 class ClientNameProvider extends ChangeNotifier {
-  String clientName ;
+  String clientName;
 
   ClientNameProvider({this.clientName = ''});
 
-  void updateClientName ({required String newValue}) async {
+  void updateClientName({required String newValue}) async {
     clientName = newValue;
     notifyListeners();
   }
 }
 
 class ClientNumberProvider extends ChangeNotifier {
-  String clientNumber ;
+  String clientNumber;
 
   ClientNumberProvider({this.clientNumber = ''});
 
-  void updateClientNumber ({required String newValue}) async {
+  void updateClientNumber({required String newValue}) async {
     clientNumber = newValue;
     notifyListeners();
   }
 }
 
 class ItemProvider extends ChangeNotifier {
-  Map<String,dynamic> item ;
+  Map<String, dynamic> item;
 
-  ItemProvider({this.item = const {} });
+  ItemProvider({this.item = const {}});
 
-  void updateItem ({required Map<String,dynamic> newValue}) async {
+  void updateItem({required Map<String, dynamic> newValue}) async {
     item = newValue;
     notifyListeners();
   }
 }
+
 class tockenProvider extends ChangeNotifier {
-  String tocken ;
+  String tocken;
 
- tockenProvider({this.tocken = ''});
+  tockenProvider({this.tocken = ''});
 
-  void updateTocken ({required String newValue}) async {
+  void updateTocken({required String newValue}) async {
     tocken = newValue;
     notifyListeners();
   }
 }
 
-
 class christProvider extends ChangeNotifier {
+  Map<String, dynamic> myMap = {};
+  ChurchDataModel? churchData;
 
-  Map<String,dynamic> myMap= {};
+  christProvider({this.myMap = const {}});
 
-  christProvider({this.myMap = const{}});
-
-  void updatemyMap ({required Map<String,dynamic> newValue}) async {
+  void updatemyMap({required Map<String, dynamic> newValue}) async {
     myMap = newValue;
+    churchData = ChurchDataModel.fromJson(newValue);
     notifyListeners();
   }
 }
 
-
 class churchProvider extends ChangeNotifier {
-
   String churchName = "";
   String logoAddress = "";
   String address = "";
@@ -255,58 +252,49 @@ class churchProvider extends ChangeNotifier {
     contactNumber = newValue;
     notifyListeners();
   }
-
 }
 
 class VisibilityProvider extends ChangeNotifier {
-
   bool _isVisible = true;
 
   bool get isVisible => _isVisible;
 
-  void visibilityToggle (bool newValue) {
+  void visibilityToggle(bool newValue) {
     _isVisible = newValue;
     notifyListeners();
   }
 }
 
-
 class IdProvider extends ChangeNotifier {
-
   String? id;
 
-
-  void changeID (String newValue) {
+  void changeID(String newValue) {
     id = newValue;
     notifyListeners();
   }
 }
 
 class RoleProvider extends ChangeNotifier {
-
   String userRole = "";
 
-
-  void changeRole ({required String newValue}) {
+  void changeRole({required String newValue}) {
     userRole = newValue;
     notifyListeners();
   }
 }
 
 class SelectedDateProvider extends ChangeNotifier {
-
   String year = "";
   String month = "";
   String day = "";
 
-  Map<String,dynamic> selectedDate = {};
+  Map<String, dynamic> selectedDate = {};
 
-
-  void updatemyMap ({required String year,required String month,required String day}) {
-
-    selectedDate[ "Year"] = year;
-    selectedDate[ "Month"] = month;
-    selectedDate[ "Day"] = day;
+  void updatemyMap(
+      {required String year, required String month, required String day}) {
+    selectedDate["Year"] = year;
+    selectedDate["Month"] = month;
+    selectedDate["Day"] = day;
 
     print(selectedDate);
     notifyListeners();
@@ -314,24 +302,19 @@ class SelectedDateProvider extends ChangeNotifier {
 }
 
 class SelectedChurchProvider extends ChangeNotifier {
-
   String selectedChurch = "";
 
-
-  void updateSelectedChurch ({required String newValue}) {
+  void updateSelectedChurch({required String newValue}) {
     selectedChurch = newValue;
     notifyListeners();
   }
 }
 
 class SelectedGenderProvider extends ChangeNotifier {
-
   String selectedGender = "";
 
-
-  void updateGender ({required String newValue}) {
+  void updateGender({required String newValue}) {
     selectedGender = newValue;
     notifyListeners();
   }
 }
-

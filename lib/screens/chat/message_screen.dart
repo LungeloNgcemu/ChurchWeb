@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:master/classes/authentication/authenticate.dart';
+import 'package:master/classes/push_notification/notification.dart';
 import 'package:master/componants/text_input.dart';
 import 'package:master/databases/database.dart';
 
@@ -30,7 +31,7 @@ class MessageScreen extends StatefulWidget {
   State<MessageScreen> createState() => _MessageScreenState();
 }
 
-class _MessageScreenState extends State<MessageScreen>  {
+class _MessageScreenState extends State<MessageScreen> {
   MessageClass messageClass = MessageClass();
   Authenticate auth = Authenticate();
   Map<String, dynamic> currentUser = {};
@@ -50,7 +51,7 @@ class _MessageScreenState extends State<MessageScreen>  {
 
     Future.delayed(Duration(seconds: 3), () {
       setState(() {
-         isLoading = false;
+        isLoading = false;
       });
     });
 
@@ -82,7 +83,6 @@ class _MessageScreenState extends State<MessageScreen>  {
   List<String> processedMessageIds = [];
 
   @override
- 
   Widget build(BuildContext context) {
     AppWriteDataBase connect = AppWriteDataBase();
 
@@ -198,7 +198,7 @@ class _MessageScreenState extends State<MessageScreen>  {
                                                     listen: false,
                                                   ).currentUserImage,
                                                   callBack: () async {
-                                                   const message =
+                                                    const message =
                                                         "Delete this message?";
                                                     alertDeleteMessage(
                                                       context,
@@ -293,6 +293,14 @@ class _MessageScreenState extends State<MessageScreen>  {
                                   controller.clear();
                                   FocusScope.of(context)
                                       .requestFocus(FocusNode());
+
+                                  PushNotifications.sendMessageToTopic(
+                                      topic: Provider.of<christProvider>(
+                                              context,
+                                              listen: false)
+                                          .myMap['Project']?['ChurchName'],
+                                      title: messageClass.currentUser['UserName'],
+                                      body: message);
                                 },
                                 icon: Icon(Icons.send_outlined)),
                           )
@@ -370,9 +378,8 @@ class MessageBubbleLeft extends StatelessWidget {
                             color: Colors.grey, shape: BoxShape.circle),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(50.0),
-                          child: 
-                          Image.network(image ?? ""),
-                          
+                          child: Image.network(image ?? ""),
+
                           // CachedNetworkImage(
                           //   imageUrl: image ?? "",
                           //   placeholder: (context, url) => const Center(
@@ -527,26 +534,26 @@ class _MessageBubbleRightState extends State<MessageBubbleRight> {
                     decoration: const BoxDecoration(
                         color: Colors.grey, shape: BoxShape.circle),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(50.0),
-                      child: Image.network( widget.image ?? "")
-                      
-                      // CachedNetworkImage(
-                      //   imageUrl: widget.image ?? "",
-                      //   placeholder: (context, url) => const Center(
-                      //     child: SizedBox(
-                      //       height: 40.0,
-                      //       width: 40.0,
-                      //       child: CircularProgressIndicator(
-                      //         value: 1.0,
-                      //       ),
-                      //     ),
-                      //   ),
-                      //   errorWidget: (context, url, error) => Icon(Icons.error),
-                      //   fit: BoxFit.cover,
-                      //   //height: 250,
-                      //   //width: double.maxFinite,
-                      // ),
-                    ),
+                        borderRadius: BorderRadius.circular(50.0),
+                        child: Image.network(widget.image ?? "")
+
+                        // CachedNetworkImage(
+                        //   imageUrl: widget.image ?? "",
+                        //   placeholder: (context, url) => const Center(
+                        //     child: SizedBox(
+                        //       height: 40.0,
+                        //       width: 40.0,
+                        //       child: CircularProgressIndicator(
+                        //         value: 1.0,
+                        //       ),
+                        //     ),
+                        //   ),
+                        //   errorWidget: (context, url, error) => Icon(Icons.error),
+                        //   fit: BoxFit.cover,
+                        //   //height: 250,
+                        //   //width: double.maxFinite,
+                        // ),
+                        ),
                   ),
                 ),
               ],
@@ -610,10 +617,10 @@ class HeaderMessage extends StatelessWidget {
                     color: Colors.grey, shape: BoxShape.circle),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(50.0),
-                  child: 
-                  Image.network(Provider.of<ClientImageProvider>(context, listen: false)
-                            .clientImage),
-                  
+                  child: Image.network(
+                      Provider.of<ClientImageProvider>(context, listen: false)
+                          .clientImage),
+
                   // CachedNetworkImage(
                   //   imageUrl:
                   //       Provider.of<ClientImageProvider>(context, listen: false)

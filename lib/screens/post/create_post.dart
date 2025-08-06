@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:master/classes/authentication/authenticate.dart';
+import 'package:master/classes/push_notification/notification.dart';
 import 'package:master/util/alerts.dart';
 import 'package:master/util/image_picker_custom.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -202,6 +203,13 @@ class _PosterState extends State<Poster> {
                                 await _uploadImageToSuperbase(_image);
                                 superbasePost(description, imageUrl!);
 
+                                PushNotifications.sendMessageToTopic(
+                                    topic: Provider.of<christProvider>(context,
+                                            listen: false)
+                                        .myMap['Project']?['ChurchName'],
+                                    title: 'Post',
+                                    body: description);
+
                                 Future.delayed(Duration(seconds: 1), () {
                                   setState(() {
                                     isLoading = false;
@@ -290,9 +298,8 @@ class _ImageFrameState extends State<ImageFrame> {
         width: double.infinity,
         height: 250.0,
       );
-    
     } else {
-      return SizedBox(); 
+      return SizedBox();
     }
   }
 }

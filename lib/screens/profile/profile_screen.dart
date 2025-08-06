@@ -6,6 +6,7 @@ import 'dart:io' as f;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:master/classes/push_notification/notification.dart';
 import 'package:master/componants/adaptable_button.dart';
 import 'package:master/componants/extrabutton.dart';
 import 'package:master/componants/global_booking.dart';
@@ -16,6 +17,7 @@ import 'package:master/databases/database.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:master/util/alerts.dart';
+import 'package:master/util/converter.dart';
 import 'package:master/util/image_picker_custom.dart';
 import 'package:path/path.dart' as path;
 import 'package:provider/provider.dart';
@@ -37,10 +39,12 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   AppWriteDataBase connect = AppWriteDataBase();
   ChurchInit churchStart = ChurchInit();
+  PushNotifications push = PushNotifications();
 
   @override
   void initState() {
     xgetUser();
+    getNotificationValue();
     super.initState();
   }
 
@@ -52,6 +56,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic> currentUser = {};
   String docId = "";
   String number = "";
+  bool notificationMessage = false;
+  bool notificationPost = false;
 
   void xgetUser() async {
     setState(() {
@@ -104,6 +110,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   String _error = 'No Error Dectected';
+
+  Future<bool> updateNotification(bool value) async {
+    // String? churchName = Provider.of<christProvider>(context, listen: false)
+    //     .churchData!
+    //     .churchName;
+
+    String? churchName = Provider.of<christProvider>(context, listen: false)
+            .myMap['Project']?['ChurchName'] ??
+        null;
+
+    print(churchName);
+
+    if (churchName == null) return false;
+
+    if (value) {
+      return PushNotifications.subscribeToChurchTopic(churchName!);
+    } else {
+      return PushNotifications.unsubscribeFromChurchTopic(churchName!);
+    }
+  }
+
+  Future<void> getNotificationValue() async {
+    String? name = await PushNotifications.getCurrentTopic();
+    if (name != null) {
+      notificationMessage = true;
+      notificationPost = true;
+    } else {
+      notificationMessage = false;
+      notificationPost = false;
+    }
+  }
 
   final ImagePickerCustom _picker = ImagePickerCustom();
   Uint8List? _image;
@@ -178,12 +215,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          NotificationSwitch(
+                            value: notificationMessage,
+                            title: 'Notifications',
+                            onChanged: (bool e) async {
+                              bool result = await updateNotification(e);
+                              if (result) {
+                                setState(() {
+                                  notificationMessage = e;
+                                  notificationPost = e;
+                                });
+                              }
+                            },
+                          ),
+                        ],
+                      ),
                       CircleProfile(
                         profileImage: image,
                         onPressed: () async {
                           await _uploadImageToSuperbase();
                           //_loadAssets();
                         },
+                      ),
+                      SizedBox(
+                        height: MediaQuery.sizeOf(context).height * 0.2,
                       ),
                       Container(
                         decoration: BoxDecoration(
@@ -200,12 +258,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       ),
-                      // InputAppwrite(
-                      //   controller: controllerPhone,
-                      //   text: 'Enter your Phone Number',
-                      //   label: "Phone Number",
-                      //   message: "Phone Number",
-                      // ),
                       Column(
                         children: [
                           ExtraButton(
@@ -249,6 +301,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
       ),
+    );
+  }
+}
+
+// ignore: must_be_immutable
+class NotificationSwitch extends StatelessWidget {
+  NotificationSwitch({super.key, this.onChanged, this.title, this.value});
+  bool? value;
+  String? title;
+  void Function(bool)? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(title ?? ''),
+        Switch(value: value ?? false, onChanged: onChanged),
+      ],
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:master/classes/authentication/authenticate.dart';
+import 'package:master/classes/push_notification/notification.dart';
 import 'package:master/classes/snack_bar.dart';
 import 'package:master/constants/constants.dart';
 import 'package:master/providers/url_provider.dart';
@@ -241,6 +242,16 @@ class _PostScreenState extends State<PostScreen>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
+        //                        MaterialButton(
+        //                         child: Text('data'),
+        //                         onPressed: () {
+
+        //           final provider = Provider.of<christProvider>(context, listen: false);
+
+        // final churchName = provider.myMap['Project']?['ChurchName'];
+        //         PushNotifications.sendMessageToTopic(
+        //             topic: churchName, title: "Hell", body: "World");
+        //       }),
                         Visibility(
                           visible: Provider.of<christProvider>(context,
                                       listen: false)
@@ -397,6 +408,7 @@ class _PostScreenState extends State<PostScreen>
                   ),
                 ),
               ),
+       
               StreamBuilder(
                 stream: streamx,
                 builder: (context, snapshot) {

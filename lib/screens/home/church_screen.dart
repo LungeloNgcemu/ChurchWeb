@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/church_class.dart';
+import 'package:master/classes/push_notification/notification.dart';
 import 'package:master/componants/extrabutton.dart';
 import 'package:master/screens/prayer/prayer_screen.dart';
 import 'package:master/screens/profile/profile_screen.dart';
@@ -141,12 +142,12 @@ class _ChurchScreenState extends State<ChurchScreen>
   Future<void> _initChurch() async {
     ChurchInit churchStart = ChurchInit();
     Authenticate auth = Authenticate();
+    PushNotifications.init(context);
 
     await churchStart.init(context);
     snackInit();
     final message = " Welcome to Church Connect";
-    alertWelcome(
-        context, message); // Wait for the initialization to complete
+    alertWelcome(context, message); // Wait for the initialization to complete
 
     // setState(() {});
   }

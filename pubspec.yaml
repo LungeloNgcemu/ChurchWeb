@@ -81,6 +81,9 @@ dependencies:
   media_kit_video: ^1.2.0
   youtube_explode_dart: ^2.3.9
   youtube_player_iframe: ^5.2.1
+  firebase_core: ^4.0.0
+  firebase_messaging: ^16.0.0
+  http: ^1.4.0
 
   
 
