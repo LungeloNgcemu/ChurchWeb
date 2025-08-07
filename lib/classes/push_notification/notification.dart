@@ -129,27 +129,26 @@ class PushNotifications {
       debugPrint('Attempting to get FCM token...');
 
       // For web, ensure messaging is properly initialized with service worker
-    
-        // This ensures the service worker is ready before token generation
-        await FirebaseMessaging.instance.setAutoInitEnabled(true);
 
-        // Explicitly request permissions if not granted
-        final NotificationSettings settings =
-            await _firebaseMessaging.requestPermission();
+      // This ensures the service worker is ready before token generation
+      await FirebaseMessaging.instance.setAutoInitEnabled(true);
 
-        // if (settings.authorizationStatus != AuthorizationStatus.authorized) {
-        //   debugPrint('User denied notification permissions');
-        //   return null;
-        // }
-    
+      // Explicitly request permissions if not granted
+      final NotificationSettings settings =
+          await _firebaseMessaging.requestPermission();
+
+      // if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+      //   debugPrint('User denied notification permissions');
+      //   return null;
+      // }
 
       // Get token with VAPID keyt
-      print("Starting...")
+      print("Starting...");
       String? token = await _firebaseMessaging.getToken(
         vapidKey:
             'BOcSkZvnrPLaW2gZicyvBphOAQQPkEmx1tDa3cQV04zFKzmQrpmqLqgJe8Jogrnv5dXapc4AsTHj2i4Oe0ymTPU',
       );
-  print("end...")
+      print("end...");
       debugPrint('Successfully obtained FCM token: ${token ?? 'NULL'}');
       return token;
     } catch (e, stackTrace) {
