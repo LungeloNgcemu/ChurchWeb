@@ -134,8 +134,8 @@ class PushNotifications {
       // await FirebaseMessaging.instance.setAutoInitEnabled(true);
 
       // // Explicitly request permissions if not granted
-      // final NotificationSettings settings =
-      //     await _firebaseMessaging.requestPermission();
+      final NotificationSettings settings =
+          await _firebaseMessaging.requestPermission();
 
       // if (settings.authorizationStatus != AuthorizationStatus.authorized) {
       //   debugPrint('User denied notification permissions');
