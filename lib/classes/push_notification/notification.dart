@@ -137,18 +137,19 @@ class PushNotifications {
         final NotificationSettings settings =
             await _firebaseMessaging.requestPermission();
 
-        if (settings.authorizationStatus != AuthorizationStatus.authorized) {
-          debugPrint('User denied notification permissions');
-          return null;
-        }
+        // if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+        //   debugPrint('User denied notification permissions');
+        //   return null;
+        // }
     
 
-      // Get token with VAPID key
+      // Get token with VAPID keyt
+      print("Starting...")
       String? token = await _firebaseMessaging.getToken(
         vapidKey:
             'BOcSkZvnrPLaW2gZicyvBphOAQQPkEmx1tDa3cQV04zFKzmQrpmqLqgJe8Jogrnv5dXapc4AsTHj2i4Oe0ymTPU',
       );
-
+  print("end...")
       debugPrint('Successfully obtained FCM token: ${token ?? 'NULL'}');
       return token;
     } catch (e, stackTrace) {
