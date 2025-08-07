@@ -131,11 +131,11 @@ class PushNotifications {
       // For web, ensure messaging is properly initialized with service worker
 
       // This ensures the service worker is ready before token generation
-      await FirebaseMessaging.instance.setAutoInitEnabled(true);
+      // await FirebaseMessaging.instance.setAutoInitEnabled(true);
 
-      // Explicitly request permissions if not granted
-      final NotificationSettings settings =
-          await _firebaseMessaging.requestPermission();
+      // // Explicitly request permissions if not granted
+      // final NotificationSettings settings =
+      //     await _firebaseMessaging.requestPermission();
 
       // if (settings.authorizationStatus != AuthorizationStatus.authorized) {
       //   debugPrint('User denied notification permissions');
