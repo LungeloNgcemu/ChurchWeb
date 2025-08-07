@@ -129,7 +129,7 @@ class PushNotifications {
       debugPrint('Attempting to get FCM token...');
 
       // For web, ensure messaging is properly initialized with service worker
-      if (kIsWeb) {
+    
         // This ensures the service worker is ready before token generation
         await FirebaseMessaging.instance.setAutoInitEnabled(true);
 
@@ -141,7 +141,7 @@ class PushNotifications {
           debugPrint('User denied notification permissions');
           return null;
         }
-      }
+    
 
       // Get token with VAPID key
       String? token = await _firebaseMessaging.getToken(
