@@ -1,32 +1,19 @@
-//import 'dart:html';
 
 import 'dart:developer';
-import 'dart:io' as f;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:master/classes/push_notification/notification.dart';
 import 'package:master/componants/adaptable_button.dart';
 import 'package:master/componants/extrabutton.dart';
 import 'package:master/componants/global_booking.dart';
 import 'package:master/componants/text_input.dart';
-import 'package:master/componants/extrabutton.dart';
-import 'package:master/constants/constants.dart';
 import 'package:master/databases/database.dart';
-import 'package:appwrite/appwrite.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:master/util/alerts.dart';
-import 'package:master/util/converter.dart';
 import 'package:master/util/image_picker_custom.dart';
-import 'package:path/path.dart' as path;
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:typed_data';
-import 'package:uuid/uuid.dart';
-
 import '../../classes/church_init.dart';
-import '../../componants/overview.dart';
 import '../../providers/url_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -109,12 +96,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  String _error = 'No Error Dectected';
 
   Future<bool> updateNotification(bool value) async {
-    // String? churchName = Provider.of<christProvider>(context, listen: false)
-    //     .churchData!
-    //     .churchName;
+
+    setState(() {
+      isLoading = true;
+    });
 
     String? churchName = Provider.of<christProvider>(context, listen: false)
             .myMap['Project']?['ChurchName'] ??
@@ -122,12 +109,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     print(churchName);
 
-    if (churchName == null) return false;
+    if (churchName == null) {
+      setState(() {
+        isLoading = false;
+      });
+      return false;
+    }
 
     if (value) {
-      return PushNotifications.subscribeToChurchTopic(churchName!);
+      return PushNotifications.subscribeToChurchTopic(churchName!)
+          .then((bool value) {
+        setState(() {
+          isLoading = false;
+        });
+        return value;
+      });
     } else {
-      return PushNotifications.unsubscribeFromChurchTopic(churchName!);
+      return PushNotifications.unsubscribeFromChurchTopic(churchName!)
+          .then((bool value) {
+        setState(() {
+          isLoading = false;
+        });
+        return value;
+      });
     }
   }
 

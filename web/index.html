@@ -30,7 +30,7 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png" />
 
-  <title>master</title>
+  <title>Church</title>
   <link rel="manifest" href="manifest.json">
 
   <script>
@@ -59,13 +59,11 @@
       measurementId: "G-6BBJLB1FXN"
     };
 
-    // Initialize Firebase
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('flutter-first-frame', function () {
-        // Use the correct path that includes /ChurchWeb/
+
         const swPath = '/firebase-messaging-sw.js';
 
         // Register with the correct scope that matches your app's base URL
