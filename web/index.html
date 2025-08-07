@@ -75,7 +75,7 @@
           .then(registration => {
             console.log('ServiceWorker registration successful:', registration);
             // Initialize Firebase Messaging with the service worker
-            firebase.messaging().useServiceWorker(registration);
+            // firebase.messaging().useServiceWorker(registration);
           })
           .catch(err => {
             console.error('ServiceWorker registration failed:', err);
@@ -83,19 +83,19 @@
       });
     }
 
-    window.addEventListener('load', function (ev) {
-      entrypointUrl: "/main.dart.js",
-        _flutter.loader.loadEntrypoint({
-          serviceWorker: {
-            serviceWorkerVersion: serviceWorkerVersion,
-          },
-          onEntrypointLoaded: function (engineInitializer) {
-            engineInitializer.initializeEngine().then(function (appRunner) {
-              appRunner.runApp();
-            });
-          }
-        });
-    });
+    // window.addEventListener('load', function (ev) {
+    //   entrypointUrl: "/main.dart.js",
+    //     _flutter.loader.loadEntrypoint({
+    //       serviceWorker: {
+    //         serviceWorkerVersion: serviceWorkerVersion,
+    //       },
+    //       onEntrypointLoaded: function (engineInitializer) {
+    //         engineInitializer.initializeEngine().then(function (appRunner) {
+    //           appRunner.runApp();
+    //         });
+    //       }
+    //     });
+    // });
 
 
 
