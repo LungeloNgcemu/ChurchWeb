@@ -65,19 +65,17 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('flutter-first-frame', function () {
-        // Get the current script's directory
-        const scriptPath = document.currentScript?.src || '';
-        const scriptDir = scriptPath.substring(0, scriptPath.lastIndexOf('/'));
+        // Use the correct path that includes /ChurchWeb/
+        const swPath = '/ChurchWeb/firebase-messaging-sw.js';
 
-        // Construct path to service worker file
-        const swPath = `${scriptDir}/firebase-messaging-sw.js`;
-
+        // Register with the correct scope that matches your app's base URL
         navigator.serviceWorker.register(swPath, {
-          scope: '/ChurchWeb/'  // Adjust if your app isn't hosted at /ChurchWeb/
+          scope: '/ChurchWeb/'  // This should match your app's base URL
         })
           .then(registration => {
             console.log('ServiceWorker registration successful:', registration);
-            // Initialize Firebase Messaging here if needed
+            // Initialize Firebase Messaging with the service worker
+            firebase.messaging().useServiceWorker(registration);
           })
           .catch(err => {
             console.error('ServiceWorker registration failed:', err);
