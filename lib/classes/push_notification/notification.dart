@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +26,17 @@ class PushNotifications {
         criticalAlert: false,
         provisional: false,
         sound: true,
+      );
+
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+            apiKey: "AIzaSyC68W0ODoBk8taha9W08fVZcRbHUEbYUm0",
+            authDomain: "churchconnect-8157d.firebaseapp.com",
+            projectId: "churchconnect-8157d",
+            storageBucket: "churchconnect-8157d.firebasestorage.app",
+            messagingSenderId: "301652956348",
+            appId: "1:301652956348:web:5773e288b7f491633e6cb9",
+            measurementId: "G-6BBJLB1FXN"),
       );
 
       debugPrint('User granted permission: ${settings.authorizationStatus}');
@@ -113,13 +125,37 @@ class PushNotifications {
   }
 
   static Future<String?> getFCMToken() async {
-    print('Geting token');
-    String? token = await _firebaseMessaging.getToken(
-      vapidKey:
-          'BOcSkZvnrPLaW2gZicyvBphOAQQPkEmx1tDa3cQV04zFKzmQrpmqLqgJe8Jogrnv5dXapc4AsTHj2i4Oe0ymTPU',
-    );
-    print('FCM Token: $token');
-    return token;
+    try {
+      debugPrint('Attempting to get FCM token...');
+
+      // For web, ensure messaging is properly initialized with service worker
+      if (kIsWeb) {
+        // This ensures the service worker is ready before token generation
+        await FirebaseMessaging.instance.setAutoInitEnabled(true);
+
+        // Explicitly request permissions if not granted
+        final NotificationSettings settings =
+            await _firebaseMessaging.requestPermission();
+
+        if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+          debugPrint('User denied notification permissions');
+          return null;
+        }
+      }
+
+      // Get token with VAPID key
+      String? token = await _firebaseMessaging.getToken(
+        vapidKey:
+            'BOcSkZvnrPLaW2gZicyvBphOAQQPkEmx1tDa3cQV04zFKzmQrpmqLqgJe8Jogrnv5dXapc4AsTHj2i4Oe0ymTPU',
+      );
+
+      debugPrint('Successfully obtained FCM token: ${token ?? 'NULL'}');
+      return token;
+    } catch (e, stackTrace) {
+      debugPrint('Error getting FCM token: $e');
+      debugPrint('Stack trace: $stackTrace');
+      return null;
+    }
   }
 
   static Future<bool> subscribeToChurchTopic(String church) async {
