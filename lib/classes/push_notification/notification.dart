@@ -8,6 +8,7 @@ import 'package:master/services/notification_service.dart';
 import 'package:master/ui/notifications/widgets/notificationSnackBar.dart';
 import 'package:master/util/converter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class PushNotifications {
   static final _firebaseMessaging = FirebaseMessaging.instance;
@@ -58,7 +59,11 @@ class PushNotifications {
       FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
       FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessageHandler);
 
-   
+       final serviceWorkerRegistration = 
+      await navigator.serviceWorker.register(
+        '/ChurchWeb/firebase-messaging-sw.js',
+        scope: '/ChurchWeb/',
+      );
 
       getFCMToken();
     } catch (e) {

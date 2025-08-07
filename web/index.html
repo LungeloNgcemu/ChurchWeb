@@ -64,7 +64,7 @@
 
     if ('serviceWorker' in navigator) {
   window.addEventListener('flutter-first-frame', function() {
-    navigator.serviceWorker.register('/ChurchWeb/firebase-messaging-sw.js', {
+    navigator.serviceWorker.register('./firebase-messaging-sw.js', {
       scope: '/ChurchWeb/'
     })
     .then(registration => {
