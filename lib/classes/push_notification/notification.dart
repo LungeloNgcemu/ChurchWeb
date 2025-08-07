@@ -59,7 +59,7 @@ class PushNotifications {
       FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
       FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessageHandler);
 
-      //  final serviceWorkerRegistration = 
+      //  final serviceWorkerRegistration =
       // await navigator.serviceWorker.register(
       //   '/ChurchWeb/firebase-messaging-sw.js',
       //   scope: '/ChurchWeb/',
@@ -91,7 +91,6 @@ class PushNotifications {
             message: body,
             contentType: contentType,
             color: Colors.black87,
-            
           ),
         ),
       ),
@@ -126,6 +125,7 @@ class PushNotifications {
     String churchName = convertName(church);
     try {
       String? token = await getFCMToken();
+      print('Token $token');
       if (token == null) return false;
       bool result =
           await notificationService.subscribeToTopic([token], churchName);
