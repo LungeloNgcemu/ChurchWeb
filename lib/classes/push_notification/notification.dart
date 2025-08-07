@@ -113,6 +113,7 @@ class PushNotifications {
   }
 
   static Future<String?> getFCMToken() async {
+    print('Geting token');
     String? token = await _firebaseMessaging.getToken(
       vapidKey:
           'BOcSkZvnrPLaW2gZicyvBphOAQQPkEmx1tDa3cQV04zFKzmQrpmqLqgJe8Jogrnv5dXapc4AsTHj2i4Oe0ymTPU',

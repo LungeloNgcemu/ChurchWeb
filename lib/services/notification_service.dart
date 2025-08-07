@@ -9,7 +9,7 @@ class NotificationService {
 
   Future<bool> subscribeToTopic(List<String> tokens, String topic) async {
     final url = Uri.parse('$baseUrl/api/notifications/subscribe');
-
+    print('Calling');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
