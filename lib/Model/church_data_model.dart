@@ -7,7 +7,7 @@ class ChurchDataModel {
   final double? gpsLong;
   final String? about;
   final String? timeOpen;
-  final String? contactNumber;
+  final dynamic? contactNumber;
   final String? color;
   final String? url;
   final String? api;

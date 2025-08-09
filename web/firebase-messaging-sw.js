@@ -26,4 +26,4 @@ messaging.onBackgroundMessage(async (payload) => {
     };
 
     self.registration.showNotification(notificationTitle, notificationOptions);
-}); a
+}); 
