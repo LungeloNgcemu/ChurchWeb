@@ -45,15 +45,15 @@ class PushNotifications {
         debugPrint('Got a message whilst in the foreground!');
         debugPrint('Message data: ${message.data}');
 
-        if (message.notification != null) {
-          debugPrint('Title: ${message.notification?.title}');
-          debugPrint('Body: ${message.notification?.body}');
+        if (message.data != null) {
+          debugPrint('Title: ${message.data['title']}');
+          debugPrint('Body: ${message.data['body']}');
 
           try {
             showAwesomeNotification(
               context: context,
-              title: message.notification?.title ?? 'New Notification',
-              body: message.notification?.body ?? 'You have a new notification',
+              title: message.data['title'] ?? 'New Notification',
+              body: message.data['body'] ?? 'You have a new notification',
               contentType: ContentType.success,
             );
           } catch (e) {
@@ -62,14 +62,14 @@ class PushNotifications {
         }
       });
 
-      RemoteMessage? initialMessage =
-          await _firebaseMessaging.getInitialMessage();
-      if (initialMessage != null) {
-        _handleMessage(initialMessage);
-      }
+      // RemoteMessage? initialMessage =
+      //     await _firebaseMessaging.getInitialMessage();
+      // if (initialMessage != null) {
+      //   _handleMessage(initialMessage);
+      // }
 
       // FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
-      // FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessageHandler);
+      FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessageHandler);
 
       //  final serviceWorkerRegistration =
       // await navigator.serviceWorker.register(
@@ -121,6 +121,9 @@ class PushNotifications {
 
   static Future<void> _firebaseBackgroundMessageHandler(
       RemoteMessage message) async {
+
+
+        
     debugPrint('Background message: ${message.messageId}');
   }
 
