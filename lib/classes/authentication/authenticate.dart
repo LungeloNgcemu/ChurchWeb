@@ -148,7 +148,7 @@ class Authenticate {
           buttonStyleData: const ButtonStyleData(
             padding: EdgeInsets.symmetric(horizontal: 16),
             height: 40,
-            width: 200,
+            width: 160,
           ),
           dropdownStyleData: const DropdownStyleData(
             maxHeight: 200,
