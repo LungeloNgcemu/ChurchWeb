@@ -1,4 +1,3 @@
-
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -96,9 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-
   Future<bool> updateNotification(bool value) async {
-
     setState(() {
       isLoading = true;
     });
@@ -107,8 +104,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .myMap['Project']?['ChurchName'] ??
         null;
 
-    print(churchName);
-
     if (churchName == null) {
       setState(() {
         isLoading = false;
@@ -116,22 +111,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return false;
     }
 
-    if (value) {
-      return PushNotifications.subscribeToChurchTopic(churchName!)
-          .then((bool value) {
-        setState(() {
-          isLoading = false;
+    try {
+      if (value) {
+        return PushNotifications.subscribeToChurchTopic(churchName!)
+            .then((bool value) {
+          setState(() {
+            isLoading = false;
+          });
+          return value;
         });
-        return value;
-      });
-    } else {
-      return PushNotifications.unsubscribeFromChurchTopic(churchName!)
-          .then((bool value) {
-        setState(() {
-          isLoading = false;
+      } else {
+        return PushNotifications.unsubscribeFromChurchTopic(churchName!)
+            .then((bool value) {
+          setState(() {
+            isLoading = false;
+          });
+          return value;
         });
-        return value;
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
       });
+
+      return false;
     }
   }
 

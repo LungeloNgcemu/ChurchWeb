@@ -42,8 +42,8 @@ class ChurchDataModel {
       logoAddress: json['LogoAddress'],
       address: json['Address'],
       read: json['Read'],
-      gpsLat: json['GpsLat']?.toDouble(),
-      gpsLong: json['GpsLong']?.toDouble(),
+      gpsLat: double.tryParse(json['GpsLat']?.toString() ?? ''),
+      gpsLong: double.tryParse(json['GpsLong']?.toString() ?? ''),
       about: json['About'],
       timeOpen: json['TimeOpen'],
       contactNumber: json['ContactNumber'],
@@ -56,7 +56,6 @@ class ChurchDataModel {
       expire: json['Expire'],
     );
   }
-
 
   Map<String, dynamic> toJson() {
     return {
