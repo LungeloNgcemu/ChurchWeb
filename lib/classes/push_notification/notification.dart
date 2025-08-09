@@ -69,7 +69,7 @@ class PushNotifications {
       }
 
       // FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
-      FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessageHandler);
+      // FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessageHandler);
 
       //  final serviceWorkerRegistration =
       // await navigator.serviceWorker.register(
