@@ -68,12 +68,12 @@ class PushNotifications {
         _handleMessage(initialMessage);
       }
 
-      FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
+      // FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
       FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessageHandler);
 
       //  final serviceWorkerRegistration =
       // await navigator.serviceWorker.register(
-      //   '/ChurchWeb/firebase-messaging-sw.js',
+      //   '/ChurchWeb/firebase-messaging-sw.js',y
       //   scope: '/ChurchWeb/',
       // );
 
