@@ -21,9 +21,9 @@ messaging.onBackgroundMessage(async (payload) => {
         body: payload.notification.body,
         icon: '/icons/Icon-192.png',
         badge: '/icons/Icon-192.png',
-        data: payload.data,
+        // data: payload.data,
         click_action: payload.notification.click_action,
     };
 
     self.registration.showNotification(notificationTitle, notificationOptions);
-});
+}); a
