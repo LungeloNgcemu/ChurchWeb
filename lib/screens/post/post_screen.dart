@@ -219,9 +219,49 @@ class _PostScreenState extends State<PostScreen>
     }
   }
 
-  void superbaseDeletePost(id) async {
+  // void superbaseDeletePost(String id) async {
+  //   try {
+  //     await supabase.from('Comments').delete().match({'PostId': id});
+  //     await supabase.from('Posts').delete().match({'id': id});
+
+
+  //   } catch (e) {
+  //     print('Error deleting post or comments: $e');
+  //   }
+  // }
+
+  void superbaseDeletePost(String id, String imageUrl) async {
+  try {
+    // 1. Delete comments
+    await supabase.from('Comments').delete().match({'PostId': id});
+
+    // 2. Delete post
     await supabase.from('Posts').delete().match({'id': id});
+
+    // 3. Delete image from Supabase Storage if imageUrl is not empty
+    if (imageUrl.isNotEmpty) {
+      final bucket = Provider.of<christProvider>(context, listen: false)
+              .myMap['Project']?['Bucket'] ??
+          "";
+
+  
+      final uri = Uri.parse(imageUrl);
+      final segments = uri.pathSegments;
+
+      if (segments.isNotEmpty) {
+    
+        final startIndex = segments.indexOf(bucket) + 1;
+        final filePath = segments.sublist(startIndex).join('/');
+
+   
+        await supabase.storage.from(bucket).remove([filePath]);
+      }
+    }
+  } catch (e) {
+    print('Error deleting post, comments, or image: $e');
   }
+}
+
 
   @override
   bool get wantKeepAlive => true;
@@ -242,16 +282,16 @@ class _PostScreenState extends State<PostScreen>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-        //                        MaterialButton(
-        //                         child: Text('data'),
-        //                         onPressed: () {
+                        //                        MaterialButton(
+                        //                         child: Text('data'),
+                        //                         onPressed: () {
 
-        //           final provider = Provider.of<christProvider>(context, listen: false);
+                        //           final provider = Provider.of<christProvider>(context, listen: false);
 
-        // final churchName = provider.myMap['Project']?['ChurchName'];
-        //         PushNotifications.sendMessageToTopic(
-        //             topic: churchName, title: "Hell", body: "World");
-        //       }),
+                        // final churchName = provider.myMap['Project']?['ChurchName'];
+                        //         PushNotifications.sendMessageToTopic(
+                        //             topic: churchName, title: "Hell", body: "World");
+                        //       }),
                         Visibility(
                           visible: Provider.of<christProvider>(context,
                                       listen: false)
@@ -408,7 +448,6 @@ class _PostScreenState extends State<PostScreen>
                   ),
                 ),
               ),
-       
               StreamBuilder(
                 stream: streamx,
                 builder: (context, snapshot) {
@@ -426,7 +465,6 @@ class _PostScreenState extends State<PostScreen>
                       // final postsData = snapshot.data?.docs;
 
                       final listDoc = snapshot.data;
-                      print('THIS IS SATA : $listDoc');
                       return SliverList(
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
@@ -436,7 +474,9 @@ class _PostScreenState extends State<PostScreen>
                               imageUrl: listDoc[index]['ImageUrl'] ?? '',
                               postId: listDoc[index]['id'].toString() ?? '',
                               onPressedDelete: () {
-                                superbaseDeletePost(listDoc[index]['id']);
+                                alertDelete(context, "Delete Post?", () async {
+                                  superbaseDeletePost(listDoc[index]['id'].toString() , listDoc[index]['ImageUrl']);
+                                });
                               },
                             );
                           },
@@ -576,26 +616,9 @@ class _SocialPostState extends State<SocialPost> {
               child: Text(widget.description ?? ""),
             ),
             Container(
-              color: Colors.grey[100],
+              // color: Colors.grey[100],
               height: 280.0,
               child: Image.network(widget.imageUrl!),
-              // CachedNetworkImage(
-              //   // will setup post image provider.
-              //   imageUrl: widget.imageUrl!,
-              //   placeholder: (context, url) => const Center(
-              //     child: SizedBox(
-              //       height: 40.0,
-              //       width: 40.0,
-              //       child: CircularProgressIndicator(
-              //         value: 1.0,
-              //       ),
-              //     ),
-              //   ),
-              //   errorWidget: (context, url, error) => Icon(Icons.error),
-              //   fit: BoxFit.cover,
-              //   // height: 250,
-              //   width: double.maxFinite,
-              // ),
             ),
             Row(
               children: [
@@ -662,9 +685,7 @@ class _SocialPostState extends State<SocialPost> {
                           return Text('No comments available.');
                         } else {
                           final comments = snapshot.data!;
-                          print(comments);
 
-                          // Display comments for the specific post
                           return SizedBox(
                             height: 130.0,
                             child: ListView.builder(

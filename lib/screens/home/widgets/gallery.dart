@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:full_screen_image/full_screen_image.dart';
 
 class Gallery extends StatefulWidget {
   Gallery({this.images, this.grid, Key? key}) : super(key: key);
@@ -27,39 +28,16 @@ class Tile extends StatelessWidget {
   final String? image;
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8.0),
-        border: Border.all(
-          color: Colors.grey, // Set the border color
-          width: 1.0, // Set the border width
-        ),
+    return FullScreenWidget(
+      disposeLevel: DisposeLevel.Low,
+      child: Center(
+        child: ClipRRect(
+            borderRadius: BorderRadius.circular(8.0),
+            child: Image.network(image ?? "",
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.error))),
       ),
-      child: ClipRRect(
-          borderRadius: BorderRadius.circular(8.0),
-          child: Image.network(image ?? "",
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.error))
-
-          // CachedNetworkImage(
-          //   imageUrl: image ?? "",
-          //   placeholder: (context, url) => const Center(
-          //     child: SizedBox(
-          //       height: 40.0,
-          //       width: 40.0,
-          //       child: CircularProgressIndicator(
-          //         value: 1.0,
-          //       ),
-          //     ),
-          //   ),
-          //   errorWidget: (context, url, error) =>
-          //       Icon(Icons.error),
-          //   fit: BoxFit.cover,
-          //   //height: 250,
-          //   //width: double.maxFinite,
-          // ),
-          ),
     );
   }
 }

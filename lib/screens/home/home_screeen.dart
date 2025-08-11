@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/church_init.dart';
 import 'package:master/classes/home_class.dart';
+import 'package:master/util/alerts.dart';
 import 'package:provider/provider.dart';
 import 'widgets/about_us.dart';
 import '../../classes/on_create_class.dart';
@@ -68,32 +69,7 @@ class _HomeScreenState extends State<HomeScreen>
               height: h * 0.2796,
               width: double.maxFinite,
               child: Image.asset("lib/images/clear.png"),
-              // child: homeClass.xbuildStreamBuilder(context, 'FrontImage'),
             ),
-            // Positioned(
-            //   top: 210.0,
-            //   left: 375.0,
-            //   child: Visibility(
-            //     visible: visbibity.visibilityToggle(context),
-            //     child: GestureDetector(
-            //       onTap: () async {
-            //         homeClass.uploadImageToSuperbase('FrontImage', context);
-            //         // final imagex = await _uploadImageToFirebase();
-            //         // uploadForSalon("FrontImage", imagex);
-            //       },
-            //       child: Container(
-            //         decoration: BoxDecoration(
-            //           borderRadius: BorderRadius.circular(5.0),
-            //           color: Colors.orange,
-            //         ),
-            //         child: const Padding(
-            //           padding: EdgeInsets.all(1.0),
-            //           child: Icon(Icons.edit, color: Colors.white),
-            //         ),
-            //       ),
-            //     ),
-            //   ),
-            // ),
           ],
         ),
         Padding(
@@ -131,18 +107,8 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
-                    // crossAxisAlignment: CrossAxisAlignment.center,
-                    // crossAxisAlignment: CrossAxisAlignment.center,
-                    // textB.locataseline: TextBaseline.alphabetic,
                     children: [
                       Icon(Icons.location_pin),
-                      // const Padding(
-                      //   padding: EdgeInsets.only(
-                      //     right: 8.0,
-                      //     top: 12.0,
-                      //   ),
-                      //   child: Icon(Icons.add_location,size: 15,),
-                      // ),
                       Padding(
                         padding: const EdgeInsets.only(left: 10.0),
                         child: Text(
@@ -198,14 +164,9 @@ class _HomeScreenState extends State<HomeScreen>
                             return SizedBox();
                           case ConnectionState.active:
                             if (snapshot.hasError) {
-                             
                             } else if (!snapshot.hasData) {
-                            
                             } else if (snapshot.hasData) {
-                           
-
                               final specs = snapshot.data;
-                             
 
                               return SizedBox(
                                 height: 150.0,
@@ -215,13 +176,20 @@ class _HomeScreenState extends State<HomeScreen>
                                   itemCount: specs.length,
                                   itemBuilder: (context, index) {
                                     return Minister(
-                                        tap: () {
-                                          homeClass.delete('Minister',
-                                              specs[index]['id']);
-                                        },
-                                        name: specs[index]['Name'],
-                                        work: specs[index]['Work'],
-                                        image: specs[index]['Image']);
+                                      onDoubleTap: () {
+                                        alertDelete(context, "Delete Minister?",
+                                            () async {
+                                          homeClass.delete(
+                                              context,
+                                              'Minister',
+                                              specs[index]['id'],
+                                              specs[index]['Image']);
+                                        });
+                                      },
+                                      name: specs[index]['Name'],
+                                      work: specs[index]['Work'],
+                                      image: specs[index]['Image'],
+                                    );
                                   },
                                 ),
                               );

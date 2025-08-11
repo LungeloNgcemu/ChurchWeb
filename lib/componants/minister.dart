@@ -6,14 +6,14 @@ class Minister extends StatelessWidget {
     this.name,
     this.work,
     this.image,
-    this.tap,
+    this.onDoubleTap,
     super.key,
   });
 
   String? name;
   String? work;
   String? image;
-  void Function()? tap;
+  void Function()? onDoubleTap;
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +21,7 @@ class Minister extends StatelessWidget {
       padding: const EdgeInsets.only(
           left: 10.0, right: 10.0, bottom: 10.0, top: 10.0),
       child: GestureDetector(
-        onDoubleTap: tap,
+        onDoubleTap: onDoubleTap,
         child: Container(
           decoration: BoxDecoration(
               color: Colors.white,

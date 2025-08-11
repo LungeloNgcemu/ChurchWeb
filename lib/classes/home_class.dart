@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:master/classes/sql_database.dart';
+import 'package:master/util/alerts.dart';
 import 'package:master/util/image_picker_custom.dart';
 import 'package:path/path.dart' as path;
 import 'package:provider/provider.dart';
@@ -14,6 +15,7 @@ import '../componants/global_booking.dart';
 import '../screens/home/widgets/gallery.dart';
 import '../providers/url_provider.dart';
 import 'dart:io';
+import 'package:full_screen_image/full_screen_image.dart';
 
 class HomeClass {
   Stream? gallery;
@@ -91,7 +93,10 @@ class HomeClass {
                       (context, index) {
                         return GestureDetector(
                             onDoubleTap: () {
-                              delete('Gallery', items[index]['id']);
+                              alertDelete(context, "Delete Image?", () async {
+                                delete(context, 'Gallery', items[index]['id'],
+                                    items[index]['Picture']);
+                              });
                             },
                             child: Tile(image: items[index]['Picture']));
                       },
@@ -113,8 +118,7 @@ class HomeClass {
       await _pickImage();
 
       if (_image != null) {
-
-              final fileName = 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final fileName = 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
         final String pathv = await supabase.storage
             .from(Provider.of<christProvider>(context, listen: false)
@@ -161,7 +165,7 @@ class HomeClass {
           }
 
           final imageUrl = snapshot.data[0]?['$path'];
-        
+
           return Container(
             height: h * 0.3,
             child: Image.network(
@@ -177,8 +181,25 @@ class HomeClass {
     );
   }
 
-  Future<void> delete(String what, id) async {
+  Future<void> delete(
+      BuildContext context, String what, id, String imageUrl) async {
     await supabase.from(what).delete().match({'id': id});
+
+    if (imageUrl.isNotEmpty) {
+      final provider = Provider.of<christProvider>(context, listen: false);
+      final bucket = provider.myMap['Project']?['Bucket'] ?? "";
+
+      final uri = Uri.parse(imageUrl);
+      final segments = uri.pathSegments;
+
+      if (segments.isNotEmpty) {
+        final startIndex = segments.indexOf(bucket) + 1;
+        final filePath = segments.sublist(startIndex).join('/');
+
+        await supabase.storage.from(bucket).remove([filePath]);
+        print('Deleted image from storage: $filePath');
+      }
+    }
   }
 
   void galleryInsert(
@@ -190,8 +211,6 @@ class HomeClass {
       await _pickImage();
 
       if (_image != null) {
-
-
         final fileName = 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
         final String pathv = await supabase.storage
@@ -200,7 +219,7 @@ class HomeClass {
             .uploadBinary('$fileName', _image!,
                 fileOptions:
                     const FileOptions(cacheControl: '3600', upsert: false));
-  
+
         final publicUrl = await supabase.storage
             .from(Provider.of<christProvider>(context, listen: false)
                 .myMap['Project']?['Bucket'])
@@ -215,7 +234,6 @@ class HomeClass {
         setState(() {
           isLoading = false;
         });
-
       }
     } catch (e) {
       print("Error uploading image to Supabase: $e");
