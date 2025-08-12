@@ -14,7 +14,7 @@ class InstallPwa {
  static Future<void> setInstalled() async {
   try {
     final prefs = await SharedPreferences.getInstance();
-    final success = await prefs.setString(_installedKey, "true");
+    final success = await prefs.setBool(_installedKey, true);
     debugPrint('setInstalled success: $success');
   } catch (e) {
     debugPrint('Error setting installed: $e');
@@ -29,7 +29,7 @@ class InstallPwa {
 
   static Future<bool> isInstalled() async {
     final prefs = await SharedPreferences.getInstance();
-    return await prefs.getString(_installedKey) == "true";
+    return await prefs.getBool(_installedKey) ?? false;
   }
 
   static Future<bool> isDismissed() async {
