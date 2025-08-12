@@ -109,7 +109,12 @@
   <script>
     let deferredPrompt;
 
-  
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      console.log('PWA install prompt available');
+    });
+
     function showInstallPrompt() {
       if (!deferredPrompt) {
         alert('Install prompt not available yet');
