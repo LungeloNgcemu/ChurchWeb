@@ -39,14 +39,14 @@ class _CrossRoadState extends State<CrossRoad> {
             "2. Select 'Add to Home Screen'.\n\n"
             "This will install the app on your device for the best experience.",
             () async {
-          InstallPwa.setInstalled();
+          await InstallPwa.setInstalled();
           Navigator.pop(context);
         });
       } else {
         alertInstall(context, "Install the app to get the best experience",
             () async {
+          await InstallPwa.setInstalled();
           InstallPwa.showInstallPrompt();
-          InstallPwa.setInstalled();
           Navigator.pop(context);
         });
       }
