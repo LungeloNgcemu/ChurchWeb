@@ -29,7 +29,7 @@ class InstallPwa {
 
   static Future<bool> isInstalled() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_installedKey) ?? false;
+    return await prefs.getBool(_installedKey) ?? false;
   }
 
   static Future<bool> isDismissed() async {
