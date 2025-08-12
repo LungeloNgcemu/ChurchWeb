@@ -28,6 +28,7 @@ class _CrossRoadState extends State<CrossRoad> {
 
   Future<void> checkInstall(BuildContext context) async {
     bool isInstalled = await InstallPwa.isInstalled();
+    print('isInstalled $isInstalled');
     if (!isInstalled) {
       String platform = InstallPwa.platform();
       print('platform $platform');
@@ -40,14 +41,12 @@ class _CrossRoadState extends State<CrossRoad> {
             "This will install the app on your device for the best experience.",
             () async {
           await InstallPwa.setInstalled();
-          Navigator.pop(context);
         });
       } else {
         alertInstall(context, "Install the app to get the best experience",
             () async {
           await InstallPwa.setInstalled();
           InstallPwa.showInstallPrompt();
-          Navigator.pop(context);
         });
       }
     }
