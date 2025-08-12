@@ -11,10 +11,16 @@ class InstallPwa {
     js.context.callMethod('showInstallPrompt');
   }
 
-  static Future<void> setInstalled() async {
+ static Future<void> setInstalled() async {
+  try {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_installedKey, true);
+    final success = await prefs.setBool(_installedKey, true);
+    debugPrint('setInstalled success: $success');
+  } catch (e) {
+    debugPrint('Error setting installed: $e');
   }
+}
+
 
   static Future<void> setDismissed() async {
     final prefs = await SharedPreferences.getInstance();
