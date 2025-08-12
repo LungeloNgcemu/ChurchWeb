@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:master/classes/authentication/authenticate.dart';
+import 'package:master/classes/install_pwa/install_pwa.dart';
 import 'package:master/classes/sql_database.dart';
 import 'package:master/componants/image_screen.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../componants/image_screen.dart';
+import 'package:master/util/alerts.dart';
 import '../../componants/extrabutton.dart';
-import 'package:master/databases/database.dart';
-
-// Choose if your a member or leader
 
 class CrossRoad extends StatefulWidget {
   const CrossRoad({super.key});
@@ -17,24 +14,42 @@ class CrossRoad extends StatefulWidget {
 }
 
 class _CrossRoadState extends State<CrossRoad> {
-
   Authenticate auth = Authenticate();
   SqlDatabase sql = SqlDatabase();
+  InstallPwa installPwa = InstallPwa();
 
-@override
+  @override
   void initState() {
     auth.endSession();
     sql.deleteBase();
-    // TODO: implement initState
+    checkInstall(context);
     super.initState();
   }
 
-
-  final Uri _url = Uri.parse('https://lungeloangcemu.github.io/Church-Connect-App-Site/');
-
-  Future<void> _launchUrl() async {
-    if (!await launchUrl(_url)) {
-      throw Exception('Could not launch $_url');
+  Future<void> checkInstall(BuildContext context) async {
+    bool isInstalled = await InstallPwa.isInstalled();
+    if (!isInstalled) {
+      String platform = InstallPwa.platform();
+      print('platform $platform');
+      if (platform == 'ios') {
+        await alertIos(
+            context,
+            "To install this app on iOS:\n\n"
+            "1. Tap the Share button (bottom center in Safari).\n"
+            "2. Select 'Add to Home Screen'.\n\n"
+            "This will install the app on your device for the best experience.",
+            () async {
+          InstallPwa.setInstalled();
+          Navigator.pop(context);
+        });
+      } else {
+        alertInstall(context, "Install the app to get the best experience",
+            () async {
+          InstallPwa.showInstallPrompt();
+          InstallPwa.setInstalled();
+          Navigator.pop(context);
+        });
+      }
     }
   }
 
@@ -79,10 +94,7 @@ class _CrossRoadState extends State<CrossRoad> {
         button2: ExtraButton(
           color: Colors.blue[900],
           skip: () {
-            //setState
-              Navigator.pushNamed(context, '/createAccount');
-            // _launchUrl();
-            //setState
+            Navigator.pushNamed(context, '/createAccount');
           },
           writing2: const Text(
             'Create Free Account',

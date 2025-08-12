@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:master/componants/tittle_head.dart';
-import '../../classes/church_init.dart';
 import '../../classes/minister_class.dart';
-import '../../componants/global_booking.dart';
-import '../../componants/overview.dart';
-
 import '../../componants/buttonChip.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
 
 class CreateMinister extends StatefulWidget {
   const CreateMinister({super.key});

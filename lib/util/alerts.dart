@@ -143,13 +143,64 @@ Future<bool?> alertLogout(BuildContext context, String message) async {
         onPressed: () async {
           ChurchInit church = ChurchInit();
           Navigator.of(context).pop();
-         await  church.clearProject(context);
+          await church.clearProject(context);
           Future.delayed(Duration(seconds: 3), () {});
           Navigator.of(context).pushReplacementNamed(RoutePaths.crossRoad);
         },
         width: 120,
         child: const Text(
           "logout",
+          style: TextStyle(color: Colors.white, fontSize: 20),
+        ),
+      )
+    ],
+  ).show();
+}
+
+Future<bool?> alertInstall(BuildContext context, String message,
+    Future<void> Function() install) async {
+  return Alert(
+    image: Image.asset('lib/images/clear.png'),
+    context: context,
+    desc: message,
+    buttons: [
+      DialogButton(
+        color: Colors.red,
+        onPressed: () async {
+          await install();
+          Navigator.of(context).pop(); // Close the dialog
+        },
+        width: 120,
+        child: const Text(
+          "Install",
+          style: TextStyle(color: Colors.white, fontSize: 20),
+        ),
+      )
+    ],
+  ).show();
+}
+
+Future<bool?> alertIos(
+    BuildContext context, String message, Future<void> Function() clear) async {
+  return Alert(
+    image: Image.asset('lib/images/clear.png'),
+    context: context,
+    desc: message,
+    style: const AlertStyle(
+      descStyle: TextStyle(
+        fontWeight: FontWeight.w100,
+      ),
+    ),
+    buttons: [
+      DialogButton(
+        color: Colors.red,
+        onPressed: () async {
+          await clear();
+          Navigator.of(context).pop(); // Close the dialog
+        },
+        width: 120,
+        child: const Text(
+          "Ok",
           style: TextStyle(color: Colors.white, fontSize: 20),
         ),
       )
