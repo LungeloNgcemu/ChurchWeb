@@ -158,7 +158,7 @@ Future<bool?> alertLogout(BuildContext context, String message) async {
 }
 
 Future<bool?> alertInstall(BuildContext context, String message,
-    Future<void> Function() install) async {
+    Future<void> Function() install, Future<void> Function() alreadyInstall) async {
   return Alert(
     image: Image.asset('lib/images/clear.png'),
     context: context,
@@ -175,7 +175,19 @@ Future<bool?> alertInstall(BuildContext context, String message,
           "Install",
           style: TextStyle(color: Colors.white, fontSize: 20),
         ),
-      )
+      ),
+      DialogButton(
+        color: Colors.red,
+        onPressed: () async {
+          await alreadyInstall();
+          Navigator.of(context).pop(); // Close the dialog
+        },
+        width: 120,
+        child: const Text(
+          "Done",
+          style: TextStyle(color: Colors.white, fontSize: 20),
+        ),
+      ),
     ],
   ).show();
 }
