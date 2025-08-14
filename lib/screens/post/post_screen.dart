@@ -449,7 +449,7 @@ class _PostScreenState extends State<PostScreen>
                   if (snapshot.connectionState == ConnectionState.active) {
                     if (snapshot.hasError) {
                       return SliverToBoxAdapter(
-                        child: Text('Error: ${snapshot.error}'),
+                        child: Text('Connecting...'),
                       );
                     } else if (!snapshot.hasData ||
                         snapshot.data.isEmpty == true) {

@@ -312,7 +312,7 @@ class _MediaScreenState extends State<MediaScreen>
                   if (snapshot.connectionState == ConnectionState.active) {
                     if (snapshot.hasError) {
                       return SliverToBoxAdapter(
-                          child: Text('Error: ${snapshot.error}'));
+                          child: Text('Connecting...'));
                     } else if (!snapshot.hasData ||
                         snapshot.data?.isEmpty == true) {
                       return SliverToBoxAdapter(
