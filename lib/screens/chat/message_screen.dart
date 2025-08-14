@@ -204,8 +204,15 @@ class _MessageScreenState extends State<MessageScreen> {
                                                       context,
                                                       message,
                                                       () async {
+                                                      
+
                                                         await deleteMessage(
                                                             rev[index]['id']);
+
+                                                        messageClass.calling(
+                                                            context, setState);
+
+                                                       
                                                       },
                                                     );
                                                   },
@@ -223,8 +230,14 @@ class _MessageScreenState extends State<MessageScreen> {
                                                       context,
                                                       message,
                                                       () async {
+                                                      
                                                         await deleteMessage(
                                                             rev[index]['id']);
+
+                                                        messageClass.calling(
+                                                            context, setState);
+
+                                                      
                                                       },
                                                     );
                                                   },
@@ -299,7 +312,8 @@ class _MessageScreenState extends State<MessageScreen> {
                                               context,
                                               listen: false)
                                           .myMap['Project']?['ChurchName'],
-                                      title: messageClass.currentUser['UserName'],
+                                      title:
+                                          messageClass.currentUser['UserName'],
                                       body: message);
                                 },
                                 icon: Icon(Icons.send_outlined)),
@@ -379,24 +393,6 @@ class MessageBubbleLeft extends StatelessWidget {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(50.0),
                           child: Image.network(image ?? ""),
-
-                          // CachedNetworkImage(
-                          //   imageUrl: image ?? "",
-                          //   placeholder: (context, url) => const Center(
-                          //     child: SizedBox(
-                          //       height: 40.0,
-                          //       width: 40.0,
-                          //       child: CircularProgressIndicator(
-                          //         value: 1.0,
-                          //       ),
-                          //     ),
-                          //   ),
-                          //   errorWidget: (context, url, error) =>
-                          //       Icon(Icons.error),
-                          //   fit: BoxFit.cover,
-                          //   //height: 250,
-                          //   //width: double.maxFinite,
-                          // ),
                         ),
                       ),
                     ],
@@ -419,8 +415,8 @@ class MessageBubbleLeft extends StatelessWidget {
                               child: Padding(
                                 padding: const EdgeInsets.all(13.0),
                                 child: Text(
-                                  text ?? '', style: TextStyle(fontSize: 16.0),
-                                  // overflow: TextOverflow.ellipsis,
+                                  text ?? '',
+                                  style: TextStyle(fontSize: 16.0),
                                   overflow: TextOverflow.clip,
                                   softWrap: true,
                                   maxLines: 4,
@@ -437,9 +433,8 @@ class MessageBubbleLeft extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6.0),
-              child: Container(
+              child: SizedBox(
                 height: h * 0.03,
-                // color: Colors.red,
                 child: Text(person ?? "", softWrap: true),
               ),
             ),
@@ -510,8 +505,7 @@ class _MessageBubbleRightState extends State<MessageBubbleRight> {
                                   padding: const EdgeInsets.all(13.0),
                                   child: Text(
                                     widget.text ?? '',
-                                    style: TextStyle(fontSize: 16.0),
-                                    // overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 16.0),
                                     overflow: TextOverflow.clip,
                                     softWrap: true,
                                     maxLines: 4,
@@ -535,35 +529,16 @@ class _MessageBubbleRightState extends State<MessageBubbleRight> {
                         color: Colors.grey, shape: BoxShape.circle),
                     child: ClipRRect(
                         borderRadius: BorderRadius.circular(50.0),
-                        child: Image.network(widget.image ?? "")
-
-                        // CachedNetworkImage(
-                        //   imageUrl: widget.image ?? "",
-                        //   placeholder: (context, url) => const Center(
-                        //     child: SizedBox(
-                        //       height: 40.0,
-                        //       width: 40.0,
-                        //       child: CircularProgressIndicator(
-                        //         value: 1.0,
-                        //       ),
-                        //     ),
-                        //   ),
-                        //   errorWidget: (context, url, error) => Icon(Icons.error),
-                        //   fit: BoxFit.cover,
-                        //   //height: 250,
-                        //   //width: double.maxFinite,
-                        // ),
-                        ),
+                        child: Image.network(widget.image ?? "")),
                   ),
                 ),
               ],
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6.0),
-              child: Container(
+              child: SizedBox(
                 height: h * 0.04,
-                //color: Colors.red,
-                child: Text("Me ", softWrap: true),
+                child: const Text("Me ", softWrap: true),
               ),
             ),
           ],

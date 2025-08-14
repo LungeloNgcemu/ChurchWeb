@@ -224,44 +224,39 @@ class _PostScreenState extends State<PostScreen>
   //     await supabase.from('Comments').delete().match({'PostId': id});
   //     await supabase.from('Posts').delete().match({'id': id});
 
-
   //   } catch (e) {
   //     print('Error deleting post or comments: $e');
   //   }
   // }
 
   void superbaseDeletePost(String id, String imageUrl) async {
-  try {
-    // 1. Delete comments
-    await supabase.from('Comments').delete().match({'PostId': id});
+    try {
+      // 1. Delete comments
+      await supabase.from('Comments').delete().match({'PostId': id});
 
-    // 2. Delete post
-    await supabase.from('Posts').delete().match({'id': id});
+      // 2. Delete post
+      await supabase.from('Posts').delete().match({'id': id});
 
-    // 3. Delete image from Supabase Storage if imageUrl is not empty
-    if (imageUrl.isNotEmpty) {
-      final bucket = Provider.of<christProvider>(context, listen: false)
-              .myMap['Project']?['Bucket'] ??
-          "";
+      // 3. Delete image from Supabase Storage if imageUrl is not empty
+      if (imageUrl.isNotEmpty) {
+        final bucket = Provider.of<christProvider>(context, listen: false)
+                .myMap['Project']?['Bucket'] ??
+            "";
 
-  
-      final uri = Uri.parse(imageUrl);
-      final segments = uri.pathSegments;
+        final uri = Uri.parse(imageUrl);
+        final segments = uri.pathSegments;
 
-      if (segments.isNotEmpty) {
-    
-        final startIndex = segments.indexOf(bucket) + 1;
-        final filePath = segments.sublist(startIndex).join('/');
+        if (segments.isNotEmpty) {
+          final startIndex = segments.indexOf(bucket) + 1;
+          final filePath = segments.sublist(startIndex).join('/');
 
-   
-        await supabase.storage.from(bucket).remove([filePath]);
+          await supabase.storage.from(bucket).remove([filePath]);
+        }
       }
+    } catch (e) {
+      print('Error deleting post, comments, or image: $e');
     }
-  } catch (e) {
-    print('Error deleting post, comments, or image: $e');
   }
-}
-
 
   @override
   bool get wantKeepAlive => true;
@@ -475,8 +470,12 @@ class _PostScreenState extends State<PostScreen>
                               postId: listDoc[index]['id'].toString() ?? '',
                               onPressedDelete: () {
                                 alertDelete(context, "Delete Post?", () async {
-                                  superbaseDeletePost(listDoc[index]['id'].toString() , listDoc[index]['ImageUrl']);
+                                  superbaseDeletePost(
+                                      listDoc[index]['id'].toString(),
+                                      listDoc[index]['ImageUrl']);
                                 });
+
+                                streamDelegate();
                               },
                             );
                           },
