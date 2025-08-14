@@ -200,6 +200,9 @@ class _HomeScreenState extends State<HomeScreen>
                                                     'Minister',
                                                     specs[index]['id'],
                                                     specs[index]['Image']);
+
+                                                homeClass.ministerInit(
+                                                    setState, context);
                                               });
                                             },
                                             name: specs[index]['Name'],
