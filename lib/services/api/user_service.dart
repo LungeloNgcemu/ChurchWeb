@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:master/Model/existing_user_model.dart';
+import 'package:master/Model/user_details_model.dart';
 import 'package:master/constants/constants.dart';
 import 'package:http/http.dart' as http;
 
@@ -37,6 +38,27 @@ class UserService {
         final data = jsonDecode(response.body);
 
         return data['count'];
+      }
+
+      return null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  static Future<UserDetails?> getUserData(
+      String phoneNumber, String uniqueChurchId) async {
+    try {
+      final response = await http.post(
+          Uri.parse('${BaseUrl.baseUrl}/api/user/getUserDetails'),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode(
+              {'phoneNumber': phoneNumber, 'uniqueChurchId': uniqueChurchId}));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        return UserDetails.fromJson(data);
       }
 
       return null;

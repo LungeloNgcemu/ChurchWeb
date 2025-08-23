@@ -59,12 +59,12 @@ class _CodeAppwriteState extends State<CodeAppwrite> {
                 ],
               ),
               ExtraButton(
-                skip: () {
+                skip: () async {
                   setState(() {
                     isLoading = true;
                   });
 
-                  auth.submitCode(context, code);
+                  await Authenticate.submitCode(context, code);
 
                   Future.delayed(const Duration(seconds: 3), () {
                     setState(() {

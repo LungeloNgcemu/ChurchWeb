@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:master/Model/churchItemModel.dart';
+import 'package:master/Model/church_data_model.dart';
+import 'package:master/Model/church_detail_model.dart';
 import 'package:master/componants/global_booking.dart';
+import 'package:master/services/api/general_data_service.dart';
 import 'package:master/services/api/user_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -25,16 +28,17 @@ class Restrictions {
     }
   }
 
-  static Future<String> getExpiryDate(String churchName) async {
+  static Future<String> getExpiryDate(String? uniqueChurchId) async {
     try {
-      final expireMap = await supabase
-          .from("Church")
-          .select("Expire")
-          .eq("ChurchName", churchName)
-          .single();
+      ChurchDetailModel? churchData =
+          await GeneralDataService.getChurchData(uniqueChurchId!);
 
-      final expire = expireMap["Expire"];
-      return expire;
+      if (churchData == null) {
+        return "";
+      }
+
+      final expire = churchData.expire;
+      return expire!;
     } catch (error) {
       print("get expiry error : $error");
       return "";
@@ -42,14 +46,11 @@ class Restrictions {
   }
 
   static bool isExpired(String expiryDate) {
-    //expiryDate is in the 2024-08-01 format
-
     DateTime now = DateTime.now();
     DateTime date = DateTime(now.year, now.month, now.day);
 
     DateTime expiry = DateTime.parse(expiryDate);
 
-//return true or false;
     return expiry.isBefore(date);
   }
 
@@ -90,8 +91,8 @@ class Restrictions {
 
   static Future<int> countChurchUsers(String uniqueChurchId) async {
     try {
-
-      final int? userNumber = await UserService.countChurchUsers(uniqueChurchId);
+      final int? userNumber =
+          await UserService.countChurchUsers(uniqueChurchId);
 
       return userNumber!;
     } catch (error) {
@@ -99,7 +100,8 @@ class Restrictions {
     }
   }
 
-  static Future<bool> userExistInChurch(String number, String uniqueChurchId) async {
+  static Future<bool> userExistInChurch(
+      String number, String uniqueChurchId) async {
     try {
       final answer = await UserService.userExist(number, uniqueChurchId);
 
@@ -117,24 +119,17 @@ class Restrictions {
     required String number,
     required ChurchItemModel selectedChurch,
   }) async {
-    print('restrictionAlgorithm $number  and For ${selectedChurch.plan}');
     var canAdd = false;
 
     try {
       final answer = await userExistInChurch(number, selectedChurch.uniqueId!);
-print(answer);
       if (answer == false) {
-
         final maxLimit = switchToUserNumber(selectedChurch.plan!);
-print(maxLimit);
         final userNumber = await countChurchUsers(selectedChurch.uniqueId!);
-print(userNumber);
         final canAdd = canAddUser(maxLimit, userNumber);
-print(canAdd);
         return canAdd;
       } else {
         canAdd = true;
-print(canAdd);
         return canAdd;
       }
     } catch (error) {

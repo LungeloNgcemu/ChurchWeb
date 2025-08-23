@@ -112,13 +112,9 @@ class _MessageScreenState extends State<MessageScreen> {
                             return Center(child: Text("Loading Messages"));
                           case ConnectionState.active:
                             if (snap.hasError) {
-                              print(snap.error);
                             } else if (!snap.hasData) {
-                              print('No Data Here');
                             } else if (snap.hasData) {
                               final rev = snap.data;
-
-                              print('THIS IS REV : $rev');
 
                               final String current =
                                   messageClass.currentUser['PhoneNumber'] ?? '';
@@ -195,7 +191,7 @@ class _MessageScreenState extends State<MessageScreen> {
                                                   text: rev[index]['Message'],
                                                   image: rev[index]
                                                           ['ProfileImage'] ??
-                                                      '',  
+                                                      '',
                                                   callBack: () async {
                                                     const message =
                                                         "Delete this message?";
@@ -287,10 +283,8 @@ class _MessageScreenState extends State<MessageScreen> {
                                     Provider.of<CurrentRoomIdProvider>(context,
                                             listen: false)
                                         .currentRoomId,
-                                    Provider.of<CurrentUserImageProvider>(
-                                            context,
-                                            listen: false)
-                                        .currentUserImage,
+                                    messageClass.currentUser['ProfileImage'] ??
+                                        '',
                                     messageClass.currentUser['PhoneNumber'] ??
                                         '',
                                     setState,

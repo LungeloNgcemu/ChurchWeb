@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:master/Model/token_user.dart';
+import 'package:master/Model/user_details_model.dart';
 import 'package:master/classes/push_notification/notification.dart';
 import 'package:master/componants/adaptable_button.dart';
 import 'package:master/componants/extrabutton.dart';
@@ -9,6 +10,7 @@ import 'package:master/componants/global_booking.dart';
 import 'package:master/componants/text_input.dart';
 import 'package:master/databases/database.dart';
 import 'package:master/services/api/token_service.dart';
+import 'package:master/services/api/user_service.dart';
 import 'package:master/util/alerts.dart';
 import 'package:master/util/image_picker_custom.dart';
 import 'package:provider/provider.dart';
@@ -64,17 +66,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (number.isEmpty) {
         throw Exception('User phone number not found');
       }
-      final item = await supabase
-          .from('User')
-          .select('ProfileImage, UserName')
-          .eq('PhoneNumber', number)
-          .single();
+
+      UserDetails? userDetails = await UserService.getUserData(
+          user.phoneNumber!, user.uniqueChurchId!);
+
+      if (userDetails == null) {
+        throw Exception('User details not found');
+      }
 
       currentUser = {
-        "UserName": item["UserName"],
-        "ProfileImage": item["ProfileImage"],
+        "UserName": userDetails?.userName,
+        "ProfileImage": userDetails?.profileImage,
       };
 
+      print(currentUser["ProfileImage"]);
       setState(() {
         controllerName.text = currentUser["UserName"];
         image = currentUser["ProfileImage"];

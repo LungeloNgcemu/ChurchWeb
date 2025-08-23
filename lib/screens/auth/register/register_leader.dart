@@ -261,7 +261,7 @@ class _RegisterLeaderState extends State<RegisterLeader> {
                             print('canAdd $canAdd');
 
                             if (canAdd) {
-                              Authenticate.authenticate(context);
+                              await Authenticate.authenticate(context);
 
                               Future.delayed(Duration(seconds: 1), () {
                                 setState(() {
@@ -270,6 +270,8 @@ class _RegisterLeaderState extends State<RegisterLeader> {
                                   codeController.clear();
                                 });
                               });
+
+
                             } else {
                               alertReturn(context,
                                   "The church plan is currently full, please contact the church owner to increse plan ");
@@ -286,6 +288,12 @@ class _RegisterLeaderState extends State<RegisterLeader> {
                         } else {
                           alertReturn(context, "Please Select a church");
                         }
+
+                        Future.delayed(Duration(seconds: 5), () {
+                          setState(() {
+                            isLoading = false;
+                          });
+                        });
                       },
                       writing2: const Text(
                         'Register/Login',

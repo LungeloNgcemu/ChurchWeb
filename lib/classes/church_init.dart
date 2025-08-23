@@ -1,10 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:master/Model/churchItemModel.dart';
+import 'package:master/Model/church_data_model.dart';
+import 'package:master/Model/church_detail_model.dart';
 import 'package:master/Model/token_user.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/restrictions.dart';
 import 'package:master/classes/sql_database.dart';
 import 'package:master/constants/constants.dart';
+import 'package:master/services/api/general_data_service.dart';
 import 'package:master/services/api/token_service.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -36,13 +39,21 @@ class ChurchInit {
     return !value;
   }
 
-  static Future<bool> expiryExpire(String churchName) async {
+  static Future<bool> expiryExpire(String? uniqueId) async {
     try {
-      final exp = await Restrictions.getExpiryDate(churchName);
+      print('unique 1');
+      final exp = await Restrictions.getExpiryDate(uniqueId);
+      print('unique 2');
+
       if (exp == 'none') {
         return true;
       }
+
+      print('unique 3');
+
       final answer = Restrictions.isExpired(exp);
+      print('unique 4');
+
       return invert(answer);
     } catch (error) {
       print("Expire Expire ERROR");
@@ -76,37 +87,12 @@ class ChurchInit {
     }
   }
 
-  Future<void> getRole(BuildContext context) async {
+  Future<ChurchDetailModel?> getChurch(String uniqueId) async {
     try {
-      final user = await getCurrentUser(context);
-
-      final number = user['PhoneNumber'];
-      final data = await supabase
-          .from('User')
-          .select()
-          .eq('PhoneNumber', number)
-          .single();
-
-      role = data["Role"];
-
-      Provider.of<RoleProvider>(context, listen: false)
-          .changeRole(newValue: role!);
-    } catch (error) {
-      print('Cant establish User Role');
-    }
-  }
-
-  Future<Map<String, dynamic>> getChurch(church) async {
-    try {
-      final data = await supabase
-          .from('Church')
-          .select()
-          .eq('ChurchName', church)
-          .single();
-      return data;
+      return await GeneralDataService.getChurchData(uniqueId);
     } catch (error) {
       print('Error fetching church data: $error');
-      return {};
+      return null;
     }
   }
 
@@ -127,7 +113,7 @@ class ChurchInit {
 
     ChurchItemModel? churchData = await SqlDatabase.getChurchItem();
 
-    bool expire = await expiryExpire(churchData?.expire ?? "");
+    bool expire = await expiryExpire(churchData!.uniqueId);
 
     if (churchData == null) {
       return;

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:master/Model/token_user.dart';
+import 'package:master/Model/user_details_model.dart';
 import 'package:master/services/api/token_service.dart';
+import 'package:master/services/utils/user_details_service.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -30,18 +32,15 @@ class MessageClass {
     });
   }
 
-// one table
   Future<Map<String, dynamic>> getCurrentUser(BuildContext context) async {
-    TokenUser? user = await TokenService.tokenUser();
+    UserDetails? user = await UserDetailsService.getUserDetailsData();
 
-    print('user name ${user?.userName}');
-    print('user id ${user?.userId}');
-    print('user phone number ${user?.phoneNumber}');
     try {
       Map<String, dynamic> userData = {
         "UserName": user?.userName,
         "UserId": user?.userId,
         "PhoneNumber": user?.phoneNumber,
+        'ProfileImage': user?.profileImage
       };
 
       currentUserImage(context, user?.phoneNumber ?? '');

@@ -210,7 +210,7 @@ class Authenticate {
     );
   }
 
-  void submitCode(BuildContext context, String code) async {
+ static Future<void> submitCode(BuildContext context, String code) async {
     String userId = Provider.of<tockenProvider>(context, listen: false).tocken;
 
     String? phoneNumber =
