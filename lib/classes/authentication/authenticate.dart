@@ -1,9 +1,13 @@
 import 'package:appwrite/models.dart';
+import 'package:master/Model/churchItemModel.dart';
 import 'package:master/classes/sql_database.dart';
 import 'package:master/constants/constants.dart';
 import 'package:master/databases/database.dart';
 import 'package:flutter/material.dart';
+import 'package:master/providers/registration_provider.dart';
 import 'package:master/providers/user_data_provider.dart';
+import 'package:master/services/api/auth_service.dart';
+import 'package:master/services/api/user_service.dart';
 import 'package:master/util/alerts.dart';
 
 import 'package:provider/provider.dart';
@@ -17,14 +21,14 @@ import 'otp_auth.dart';
 
 class Authenticate {
   String? selectedGender;
-  String? selectedChurch;
+  ChurchItemModel? selectedChurch;
   String role = "";
   String churchCode = "";
   String churchId = "";
   List<String> churchList = [];
 
   SqlDatabase sql = SqlDatabase();
-  AppWriteDataBase connect = AppWriteDataBase();
+  // AppWriteDataBase connect = AppWriteDataBase();
   SupabaseClient supabase = Supabase.instance.client;
   OtpAuth _otpAuth = OtpAuth();
 
@@ -56,12 +60,12 @@ class Authenticate {
     }
   }
 
-  void endSession() async {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final result = await connect.account.deleteSessions();
-      print(result);
-    });
-  }
+  // void endSession() async {
+  //   WidgetsBinding.instance.addPostFrameCallback((_) async {
+  //     final result = await connect.account.deleteSessions();
+  //     print(result);
+  //   });
+  // }
 
   Widget dropDownMenu(BuildContext context, List<String> items,
       Function(void Function()) setState) {
@@ -91,6 +95,11 @@ class Authenticate {
           onChanged: (String? value) {
             setState(() {
               selectedGender = value;
+
+              Provider.of<RegistrationProvider>(context, listen: false)
+                  .registrationModel
+                  .gender = value;
+
               context
                   .read<SelectedGenderProvider>()
                   .updateGender(newValue: selectedGender!);
@@ -109,11 +118,11 @@ class Authenticate {
     );
   }
 
-  Widget dropSearch(BuildContext context, List<String> churches,
+  Widget dropSearch(BuildContext context, List<ChurchItemModel> churches,
       Function(void Function()) setState, TextEditingController controller) {
     return Center(
       child: DropdownButtonHideUnderline(
-        child: DropdownButton2<String>(
+        child: DropdownButton2<ChurchItemModel>(
           isExpanded: true,
           hint: Text(
             'Select Church',
@@ -126,7 +135,7 @@ class Authenticate {
               .map((item) => DropdownMenuItem(
                     value: item,
                     child: Text(
-                      item,
+                      item.churchName ?? '',
                       style: const TextStyle(
                         fontSize: 14,
                       ),
@@ -140,10 +149,11 @@ class Authenticate {
             });
 
             context
-                .read<SelectedChurchProvider>()
-                .updateSelectedChurch(newValue: selectedChurch!);
+                .read<RegistrationProvider>()
+                .updateRegistration(uniqueChurchId: selectedChurch?.uniqueId);
 
-            getChurchCode(context, selectedChurch!);
+            Provider.of<SelectedChurchProvider>(context, listen: false)
+                .updateSelectedChurch(newValue: selectedChurch!);
           },
           buttonStyleData: const ButtonStyleData(
             padding: EdgeInsets.symmetric(horizontal: 16),
@@ -203,11 +213,33 @@ class Authenticate {
   void submitCode(BuildContext context, String code) async {
     String userId = Provider.of<tockenProvider>(context, listen: false).tocken;
 
-    try {
-      final session = await connect.account
-          .updatePhoneSession(userId: userId, secret: code);
+    String? phoneNumber =
+        Provider.of<RegistrationProvider>(context, listen: false)
+            .registrationModel
+            .phoneNumber;
+    String? userName = Provider.of<RegistrationProvider>(context, listen: false)
+        .registrationModel
+        .userName;
+    String? gender = Provider.of<RegistrationProvider>(context, listen: false)
+        .registrationModel
+        .gender;
+    String? selectedChurch =
+        Provider.of<SelectedChurchProvider>(context, listen: false)
+            .selectedChurch
+            .churchName;
+    String? role = Provider.of<RegistrationProvider>(context, listen: false)
+        .registrationModel
+        .role;
+    String? uniqueChurchId =
+        Provider.of<RegistrationProvider>(context, listen: false)
+            .registrationModel
+            .uniqueChurchId;
 
-      if (session != null) {
+    try {
+      bool result = await AuthService.verifyOtp(phoneNumber ?? '', code, userName ?? '',
+          gender ?? '', selectedChurch ?? '', role ?? '', uniqueChurchId ?? '');
+
+      if (result) {
         Navigator.of(context).pushNamedAndRemoveUntil(
           RoutePaths.church,
           (Route<dynamic> route) => false,
@@ -220,255 +252,53 @@ class Authenticate {
     }
   }
 
-  // void superbaseSubmitCode(
-  //     BuildContext context, String number, String code) async {
-  //   User? user = await _otpAuth.superbaseVerifyOtpLogin(supabase, number, code);
-  //
-  //   if (user != null) {
-  //     Navigator.of(context).pushNamedAndRemoveUntil(
-  //       RoutePaths.church,
-  //       (Route<dynamic> route) => false,
-  //     );
-  //   } else {
-  //     alertReturn(context, 'The code entered is invalid');
-  //   }
-  // }
-
-  Future<void> superbaseOtpLogin(BuildContext context, String number) async {
-    await _otpAuth.superbaseOtpLogin(supabase, number);
-    Provider.of<UserDataProvider>(context, listen: false)
-        .updatePhoneNUmber(number);
-  }
-
   void signOut() async {
-    await connect.account.deleteSessions();
-    print("Session Refreshed");
+    // await connect.account.deleteSessions();
+    // print("Session Refreshed");
   }
 
-  Future<void> superbaseAccountLogin(BuildContext context, String number,
-      String name, String role, String gender) async {
+  static Future<void> authenticate(BuildContext context) async {
     try {
-      final phoneNumber = number;
+      final registrationData =
+          context.read<RegistrationProvider>().registrationModel;
 
-      final existingUser = await supabase
-          .from("User")
-          .select("UserId, Role")
-          .eq('PhoneNumber', phoneNumber)
-          .maybeSingle();
+      final existingUser = await UserService.userExist(
+          registrationData.phoneNumber!, registrationData.uniqueChurchId!);
 
       if (existingUser != null) {
-        if (role == existingUser["Role"]) {
-          await superbaseOtpLogin(context, phoneNumber);
-          Navigator.pushNamed(context, RoutePaths.code);
-        } else {
-          alertReturn(context, "You are in the Wrong Registration screen");
-        }
-      } else {
-        if (role == "Admin" && churchCode != churchId) {
-          alertReturn(context, "Wrong Church Code");
-          return;
-        }
+        if (registrationData.role == existingUser.role) {
+          if (registrationData.role == Role.admin) {
+            final isPasswordValid = await AuthService.checkPassword(
+                registrationData.password!, registrationData.uniqueChurchId!);
 
-        final userId = Uuid().v6();
-
-        await superbaseOtpLogin(context, phoneNumber);
-
-        await supabase.from("User").insert({
-          "UserName": name,
-          "UserId": userId,
-          'PhoneNumber': phoneNumber,
-          'Gender': gender,
-          'Church': selectedChurch,
-          'Role': role,
-        });
-
-        Navigator.pushNamed(context, RoutePaths.code);
-      }
-    } catch (error) {
-      print("Error: $error");
-      alertReturn(context, "Problem with Number");
-    }
-  }
-
-  // Future<void> createPhoneAccount1(BuildContext context, String number,
-  //     String name, String role, String gender) async {
-  //   try {
-  //     final phoneNumber = number;
-  //     final existingUser = await supabase
-  //         .from("User")
-  //         .select("UserId, Role")
-  //         .eq('PhoneNumber', phoneNumber)
-  //         .single();
-  //
-  //     final userId =
-  //         existingUser != null ? existingUser["UserId"] : Uuid().v6();
-  //
-  //     final userRole = existingUser["Role"];
-  //
-  //     if (role == userRole) {
-  //       final sessionToken = await connect.account.createPhoneSession(
-  //         userId: userId,
-  //         phone: phoneNumber,
-  //       );
-  //
-  //       context
-  //           .read<tockenProvider>()
-  //           .updateTocken(newValue: sessionToken.userId);
-  //
-  //       if (sessionToken != null) {
-  //         Navigator.pushNamed(context, '/code');
-  //       }
-  //     } else {
-  //       alertReturn(context, "You are in the Wrong Registration screen");
-  //     }
-  //   } catch (error) {
-  //     try {
-  //       if (role == "Admin") {
-  //         if (churchCode == churchId) {
-  //           final phoneNumber = number;
-  //           final userId = Uuid().v6();
-  //
-  //           final sessionToken = await connect.account.createPhoneSession(
-  //             userId: userId,
-  //             phone: phoneNumber,
-  //           );
-  //
-  //           await supabase.from("User").insert({
-  //             "UserName": name,
-  //             "UserId": userId,
-  //             'PhoneNumber': phoneNumber,
-  //             'Gender': selectedGender,
-  //             'Church': selectedChurch,
-  //             'Role': role,
-  //             'Gender': gender,
-  //           });
-  //
-  //           context
-  //               .read<tockenProvider>()
-  //               .updateTocken(newValue: sessionToken.userId);
-  //
-  //           Navigator.pushNamed(context, '/code');
-  //         } else {
-  //           //wromg church code
-  //
-  //           alertReturn(context, "Wrong Church Code");
-  //         }
-  //       } else {
-  //         final phoneNumber = number;
-  //         final userId = Uuid().v6();
-  //
-  //         final sessionToken = await connect.account.createPhoneSession(
-  //           userId: userId,
-  //           phone: phoneNumber,
-  //         );
-  //
-  //         await supabase.from("User").insert({
-  //           "UserName": name,
-  //           "UserId": userId,
-  //           'PhoneNumber': phoneNumber,
-  //           'Gender': selectedGender,
-  //           'Church': selectedChurch,
-  //           'Role': role,
-  //           'Gender': gender,
-  //         });
-  //
-  //         context
-  //             .read<tockenProvider>()
-  //             .updateTocken(newValue: sessionToken.userId);
-  //
-  //         Navigator.pushNamed(context, '/code');
-  //       }
-  //     } catch (e) {
-  //       alertReturn(context, "Problem with Number");
-  //     }
-  //     print(error);
-  //   }
-  // }
-
-  Future<Token?> createPhoneSession(
-    BuildContext context,
-    String userId,
-    String phoneNumber,
-  ) async {
-    try {
-      final token = await connect.account.createPhoneToken(
-        userId: userId,
-        phone: phoneNumber,
-      );
-      return token;
-    } catch (error) {
-      print("Error creating phone session: $error");
-      alertReturn(context, 'Invalid phone number');
-      return null;
-    }
-  }
-
-  Future<void> appwriteAccountOtp(
-    BuildContext context,
-    String number,
-    String name,
-    String role,
-    String gender,
-  ) async {
-    try {
-      final phoneNumber = number;
-
-      final existingUser = await supabase
-          .from("User")
-          .select("UserId, Role")
-          .eq('PhoneNumber', phoneNumber)
-          .maybeSingle();
-
-      if (existingUser != null) {
-        if (role == existingUser["Role"]) {
-          if (role == "Admin" && churchCode != churchId) {
-            alertReturn(context, "Wrong Church Code");
-            return;
+            if (!isPasswordValid) {
+              alertReturn(context, "Wrong Password");
+              return;
+            }
           }
 
-          final sessionToken = await createPhoneSession(
-            context,
-            existingUser["UserId"],
-            phoneNumber,
-          );
-
-          if (sessionToken != null) {
-            context
-                .read<tockenProvider>()
-                .updateTocken(newValue: sessionToken.userId);
+          if (await AuthService.sendOtp(registrationData.phoneNumber!)) {
             Navigator.pushNamed(context, RoutePaths.code);
           }
         } else {
           alertReturn(context, "You are in the Wrong Registration screen");
         }
       } else {
-        if (role == "Admin" && churchCode != churchId) {
-          alertReturn(context, "Wrong Church Code");
-          return;
+        if (registrationData.role == Role.admin) {
+          final isPasswordValid = await AuthService.checkPassword(
+              registrationData.password!, registrationData.uniqueChurchId!);
+
+          if (!isPasswordValid) {
+            alertReturn(context, "Wrong Password");
+            return;
+          }
         }
 
-        final userId = Uuid().v6();
-        final sessionToken =
-            await createPhoneSession(context, userId, phoneNumber);
-
-        if (sessionToken != null) {
-          await supabase.from("User").insert({
-            "UserName": name,
-            "UserId": userId,
-            'PhoneNumber': phoneNumber,
-            'Gender': gender,
-            'Church': selectedChurch,
-            'Role': role,
-          });
-
-          context
-              .read<tockenProvider>()
-              .updateTocken(newValue: sessionToken.userId);
+        if (await AuthService.sendOtp(registrationData.phoneNumber!)) {
           Navigator.pushNamed(context, RoutePaths.code);
         }
       }
     } catch (error) {
-      print("Error in appwriteAccountOtp: $error");
       alertReturn(context, "Problem with Number");
     }
   }

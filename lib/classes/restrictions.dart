@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:master/Model/churchItemModel.dart';
 import 'package:master/componants/global_booking.dart';
+import 'package:master/services/api/user_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Restrictions {
+  static final supabase = Supabase.instance.client;
   Future<String> getPlan(String churchName) async {
     try {
       final planMap = await supabase
@@ -22,7 +25,7 @@ class Restrictions {
     }
   }
 
-  Future<String> getExpiryDate(String churchName) async {
+  static Future<String> getExpiryDate(String churchName) async {
     try {
       final expireMap = await supabase
           .from("Church")
@@ -38,11 +41,11 @@ class Restrictions {
     }
   }
 
-  bool isExpired(String expiryDate) {
+  static bool isExpired(String expiryDate) {
     //expiryDate is in the 2024-08-01 format
 
-    DateTime now = new DateTime.now();
-    DateTime date = new DateTime(now.year, now.month, now.day);
+    DateTime now = DateTime.now();
+    DateTime date = DateTime(now.year, now.month, now.day);
 
     DateTime expiry = DateTime.parse(expiryDate);
 
@@ -50,7 +53,7 @@ class Restrictions {
     return expiry.isBefore(date);
   }
 
-  int switchToUserNumber(String plan) {
+  static int switchToUserNumber(String plan) {
     int number = 0;
 
     switch (plan) {
@@ -66,19 +69,18 @@ class Restrictions {
       case "Gold":
         number = 500;
         break;
-         case "Special":
+      case "Special":
         number = 150;
         break;
       default:
         print("Plan not found");
+        number = 0;
     }
 
     return number;
   }
 
-  bool canAddUser(int planLimit, int userNumber) {
-    //getChurchUserNumber
-    //switchToUserNumber
+  static bool canAddUser(int planLimit, int userNumber) {
     if (userNumber < planLimit) {
       return true;
     } else {
@@ -86,71 +88,57 @@ class Restrictions {
     }
   }
 
-  Future<int> getChurchUserNumber(String churchName) async {
-    // 1. get list and count list number
+  static Future<int> countChurchUsers(String uniqueChurchId) async {
     try {
-      final userList =
-          await supabase.from("User").select().eq("Church", churchName);
 
-      final int number = userList.length;
+      final int? userNumber = await UserService.countChurchUsers(uniqueChurchId);
 
-      return number;
+      return userNumber!;
     } catch (error) {
-      print("Error getting user list number : $error");
       return 0;
     }
   }
 
-  Future<bool> userExist(String number) async {
-    var isFound = false;
-
+  static Future<bool> userExistInChurch(String number, String uniqueChurchId) async {
     try {
-      final userList =
-          await supabase.from("User").select().eq("PhoneNumber", number);
-      if (userList.isNotEmpty) {
-        isFound = true;
+      final answer = await UserService.userExist(number, uniqueChurchId);
+
+      if (answer != null) {
+        return true;
       }
 
-      return isFound;
+      return false;
     } catch (error) {
-      return isFound;
+      return false;
     }
   }
 
-  Future<bool> restrictonAlgorithm({
-    num,
-    selectedChurch,
+  static Future<bool> restrictionAlgorithm({
+    required String number,
+    required ChurchItemModel selectedChurch,
   }) async {
+    print('restrictionAlgorithm $number  and For ${selectedChurch.plan}');
     var canAdd = false;
+
     try {
-      print("Number : $num");
-      final answer = await userExist(num);
-      print("user exist or not? : $answer");
-
-      print("restrict 1");
-
+      final answer = await userExistInChurch(number, selectedChurch.uniqueId!);
+print(answer);
       if (answer == false) {
-        final plan = await getPlan(selectedChurch);
-        print("plan $plan");
-        print("restrict 2");
-        final maxLimit = switchToUserNumber(plan);
 
-        final userNumber = await getChurchUserNumber(selectedChurch);
-        print("restrict 3");
-
-        //if the user can be added?
+        final maxLimit = switchToUserNumber(selectedChurch.plan!);
+print(maxLimit);
+        final userNumber = await countChurchUsers(selectedChurch.uniqueId!);
+print(userNumber);
         final canAdd = canAddUser(maxLimit, userNumber);
-
+print(canAdd);
         return canAdd;
       } else {
         canAdd = true;
+print(canAdd);
         return canAdd;
       }
     } catch (error) {
-      //Todo dont know yet!!!!!!!!!
-      print("restriction error : $error");
       return canAdd;
     }
-    //
   }
 }

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:master/services/notification_service.dart';
+import 'package:master/services/api/notification_service.dart';
 import 'package:master/ui/notifications/widgets/notificationSnackBar.dart';
 import 'package:master/util/converter.dart';
 import 'package:shared_preferences/shared_preferences.dart';

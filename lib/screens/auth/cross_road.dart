@@ -20,7 +20,7 @@ class _CrossRoadState extends State<CrossRoad> {
 
   @override
   void initState() {
-    auth.endSession();
+    // auth.endSession();
     // sql.deleteBase();
     checkInstall(context);
     super.initState();

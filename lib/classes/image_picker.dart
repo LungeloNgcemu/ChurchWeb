@@ -28,7 +28,7 @@ class ImagePicked {
         final fileName = 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
         final String path = await supabase.storage
-            .from(churchStart.projects['Project']?['Bucket'])
+            .from(ChurchInit.projects['Project']?['Bucket'])
             .uploadBinary(
               'public/frontImage.png',
               _image!,
@@ -37,7 +37,7 @@ class ImagePicked {
             );
 
         final String publicUrl = supabase.storage
-            .from(churchStart.projects['Project']?['Bucket'])
+            .from(ChurchInit.projects['Project']?['Bucket'])
             .getPublicUrl('frontImage.png');
 
         await supabase.from('DisplayImages').insert({'FrontImage': publicUrl});

@@ -3,11 +3,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:master/classes/push_notification/notification.dart';
+import 'package:master/providers/registration_provider.dart';
 import 'package:master/providers/user_data_provider.dart';
 import 'package:master/screens/home/church_screen.dart';
 import 'package:master/screens/auth/register/create_account.dart';
 import 'package:master/screens/auth/cross_road.dart';
 import 'package:master/screens/splash/splash_screen.dart';
+import 'package:master/services/utils/env_service.dart';
 import 'constants/constants.dart';
 import 'screens/home/create_minister.dart';
 import 'screens/prayer/create_prayer.dart';
@@ -27,6 +29,8 @@ import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  EnvService.envInit();
 
   await Supabase.initialize(url: Keys.supabaseUrl, anonKey: Keys.supabaseKey);
 
@@ -118,6 +122,9 @@ void main() async {
         ChangeNotifierProvider<UserDataProvider>(
           create: (BuildContext context) => UserDataProvider(),
         ),
+        ChangeNotifierProvider<RegistrationProvider>(
+          create: (BuildContext context) => RegistrationProvider(),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -148,7 +155,6 @@ class MyApp extends StatelessWidget {
         '/church': (context) => const ChurchScreen(),
         '/loginAppwrite': (context) => LoginAppwrite(),
         '/code': (context) => const CodeAppwrite(),
-        '/booking': (context) => const BookingScreen(),
         '/create': (context) => const CreatePage(),
         '/createMinister': (context) => const CreateMinister(),
         '/createPrayer': (context) => CreatePrayer(),

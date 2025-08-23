@@ -89,7 +89,7 @@ class _ChurchScreenState extends State<ChurchScreen>
               ),
             ),
             Visibility(
-              visible: churchStart.visibilityToggle(context),
+              visible: ChurchInit.visibilityToggle(context),
               child: ExtraButton(
                 color: Colors.red,
                 writing2: const Text(
@@ -122,9 +122,11 @@ class _ChurchScreenState extends State<ChurchScreen>
             .myMap['Project']?['Expire'] ??
         false;
 
-    if (!isExpired) {
-      return snack();
-    }
+    print("Expired: $isExpired");
+
+    // if (!isExpired) {
+    //   return snack();
+    // }
   }
 
   @override
@@ -140,12 +142,9 @@ class _ChurchScreenState extends State<ChurchScreen>
   }
 
   Future<void> _initChurch() async {
-    ChurchInit churchStart = ChurchInit();
-    Authenticate auth = Authenticate();
     PushNotifications.init(context);
-
-    await churchStart.init(context);
-    snackInit();
+    await ChurchInit.init(context);
+    // snackInit();
     final message = " Welcome to Church Connect";
     alertWelcome(context, message); // Wait for the initialization to complete
 
@@ -169,10 +168,6 @@ class _ChurchScreenState extends State<ChurchScreen>
   void dispose() {
     super.dispose();
   }
-
-  AppWriteDataBase connect = AppWriteDataBase();
-
-  Church churchSystems = Church();
 
   final supabase = Supabase.instance.client;
 
@@ -367,7 +362,7 @@ class _ChurchScreenState extends State<ChurchScreen>
                   if (snapshot.hasData) {
                     //TODO uncoment
                     print('Main count');
-                    churchSystems.superbaseCount(setState);
+                    // churchSystems.superbaseCount(setState);
                     //getCount();
 
                     // Future.delayed(Duration.zero, () async {

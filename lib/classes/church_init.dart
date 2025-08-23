@@ -1,7 +1,11 @@
 import 'package:flutter/cupertino.dart';
+import 'package:master/Model/churchItemModel.dart';
+import 'package:master/Model/token_user.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/restrictions.dart';
 import 'package:master/classes/sql_database.dart';
+import 'package:master/constants/constants.dart';
+import 'package:master/services/api/token_service.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,33 +15,34 @@ import '../providers/url_provider.dart';
 import 'message_class.dart';
 
 class ChurchInit {
-  String? ChurchName = "";
-  String? LogoAddress = "";
-  String? Address = "";
-  String? Read = "";
-  String? GpsLat = "";
-  String? GpsLong = "";
-  String? About = "";
-  String? TimeOpen = "";
-  int? Color = 0;
-  String? Bucket = "";
-  String? ContactNumber = "";
-  String? role = "";
+  static String? churchName = "";
+  static String? logo = "";
+  static String? address = "";
+  static String? read = "";
+  static String? gpsLat = "";
+  static String? gpsLong = "";
+  static String? about = "";
+  static String? timeOpen = "";
+  static String? bucket = "";
+  static String? contactNumber = "";
+  static String? role = "";
+
+  static Map<String, Map<String, dynamic>> projects = {};
 
   SqlDatabase sql = SqlDatabase();
   Restrictions restrict = Restrictions();
 
-  bool invert(bool value) {
+  static bool invert(bool value) {
     return !value;
   }
 
-  Future<bool> expiryExpire(churchName) async {
+  static Future<bool> expiryExpire(String churchName) async {
     try {
-      final exp = await restrict.getExpiryDate(churchName);
+      final exp = await Restrictions.getExpiryDate(churchName);
       if (exp == 'none') {
         return true;
       }
-      final answer = restrict.isExpired(exp);
+      final answer = Restrictions.isExpired(exp);
       return invert(answer);
     } catch (error) {
       print("Expire Expire ERROR");
@@ -45,7 +50,7 @@ class ChurchInit {
     }
   }
 
-  bool visibilityToggle(BuildContext context) {
+  static bool visibilityToggle(BuildContext context) {
     final status = Provider.of<christProvider>(context, listen: false)
         .myMap['Project']?['Role'];
 
@@ -55,19 +60,13 @@ class ChurchInit {
   }
 
   Future<Map<String, dynamic>> getCurrentUser(BuildContext context) async {
-    AppWriteDataBase connect = AppWriteDataBase();
-    try {
-      final user = await connect.account.get();
-      final nameMap = await supabase
-          .from("User")
-          .select()
-          .eq('PhoneNumber', user.phone)
-          .single();
+    TokenUser? user = await TokenService.tokenUser();
 
+    try {
       Map<String, dynamic> userData = {
-        "UserName": nameMap['UserName'],
-        "UserId": user.$id,
-        "PhoneNumber": user.phone,
+        "UserName": user?.userName,
+        "UserId": user?.userId,
+        "PhoneNumber": user?.phoneNumber,
       };
 
       return userData;
@@ -97,8 +96,6 @@ class ChurchInit {
     }
   }
 
-  Map<String, Map<String, dynamic>> projects = {};
-
   Future<Map<String, dynamic>> getChurch(church) async {
     try {
       final data = await supabase
@@ -113,77 +110,80 @@ class ChurchInit {
     }
   }
 
-  Future<void> updateProjects(BuildContext context, projects) async {
+  static Future<void> updateProjects(BuildContext context, projects) async {
     context.read<christProvider>().updatemyMap(newValue: projects);
   }
 
-  Future<void> init(BuildContext context) async {
-    final selectedChurch =
-        Provider.of<SelectedChurchProvider>(context, listen: false)
-            .selectedChurch;
-    final name = await sql.getChurchName();
-    final expire = await expiryExpire(name);
-    final churchData = await getChurch(name);
+  static Future<void> init(BuildContext context) async {
+    final tokenUser = await TokenService.tokenUser();
 
-    await getRole(context);
-
-    if (churchData.isEmpty) {
+    if (tokenUser == null) {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        RoutePaths.church,
+        (Route<dynamic> route) => false,
+      );
       return;
     }
 
-    ChurchName = churchData['ChurchName'] ?? "";
-    LogoAddress = churchData['LogoAddress'] ?? "";
-    Address = churchData['Address'] ?? "";
-    Read = churchData['Read'] ?? "";
-    GpsLat = churchData['GpsLat'] ?? "";
-    GpsLong = churchData['GpsLong'] ?? "";
-    About = churchData['About'] ?? "";
-    TimeOpen = churchData['TimeOpen'] ?? "";
-    ContactNumber = churchData['ContactNumber'] ?? "";
-    Color = int.tryParse(churchData['Color'] ?? '0') ?? 0;
-    Bucket = churchData['Bucket'] ?? "";
+    ChurchItemModel? churchData = await SqlDatabase.getChurchItem();
 
-    role = Provider.of<RoleProvider>(context, listen: false).userRole;
+    bool expire = await expiryExpire(churchData?.expire ?? "");
+
+    if (churchData == null) {
+      return;
+    }
+
+    churchName = churchData.churchName ?? "";
+    logo = churchData.logo ?? "";
+    address = churchData.address ?? "";
+    read = churchData.read ?? "";
+    gpsLat = churchData.gpsLat ?? "";
+    gpsLong = churchData.gpsLong ?? "";
+    about = churchData.about ?? "";
+    timeOpen = churchData.timeOpen ?? "";
+    contactNumber = churchData.contactNumber ?? "";
+    bucket = churchData.bucket ?? "";
+    role = tokenUser.role;
 
     projects = {
       'Project': {
-        'ChurchName': ChurchName,
-        'LogoAddress': LogoAddress,
-        'Address': Address,
-        'Read': Read,
-        'GpsLat': GpsLat,
-        'GpsLong': GpsLong,
-        'About': About,
-        'TimeOpen': TimeOpen,
-        'ContactNumber': ContactNumber,
-        'Color': Color,
+        'ChurchName': churchName,
+        'LogoAddress': logo,
+        'Address': address,
+        'Read': read,
+        'GpsLat': gpsLat,
+        'GpsLong': gpsLong,
+        'About': about,
+        'TimeOpen': timeOpen,
+        'ContactNumber': contactNumber,
+        'Color': 0,
         'URL': 'https://bmzconrnjgpbiapvqcfh.supabase.co',
         'API':
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljaG52dW1mem9iaWdza3lyb2VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTUzNjUyMDYsImV4cCI6MjAzMDk0MTIwNn0.UgA32sjsuwQav3QHB7q7fhcCTzQZ8qcihD9NLIvQpsI',
         'ProjectId': '663e70370012ecbb3ba5',
-        'Bucket': Bucket,
+        'Bucket': bucket,
         'Role': role,
         'Expire': expire,
       },
     };
 
     await updateProjects(context, projects);
+
     visibilityToggle(context);
   }
 
   Future<void> clearProject(BuildContext context) async {
     try {
-      ChurchName = "";
-      LogoAddress = "";
-      Address = "";
-      Read = "";
-      GpsLat = "";
-      GpsLong = "";
-      About = "";
-      TimeOpen = "";
-      ContactNumber = "";
-      Color = 0;
-      Bucket = "";
+      churchName = "";
+      logo = "";
+      address = "";
+      read = "";
+      gpsLat = "";
+      gpsLong = "";
+      about = "";
+      timeOpen = "";
+      contactNumber = "";
+      bucket = "";
       role = "";
 
       Map<String, dynamic> projects = {};

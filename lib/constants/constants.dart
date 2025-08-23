@@ -1,6 +1,7 @@
 import 'dart:core';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Keys {
   static String supabaseUrl = 'https://ichnvumfzobigskyroej.supabase.co';
@@ -22,6 +23,11 @@ class Assets {
 }
 
 class BaseUrl {
-  // static const String baseUrl = 'http://localhost:3000';
-  static const String baseUrl = 'https://backendconnect-5zv1.onrender.com';
+  static String? baseUrl = dotenv.env['BASEURL'];
+}
+
+
+class Role {
+  static String admin = 'Admin';
+  static String user = 'User';
 }

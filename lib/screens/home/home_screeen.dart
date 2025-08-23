@@ -49,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen>
     ChurchInit churchStart = ChurchInit();
     Authenticate auth = Authenticate();
 
-    await churchStart.init(context);
+    await ChurchInit.init(context);
     const message = " Welcome to Church Connect";
     homeClass.ministerInit(setState, context);
 
@@ -152,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         .myMap['Project']?['Expire'] ??
                                     false,
                                 child: Visibility(
-                                  visible: visbibity.visibilityToggle(context),
+                                  visible: ChurchInit.visibilityToggle(context),
                                   child: TextButton(
                                     onPressed: () {
                                       create.sheeting(
@@ -229,7 +229,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       .myMap['Project']?['Expire'] ??
                                   false,
                               child: Visibility(
-                                visible: visbibity.visibilityToggle(context),
+                                visible: ChurchInit.visibilityToggle(context),
                                 child: TextButton(
                                     onPressed: () {
                                       homeClass.galleryInsert(

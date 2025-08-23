@@ -129,7 +129,7 @@ class _MapState extends State<Map> {
           : Column(
               children: [
                 Visibility(
-                  visible: visbibity.visibilityToggle(context),
+                  visible: ChurchInit.visibilityToggle(context),
                   child: Visibility(
                     visible: Provider.of<christProvider>(context, listen: false)
                             .myMap['Project']?['Expire'] ??

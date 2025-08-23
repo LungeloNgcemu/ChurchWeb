@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:master/Model/token_user.dart';
+import 'package:master/services/api/token_service.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -6,94 +8,77 @@ import '../componants/global_booking.dart';
 import '../databases/database.dart';
 import '../providers/url_provider.dart';
 
-
 class MessageClass {
-
   Map<String, dynamic> currentUser = {};
   Stream? listen;
-
 
   Stream load(BuildContext context) {
     return supabase
         .from('Message')
         .stream(primaryKey: ['id'])
-        .eq('Church', Provider.of<christProvider>(context, listen: false).myMap['Project']?['ChurchName'])
+        .eq(
+            'Church',
+            Provider.of<christProvider>(context, listen: false).myMap['Project']
+                ?['ChurchName'])
         .order('id', ascending: false);
   }
 
-  void calling(BuildContext context,Function(void Function()) setState) {
+  void calling(BuildContext context, Function(void Function()) setState) {
     final calz = load(context);
     setState(() {
       listen = calz;
     });
   }
 
-
 // one table
-  Future<Map<String,dynamic>> getCurrentUser(BuildContext context) async {
-    AppWriteDataBase connect = AppWriteDataBase();
+  Future<Map<String, dynamic>> getCurrentUser(BuildContext context) async {
+    TokenUser? user = await TokenService.tokenUser();
+
+    print('user name ${user?.userName}');
+    print('user id ${user?.userId}');
+    print('user phone number ${user?.phoneNumber}');
     try {
-      final user = await connect.account.get();
-
-      print("User : ${user.phone}");
-
-      final nameMap = await supabase
-          .from("User")
-          .select()
-          .eq('PhoneNumber', user.phone)
-          .single();
-
-      print(nameMap);
-
-      print(user.name);
       Map<String, dynamic> userData = {
-        "UserName": nameMap['UserName'],
-        "UserId": user.$id,
-        "PhoneNumber": user.phone,
+        "UserName": user?.userName,
+        "UserId": user?.userId,
+        "PhoneNumber": user?.phoneNumber,
       };
 
-
-      await currentUserImage(context, user.phone);
+      currentUserImage(context, user?.phoneNumber ?? '');
 
       return userData;
     } catch (error) {
       print(error);
-       return {};
+      return {};
     }
-
   }
 
-
-  Future<void> currentUserImage(BuildContext context,String number) async {
-
+  Future<void> currentUserImage(BuildContext context, String number) async {
     final item = await supabase
         .from('User')
         .select('ProfileImage')
         .eq('PhoneNumber', number)
         .single();
 
-   final  image = item['ProfileImage'];
+    final image = item['ProfileImage'];
 
-    context.read<CurrentUserImageProvider>().updatecCurrentRoomId(newValue: image);
-
+    context
+        .read<CurrentUserImageProvider>()
+        .updatecCurrentRoomId(newValue: image);
   }
 
-  void userInit(Function(void Function()) setState,BuildContext context) async {
-
-
+  void userInit(
+      Function(void Function()) setState, BuildContext context) async {
     final user = await getCurrentUser(context);
     if (user != null) {
       setState(() {
         currentUser = user;
       });
 
-      print(currentUser);
-
+      print('currentUser $currentUser');
     } else {
-
       print('User is null');
     }
-
   }
 
   Stream<dynamic> listining2() {
@@ -102,18 +87,17 @@ class MessageClass {
 
   final supabase = Supabase.instance.client;
 
-
-
-
-
-
-
-
   List<String> items = [];
 
-
-  Future sendMessage(BuildContext context ,String sender, String senderId, String message, String id,
-      String profileImage, String number, Function( void Function()) setState) async {
+  Future sendMessage(
+      BuildContext context,
+      String sender,
+      String senderId,
+      String message,
+      String id,
+      String profileImage,
+      String number,
+      Function(void Function()) setState) async {
     var uuid = Uuid();
     var docId = uuid.v1();
     try {
@@ -122,12 +106,14 @@ class MessageClass {
         'SenderId': "blank",
         'ChatRoomId': "blank",
         'Message': message,
-        'ProfileImage':profileImage,
+        'ProfileImage': profileImage,
         'DocId': "blank",
         'Status': 'Unread',
         'Time': DateTime.now().toIso8601String(),
         'PhoneNumber': number,
-        'Church' : Provider.of<christProvider>(context, listen: false).myMap['Project']?['ChurchName'] ?? ""
+        'Church': Provider.of<christProvider>(context, listen: false)
+                .myMap['Project']?['ChurchName'] ??
+            ""
       });
 
       print("Sent Message");
@@ -136,6 +122,4 @@ class MessageClass {
       print('This is the eror : $error');
     }
   }
-
-
 }

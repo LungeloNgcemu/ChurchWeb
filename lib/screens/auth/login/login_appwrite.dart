@@ -31,8 +31,8 @@ class _LoginAppwriteState extends State<LoginAppwrite> {
   }
 
   void signOut() async {
-    AppWriteDataBase connect = AppWriteDataBase();
-    await connect.account.deleteSessions();
+    // AppWriteDataBase connect = AppWriteDataBase();
+    // await connect.account.deleteSessions();
     print("Session Refreshed");
   }
   @override
@@ -69,7 +69,7 @@ class _LoginAppwriteState extends State<LoginAppwrite> {
 
 
           try {
-            AppWriteDataBase connect = AppWriteDataBase();
+            // AppWriteDataBase connect = AppWriteDataBase();
 
             // final session = await connect.account.createEmailSession(
             //     email: email,

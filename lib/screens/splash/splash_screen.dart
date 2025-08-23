@@ -19,14 +19,11 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   void initState() {
-    // _initChurch();
-    // sql.initializeDatabase();
     super.initState();
   }
 
   Future<void> _initChurch() async {
-    churchStart = ChurchInit();
-    await churchStart.init(context);
+    await ChurchInit.init(context);
   }
 
   @override
@@ -51,11 +48,10 @@ class _SplashScreenState extends State<SplashScreen> {
           try {
             await Future.delayed(const Duration(seconds: 5));
 
-            AppWriteDataBase connect = AppWriteDataBase();
+            final token = await SqlDatabase.getToken();
 
-            final session = await connect.account.get();
+            if (token != "" && context.mounted) {
 
-            if (session.phone != null && context.mounted) {
               await _initChurch();
 
               Navigator.of(context).pushNamedAndRemoveUntil(

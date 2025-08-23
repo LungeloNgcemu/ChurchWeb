@@ -1,10 +1,13 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
+import 'package:master/Model/churchItemModel.dart';
 import 'package:master/classes/restrictions.dart';
 import 'package:master/classes/sql_database.dart';
 import 'package:master/componants/text_input.dart';
 import 'package:master/componants/extrabutton.dart';
+import 'package:master/providers/registration_provider.dart';
 import 'package:master/providers/url_provider.dart';
+import 'package:master/services/api/general_data_service.dart';
 import 'package:master/util/alerts.dart';
 import 'package:provider/provider.dart';
 import '../../../classes/authentication/authenticate.dart';
@@ -20,7 +23,7 @@ class RegisterLeader extends StatefulWidget {
 
 class _RegisterLeaderState extends State<RegisterLeader> {
   Authenticate auth = Authenticate();
-  List<String> names_of_churches = [];
+  List<ChurchItemModel> names_of_churches = [];
   Restrictions restrict = Restrictions();
   SqlDatabase sql = SqlDatabase();
 
@@ -39,7 +42,7 @@ class _RegisterLeaderState extends State<RegisterLeader> {
       isLoading = true;
     });
 
-    final List<String> list = await auth.getChurchList(context);
+    final List<ChurchItemModel> list = await GeneralDataService.getChurches();
 
     setState(() {
       names_of_churches = list;
@@ -72,16 +75,6 @@ class _RegisterLeaderState extends State<RegisterLeader> {
     'Female',
   ];
 
-  // final List<String> churches = [
-  //   'Restoration',
-  //   'DCC',
-  //   'ICC',
-  //   'CMCI',
-  //   'CFC',
-  //   'CCC',
-  //   'MNW',
-  // ];
-
   TextEditingController churchController = TextEditingController();
   TextEditingController codeController = TextEditingController();
 
@@ -104,14 +97,12 @@ class _RegisterLeaderState extends State<RegisterLeader> {
             children: [
               Container(
                 constraints: BoxConstraints(minHeight: h),
-                // color: Colors.red,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Padding(
                       padding: EdgeInsets.all(8.0),
                       child: Container(
-                        ///color: Colors.deepOrange,
                         height: 200,
                         child: DefaultTextStyle(
                           style: const TextStyle(
@@ -139,18 +130,19 @@ class _RegisterLeaderState extends State<RegisterLeader> {
                               horizontal: 10.0, vertical: 10.0),
                           child: Container(
                             decoration: BoxDecoration(
-                                // color: Colors.grey[200],
                                 borderRadius: BorderRadius.circular(10.0)),
                             child: Column(
                               children: [
                                 InputAppwrite(
-                                  // message: 'Enter Name',
                                   controller: controllerName,
                                   label: 'Name',
                                   text: 'Name',
                                   keyboard: TextInputType.text,
-
                                   onChanged: (value) {
+                                    Provider.of<RegistrationProvider>(context,
+                                            listen: false)
+                                        .registrationModel
+                                        .userName = value;
                                     userName = value;
                                   },
                                 ),
@@ -178,7 +170,6 @@ class _RegisterLeaderState extends State<RegisterLeader> {
                           padding: const EdgeInsets.symmetric(horizontal: 5.0),
                           child: Container(
                             decoration: BoxDecoration(
-                                // color: Colors.grey[200],
                                 borderRadius: BorderRadius.circular(10.0)),
                             child: Padding(
                               padding: const EdgeInsets.only(
@@ -191,9 +182,7 @@ class _RegisterLeaderState extends State<RegisterLeader> {
                                   IntlPhoneField(
                                     decoration: const InputDecoration(
                                       isDense: true,
-                                      // Added this
                                       contentPadding: EdgeInsets.all(8),
-
                                       border: const OutlineInputBorder(
                                         borderRadius: BorderRadius.all(
                                           Radius.circular(30.0),
@@ -204,7 +193,11 @@ class _RegisterLeaderState extends State<RegisterLeader> {
                                     ),
                                     initialCountryCode: '+27',
                                     onChanged: (phone) {
-                                      print(phone.completeNumber);
+                                      Provider.of<RegistrationProvider>(context,
+                                              listen: false)
+                                          .registrationModel
+                                          .phoneNumber = phone.completeNumber;
+
                                       number = phone.completeNumber;
                                     },
                                   ),
@@ -224,7 +217,10 @@ class _RegisterLeaderState extends State<RegisterLeader> {
                             label: 'Security Code',
                             text: 'Security Code',
                             onChanged: (value) {
-                              auth.churchCode = value;
+                              Provider.of<RegistrationProvider>(context,
+                                      listen: false)
+                                  .registrationModel
+                                  .password = value;
                             },
                           ),
                         ),
@@ -232,44 +228,40 @@ class _RegisterLeaderState extends State<RegisterLeader> {
                     ),
                     ExtraButton(
                       skip: () async {
+                        Provider.of<RegistrationProvider>(context,
+                                listen: false)
+                            .registrationModel
+                            .role = "Admin";
+
+                        final registrationData =
+                            Provider.of<RegistrationProvider>(context,
+                                    listen: false)
+                                .registrationModel;
+
                         final selectedChurch =
                             Provider.of<SelectedChurchProvider>(context,
                                     listen: false)
                                 .selectedChurch;
 
-                        final selectedGender =
-                            Provider.of<SelectedGenderProvider>(context,
-                                    listen: false)
-                                .selectedGender;
-
-                        if (selectedChurch != "") {
-                          //No internet needed
+                        if (registrationData.uniqueChurchId != "" &&
+                            registrationData.uniqueChurchId != null) {
                           setState(() {
                             isLoading = true;
                           });
 
-                          sql.insertChurchName(
-                              churchName: Provider.of<SelectedChurchProvider>(
-                                      context,
-                                      listen: false)
-                                  .selectedChurch);
-
-                          // num = await auth.numberCheck(context, number);
-                          //1. check whether the user can register into the church?
-                          //a. is there number already in the list?
+                          SqlDatabase.insertChurcItem(
+                              churchItem: selectedChurch);
 
                           if (number.isNotEmpty) {
-                            final canAdd = await restrict.restrictonAlgorithm(
-                                num: number,
-                                selectedChurch: auth.selectedChurch);
-
-                            print("restrict final answer : $canAdd");
+                            print('number $number');
+                            final canAdd =
+                                await Restrictions.restrictionAlgorithm(
+                                    number: number,
+                                    selectedChurch: selectedChurch);
+                            print('canAdd $canAdd');
 
                             if (canAdd) {
-                              //Todo  reasons why someone cant be added. 1. The plan is full
-
-                              await auth.appwriteAccountOtp(context, number,
-                                  userName, auth.role, selectedGender);
+                              Authenticate.authenticate(context);
 
                               Future.delayed(Duration(seconds: 1), () {
                                 setState(() {
@@ -279,10 +271,8 @@ class _RegisterLeaderState extends State<RegisterLeader> {
                                 });
                               });
                             } else {
-                              //alert;
-                              const message =
-                                  "The church plan is currently full, please contact the church owner to increse plan ";
-                              alertReturn(context, message);
+                              alertReturn(context,
+                                  "The church plan is currently full, please contact the church owner to increse plan ");
                             }
                           } else {
                             alertReturn(context, 'Please add a phone number');
@@ -290,8 +280,6 @@ class _RegisterLeaderState extends State<RegisterLeader> {
 
                           Future.delayed(Duration(seconds: 2), () {
                             setState(() {
-                              // num = '';
-                              // number = '';
                               isLoading = false;
                             });
                           });
@@ -304,7 +292,9 @@ class _RegisterLeaderState extends State<RegisterLeader> {
                         style: TextStyle(color: Colors.white, fontSize: 20.0),
                       ),
                     ),
-                    SizedBox(height: 20,)
+                    const SizedBox(
+                      height: 20,
+                    )
                   ],
                 ),
               ),

@@ -1,29 +1,63 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:master/Model/churchItemModel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SqlDatabase {
   static const String _churchKey = "churchName";
+  static const String _tokenKey = "token";
 
   bool _isInitialized = false;
   SharedPreferences? _prefs;
 
-  // Initialize SharedPreferences
-  // Future<void> initializeDatabase() async {
-  //   _prefs = await SharedPreferences.getInstance();
-  //   _isInitialized = true;
-  // }
 
-  // Simulate database insert
+  static Future<void> insertToken({required String token}) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    try {
+      await prefs?.setString(_tokenKey, token);
+    } catch (error) {
+      print("Token not inserted: $error");
+    }
+  }
+
+  static Future<String> getToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    try {
+      final token = prefs.getString(_tokenKey) ?? "";
+      return token;
+    } catch (error) {
+      return "";
+    }
+  }
+
   void insertChurchName({required String churchName}) async {
     _prefs = await SharedPreferences.getInstance();
 
     try {
       await _prefs?.setString(_churchKey, churchName);
-      print('Inserted church name: $churchName');
     } catch (error) {
       print("Church not inserted: $error");
     }
   }
+
+
+static Future<void> insertChurcItem({
+  required ChurchItemModel churchItem,
+}) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  // Convert Map -> String
+  final String item = jsonEncode(churchItem.toJson());
+
+  try {
+    await prefs.setString(_churchKey, item);
+  } catch (error) {
+    print("Church not inserted: $error");
+  }
+}
+
 
   // Simulate database query
   Future<String> getChurchName() async {
@@ -32,12 +66,23 @@ class SqlDatabase {
       final name = _prefs?.getString(_churchKey) ?? "";
       return name;
     } catch (error) {
-      print("Something went wrong getting church name");
       return "";
     }
   }
 
-  // Simulate delete all churches
+  static Future<ChurchItemModel?> getChurchItem() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    try {
+      final name = prefs.getString(_churchKey) ?? "";
+
+      final Map<String, dynamic> item = json.decode(name);
+
+      return ChurchItemModel.fromJson(item);
+    } catch (error) {
+      return null;
+    }
+  }
+
   Future<void> deleteAllChurches() async {
     _prefs = await SharedPreferences.getInstance();
 
@@ -49,9 +94,8 @@ class SqlDatabase {
     }
   }
 
-  // Simulate database deletion (clearing all data)
   Future<void> deleteBase() async {
-  _prefs = await SharedPreferences.getInstance();
+    _prefs = await SharedPreferences.getInstance();
 
     try {
       await _prefs?.clear();
