@@ -299,7 +299,7 @@ class Authenticate {
         }
       }
     } catch (error) {
-      alertReturn(context, "Problem with Number");
+      alertReturn(context, "Problem with Number ${error}");
     }
   }
 
