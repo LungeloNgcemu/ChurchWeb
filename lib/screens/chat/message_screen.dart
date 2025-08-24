@@ -4,12 +4,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
+import 'package:master/Model/token_user.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/push_notification/notification.dart';
 import 'package:master/componants/text_input.dart';
 import 'package:master/databases/database.dart';
 
 import 'package:intl/intl.dart';
+import 'package:master/services/api/token_service.dart';
 import 'package:master/util/alerts.dart';
 import 'package:uuid/uuid.dart';
 import 'package:appwrite/appwrite.dart';
@@ -110,13 +112,9 @@ class _MessageScreenState extends State<MessageScreen> {
                             return Center(child: Text("Loading Messages"));
                           case ConnectionState.active:
                             if (snap.hasError) {
-                              print(snap.error);
                             } else if (!snap.hasData) {
-                              print('No Data Here');
                             } else if (snap.hasData) {
                               final rev = snap.data;
-
-                              print('THIS IS REV : $rev');
 
                               final String current =
                                   messageClass.currentUser['PhoneNumber'] ?? '';
@@ -162,13 +160,9 @@ class _MessageScreenState extends State<MessageScreen> {
                               return Center(child: Text("Loading Messages"));
                             case ConnectionState.active:
                               if (snap.hasError) {
-                                print(snap.error);
                               } else if (!snap.hasData) {
-                                print('No Data Here');
                               } else if (snap.hasData) {
                                 final rev = snap.data;
-
-                                print('THIS IS REV : $rev');
 
                                 if (rev != null) {
                                   return SizedBox(
@@ -179,10 +173,13 @@ class _MessageScreenState extends State<MessageScreen> {
                                         itemBuilder: (context, index) {
                                           final String senderId =
                                               rev[index]['PhoneNumber'] ?? '';
+
                                           final String current = messageClass
                                                   .currentUser['PhoneNumber'] ??
                                               '';
+
                                           bool isSender = senderId == current;
+
                                           DateTime dateTime = DateTime.parse(
                                               rev[index]['Time']);
                                           int hour = dateTime.hour;
@@ -192,11 +189,9 @@ class _MessageScreenState extends State<MessageScreen> {
                                               ? MessageBubbleRight(
                                                   name: '$hour:$minute',
                                                   text: rev[index]['Message'],
-                                                  image: Provider.of<
-                                                      CurrentUserImageProvider>(
-                                                    context,
-                                                    listen: false,
-                                                  ).currentUserImage,
+                                                  image: rev[index]
+                                                          ['ProfileImage'] ??
+                                                      '',
                                                   callBack: () async {
                                                     const message =
                                                         "Delete this message?";
@@ -204,15 +199,11 @@ class _MessageScreenState extends State<MessageScreen> {
                                                       context,
                                                       message,
                                                       () async {
-                                                      
-
                                                         await deleteMessage(
                                                             rev[index]['id']);
 
                                                         messageClass.calling(
                                                             context, setState);
-
-                                                       
                                                       },
                                                     );
                                                   },
@@ -230,14 +221,11 @@ class _MessageScreenState extends State<MessageScreen> {
                                                       context,
                                                       message,
                                                       () async {
-                                                      
                                                         await deleteMessage(
                                                             rev[index]['id']);
 
                                                         messageClass.calling(
                                                             context, setState);
-
-                                                      
                                                       },
                                                     );
                                                   },
@@ -295,10 +283,8 @@ class _MessageScreenState extends State<MessageScreen> {
                                     Provider.of<CurrentRoomIdProvider>(context,
                                             listen: false)
                                         .currentRoomId,
-                                    Provider.of<CurrentUserImageProvider>(
-                                            context,
-                                            listen: false)
-                                        .currentUserImage,
+                                    messageClass.currentUser['ProfileImage'] ??
+                                        '',
                                     messageClass.currentUser['PhoneNumber'] ??
                                         '',
                                     setState,
@@ -559,11 +545,13 @@ class HeaderMessage extends StatelessWidget {
   VoidCallback? onPressedCall;
 
   Future getCurrentUser() async {
-    AppWriteDataBase connect = AppWriteDataBase();
     try {
-      final user = await connect.account.get();
-      print(user.name);
-      return user;
+      TokenUser? user = await TokenService.tokenUser();
+
+      if (user != null) {
+        print(user.userName);
+        return user;
+      }
     } catch (error) {
       print(error);
       return null;

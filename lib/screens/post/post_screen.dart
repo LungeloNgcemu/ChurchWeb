@@ -293,7 +293,7 @@ class _PostScreenState extends State<PostScreen>
                                   .myMap['Project']?['Expire'] ??
                               false,
                           child: Visibility(
-                            visible: churchStart.visibilityToggle(context),
+                            visible: ChurchInit.visibilityToggle(context),
                             child: MaterialButton(
                               elevation: 0,
                               shape: const RoundedRectangleBorder(
@@ -407,7 +407,7 @@ class _PostScreenState extends State<PostScreen>
                                   .myMap['Project']?['Expire'] ??
                               false,
                           child: Visibility(
-                            visible: churchStart.visibilityToggle(context),
+                            visible: ChurchInit.visibilityToggle(context),
                             child: GestureDetector(
                               onTap: () async {
                                 setState(() {
@@ -641,7 +641,7 @@ class _SocialPostState extends State<SocialPost> {
                       });
                     }),
                 Visibility(
-                  visible: churchStart.visibilityToggle(context),
+                  visible: ChurchInit.visibilityToggle(context),
                   child: IconButton(
                     onPressed: widget.onPressedDelete ?? () {},
                     icon: const Icon(

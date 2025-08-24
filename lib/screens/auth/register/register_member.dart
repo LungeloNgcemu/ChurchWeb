@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:master/Model/churchItemModel.dart';
 import 'package:master/classes/restrictions.dart';
 import 'package:master/classes/sql_database.dart';
 import 'package:master/databases/database.dart';
+import 'package:master/providers/registration_provider.dart';
 import 'package:master/screens/profile/profile_screen.dart';
 import 'package:master/providers/url_provider.dart';
+import 'package:master/services/api/general_data_service.dart';
 import 'package:master/util/alerts.dart';
 import 'package:provider/provider.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
@@ -27,7 +30,7 @@ class RegisterMember extends StatefulWidget {
 class _RegisterMemberState extends State<RegisterMember> {
   Authenticate auth = Authenticate();
   Restrictions restrict = Restrictions();
-  List<String> names_of_churches = [];
+  List<ChurchItemModel> names_of_churches = [];
   SqlDatabase sql = SqlDatabase();
 
   @override
@@ -43,7 +46,7 @@ class _RegisterMemberState extends State<RegisterMember> {
       isLoading = true;
     });
 
-    final List<String> list = await auth.getChurchList(context);
+    final List<ChurchItemModel> list = await GeneralDataService.getChurches();
 
     setState(() {
       names_of_churches = list;
@@ -184,7 +187,7 @@ class _RegisterMemberState extends State<RegisterMember> {
                                   labelText: 'Phone Number',
                                   hintText: 'Phone Number',
                                 ),
-                                initialCountryCode:'+27',
+                                initialCountryCode: '+27',
                                 onChanged: (phone) {
                                   print(phone.completeNumber);
                                   number = phone.completeNumber;
@@ -199,44 +202,40 @@ class _RegisterMemberState extends State<RegisterMember> {
                     //Search for church here...
                     ExtraButton(
                       skip: () async {
+                        
+                        Provider.of<RegistrationProvider>(context,
+                                listen: false)
+                            .registrationModel
+                            .role = "Member";
+
+                        final registrationData =
+                            Provider.of<RegistrationProvider>(context,
+                                    listen: false)
+                                .registrationModel;
 
                         final selectedChurch =
                             Provider.of<SelectedChurchProvider>(context,
                                     listen: false)
                                 .selectedChurch;
 
-                        final selectedGender =
-                            Provider.of<SelectedGenderProvider>(context,
-                                    listen: false)
-                                .selectedGender;
-
-                        if (selectedChurch != "") {
-                          //No internet needed
+                        if (registrationData.uniqueChurchId != null &&
+                            registrationData.uniqueChurchId != "") {
                           setState(() {
                             isLoading = true;
                           });
 
-                          sql.insertChurchName(
-                              churchName: Provider.of<SelectedChurchProvider>(
-                                      context,
-                                      listen: false)
-                                  .selectedChurch);
-
-                          // num = await auth.numberCheck(context, number);
-                          //1. check whether the user can register into the church?
-                          //a. is there number already in the list?
+                          SqlDatabase.insertChurcItem(
+                              churchItem: selectedChurch);
 
                           if (number != '') {
-                            final canAdd = await restrict.restrictonAlgorithm(
-                                num: number,
-                                selectedChurch: auth.selectedChurch);
-
+                            final canAdd =
+                                await Restrictions.restrictionAlgorithm(
+                                    number: number,
+                                    selectedChurch: selectedChurch);
 
                             if (canAdd) {
-                              //Todo  reasons why someone cant be added. 1. The plan is full
+                              Authenticate.authenticate(context);
 
-                              await auth.appwriteAccountOtp(context, number,
-                                  userName, auth.role, selectedGender);
                               Future.delayed(Duration(seconds: 1), () {
                                 setState(() {
                                   controllerName.clear();
@@ -249,7 +248,7 @@ class _RegisterMemberState extends State<RegisterMember> {
                                   "The church plan is currently full, please contact the church owner to increse plan ";
                               alertReturn(context, message);
                             }
-                          }else{
+                          } else {
                             alertReturn(context, 'Please add a phone number');
                           }
 

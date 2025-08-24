@@ -85,6 +85,7 @@ dependencies:
   firebase_messaging: ^16.0.0
   http: ^1.4.0
   full_screen_image: ^2.0.0
+  flutter_dotenv: ^6.0.0
 
   
 
@@ -113,6 +114,9 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
      - lib/images/
+     - envDev
+     - envProd
+     - envUat
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

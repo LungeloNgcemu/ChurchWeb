@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:master/Model/churchItemModel.dart';
 import 'package:master/Model/church_data_model.dart';
 import 'package:path_provider/path_provider.dart' as pp;
 import 'dart:io';
@@ -296,15 +297,14 @@ class SelectedDateProvider extends ChangeNotifier {
     selectedDate["Month"] = month;
     selectedDate["Day"] = day;
 
-    print(selectedDate);
     notifyListeners();
   }
 }
 
 class SelectedChurchProvider extends ChangeNotifier {
-  String selectedChurch = "";
+  ChurchItemModel selectedChurch = ChurchItemModel();
 
-  void updateSelectedChurch({required String newValue}) {
+  void updateSelectedChurch({required ChurchItemModel newValue}) {
     selectedChurch = newValue;
     notifyListeners();
   }

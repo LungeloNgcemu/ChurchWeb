@@ -186,7 +186,7 @@ class _MediaScreenState extends State<MediaScreen>
                 automaticallyImplyLeading: false,
                 backgroundColor: Colors.white54,
                 expandedHeight:
-                    visibility.visibilityToggle(context) == false ? 140 : 200,
+                    ChurchInit.visibilityToggle(context) == false ? 140 : 200,
                 flexibleSpace: FlexibleSpaceBar(
                   background: Column(
                     children: [
@@ -270,7 +270,7 @@ class _MediaScreenState extends State<MediaScreen>
                                     .myMap['Project']?['Expire'] ??
                                 false,
                         child: Visibility(
-                          visible: visibility.visibilityToggle(context),
+                          visible: ChurchInit.visibilityToggle(context),
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Row(
@@ -337,7 +337,7 @@ class _MediaScreenState extends State<MediaScreen>
                               idProvider.changeID(linkId);
                               return GestureDetector(
                                 onLongPress: () {
-                                  if (visibility.visibilityToggle(context) ==
+                                  if (ChurchInit.visibilityToggle(context) ==
                                       true) {
                                     const message = "Delete Video?";
                                     //delete by id
