@@ -137,6 +137,10 @@ class _RegisterMemberState extends State<RegisterMember> {
                                   label: 'Name',
                                   text: 'Name',
                                   onChanged: (value) {
+                                    Provider.of<RegistrationProvider>(context,
+                                            listen: false)
+                                        .registrationModel
+                                        .userName = value;
                                     userName = value;
                                   },
                                 ),
@@ -189,7 +193,11 @@ class _RegisterMemberState extends State<RegisterMember> {
                                 ),
                                 initialCountryCode: '+27',
                                 onChanged: (phone) {
-                                  print(phone.completeNumber);
+                                  Provider.of<RegistrationProvider>(context,
+                                          listen: false)
+                                      .registrationModel
+                                      .phoneNumber = phone.completeNumber;
+
                                   number = phone.completeNumber;
                                 },
                               ),
@@ -202,7 +210,6 @@ class _RegisterMemberState extends State<RegisterMember> {
                     //Search for church here...
                     ExtraButton(
                       skip: () async {
-                        
                         Provider.of<RegistrationProvider>(context,
                                 listen: false)
                             .registrationModel

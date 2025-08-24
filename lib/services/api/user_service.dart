@@ -7,6 +7,8 @@ import 'package:http/http.dart' as http;
 class UserService {
   static Future<ExistingUser?> userExist(
       String phoneNumber, String uniqueChurchId) async {
+    print("User Exist $phoneNumber $uniqueChurchId");
+
     try {
       final response = await http.post(
           Uri.parse('${BaseUrl.baseUrl}/api/user/getExistingUser'),
@@ -18,6 +20,9 @@ class UserService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+
+        if (data['user'] == null) return null;
+
         return ExistingUser.fromJson(data['user']);
       } else {
         print("User not found");

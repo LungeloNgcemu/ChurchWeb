@@ -289,6 +289,7 @@ class _MessageScreenState extends State<MessageScreen> {
                                         '',
                                     setState,
                                   );
+                                  
                                   controller.clear();
                                   FocusScope.of(context)
                                       .requestFocus(FocusNode());
