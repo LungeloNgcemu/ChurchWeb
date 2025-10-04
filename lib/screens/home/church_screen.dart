@@ -124,9 +124,9 @@ class _ChurchScreenState extends State<ChurchScreen>
 
     print("Expired: $isExpired");
 
-    if (!isExpired) {
-      return snack();
-    }
+    // if (!isExpired) {
+    //   return snack();
+    // }
   }
 
   @override
@@ -143,7 +143,6 @@ class _ChurchScreenState extends State<ChurchScreen>
 
   Future<void> _initChurch() async {
     PushNotifications.init(context);
-    await ChurchInit.init(context);
     snackInit();
     final message = " Welcome to Church Connect";
     alertWelcome(context, message); // Wait for the initialization to complete
