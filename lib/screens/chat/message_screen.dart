@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
+import 'package:master/Model/message_model.dart';
 import 'package:master/Model/token_user.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/push_notification/notification.dart';
@@ -11,7 +12,10 @@ import 'package:master/componants/text_input.dart';
 import 'package:master/databases/database.dart';
 
 import 'package:intl/intl.dart';
+import 'package:master/providers/message_provider.dart';
+import 'package:master/services/api/chat_service.dart';
 import 'package:master/services/api/token_service.dart';
+import 'package:master/services/socket/io_service.dart';
 import 'package:master/util/alerts.dart';
 import 'package:uuid/uuid.dart';
 import 'package:appwrite/appwrite.dart';
@@ -36,28 +40,63 @@ class MessageScreen extends StatefulWidget {
 class _MessageScreenState extends State<MessageScreen> {
   MessageClass messageClass = MessageClass();
   Authenticate auth = Authenticate();
-  Map<String, dynamic> currentUser = {};
+  IOService ioService = IOService();
+  TokenUser? currentUser;
   bool isLoading = false;
 
   List<dynamic> messages = [];
   String message = '';
+  int previousMessageLength = 0;
+
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
+    initChat();
+    super.initState();
+  }
+
+  Future<void> initChat() async {
     setState(() {
       isLoading = true;
     });
-    messageClass.userInit(setState, context);
-    messageClass.calling(context, setState);
-    currentUser = messageClass.currentUser;
+    initCurrentUser();
+
+    ioService.initializeWithProvider(context);
+    ioService.joinRoom('d103e5c2-7817-445c-a39d-eb5747ef6e88');
 
     Future.delayed(Duration(seconds: 3), () {
       setState(() {
         isLoading = false;
       });
+
+      _scrollToBottom();
     });
 
-    super.initState();
+    final messageProvider =
+        Provider.of<MessageProvider>(context, listen: false);
+    messageProvider.addListener(_onMessageUpdate);
+  }
+
+  void _onMessageUpdate() {
+    final messageProvider =
+        Provider.of<MessageProvider>(context, listen: false);
+
+    if (messageProvider.messages != null &&
+        messageProvider.messages!.length > previousMessageLength) {
+      previousMessageLength = messageProvider.messages!.length;
+      _scrollToBottom();
+    }
+  }
+
+  Future<void> initCurrentUser() async {
+    TokenUser? user = await TokenService.tokenUser();
+
+    if (user != null) {
+      setState(() {
+        currentUser = user;
+      });
+    }
   }
 
   String parseDateTimeToHourMinute(String timeStamp) {
@@ -78,8 +117,52 @@ class _MessageScreenState extends State<MessageScreen> {
     super.dispose();
   }
 
-  Future<void> deleteMessage(id) async {
-    await supabase.from('Message').delete().match({'id': id});
+  Future<void> deleteMessage({id, uniqueId}) async {
+    print('Deleting message: $id and $uniqueId' );
+    await ChatService.deleteMessage(id: id, uniqueId: uniqueId);
+  }
+
+  Future<void> sendMessage(
+      {uniqueId, message, sender, senderId, profileImage, time, church}) async {
+    ChatService.sendMessage(
+      uniqueId: uniqueId,
+      message: message,
+      sender: sender,
+      senderId: senderId,
+      time: time,
+      church: church,
+    );
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(
+          _scrollController.position.maxScrollExtent + 400,
+        );
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final messageProvider = Provider.of<MessageProvider>(context);
+
+    // Listen to changes
+    if (messageProvider.messages != null &&
+        messageProvider.messages!.length + 2 > previousMessageLength) {
+      previousMessageLength = messageProvider.messages!.length;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 50),
+            curve: Curves.easeInOutCubic,
+          );
+        }
+      });
+    }
   }
 
   List<String> processedMessageIds = [];
@@ -87,9 +170,10 @@ class _MessageScreenState extends State<MessageScreen> {
   @override
   Widget build(BuildContext context) {
     AppWriteDataBase connect = AppWriteDataBase();
-
     double w = MediaQuery.of(context).size.width;
     double h = MediaQuery.of(context).size.height;
+
+    final messageProvider = Provider.of<MessageProvider>(context, listen: true);
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -102,152 +186,103 @@ class _MessageScreenState extends State<MessageScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  StreamBuilder(
-                      stream: messageClass.listen,
-                      builder: (context, snap) {
-                        switch (snap.connectionState) {
-                          case ConnectionState.none:
-                            return CircularProgressIndicator();
-                          case ConnectionState.waiting:
-                            return Center(child: Text("Loading Messages"));
-                          case ConnectionState.active:
-                            if (snap.hasError) {
-                            } else if (!snap.hasData) {
-                            } else if (snap.hasData) {
-                              final rev = snap.data;
-
-                              final String current =
-                                  messageClass.currentUser['PhoneNumber'] ?? '';
-                              for (var item in rev!) {
-                                final String senderId =
-                                    item['PhoneNumber'] ?? '';
-
-                                if (senderId != current) {
-                                  //TODO mark as read
-
-                                  //  supabase.from('Message').update({
-                                  //   'Status': 'Read',
-                                  // }).match({'id': item['id']}).neq(
-                                  //     'SenderId', messageClass.currentUser['PhoneNumber']);
-
-                                  // supabase.from('Message').insert({
-                                  //   'Sender': "blank",
-                                  //   'SenderId': "blank",
-                                  // });
-                                  //
-                                  // supabase.from('Message').delete().match({ 'SenderId': "blank" });
-                                }
-                              }
-                              return SizedBox();
-                            }
-                          case ConnectionState.done:
-                            return SizedBox();
-                        }
-                        ;
-                        return SizedBox();
-                      }),
-
-                  /////////////////////////////
                   SizedBox(
                     height: h * 0.75418,
-                    child: StreamBuilder(
-                        stream: messageClass.listen,
-                        builder: (context, snap) {
-                          switch (snap.connectionState) {
-                            case ConnectionState.none:
-                              return CircularProgressIndicator();
-                            case ConnectionState.waiting:
-                              return Center(child: Text("Loading Messages"));
-                            case ConnectionState.active:
-                              if (snap.hasError) {
-                              } else if (!snap.hasData) {
-                              } else if (snap.hasData) {
-                                final rev = snap.data;
+                    child: StreamBuilder<List<MessageModel>>(
+                      stream:
+                          Provider.of<MessageProvider>(context, listen: false)
+                              .messagesStream,
+                      builder: (context, snapshot) {
+                        final messages = snapshot.data ?? [];
+                        return ListView.builder(
+                            // reverse: true,
+                            controller: _scrollController, // Add controller
+                            itemCount: messageProvider.messages?.length,
+                            itemBuilder: (context, index) {
+                              print(
+                                  '📱 ListView building with ${messageProvider.messages?.length} messages');
 
-                                if (rev != null) {
-                                  return SizedBox(
-                                    height: h * 0.75418,
-                                    child: ListView.builder(
-                                        reverse: true,
-                                        itemCount: rev?.length,
-                                        itemBuilder: (context, index) {
-                                          final String senderId =
-                                              rev[index]['PhoneNumber'] ?? '';
+                              final String senderId = messageProvider
+                                      .messages?[index].phoneNumber ??
+                                  '';
 
-                                          final String current = messageClass
-                                                  .currentUser['PhoneNumber'] ??
-                                              '';
+                              final String current =
+                                  currentUser?.phoneNumber ?? '';
 
-                                          bool isSender = senderId == current;
+                              bool isSender = senderId == current;
 
-                                          DateTime dateTime = DateTime.parse(
-                                              rev[index]['Time']);
-                                          int hour = dateTime.hour;
-                                          int minute = dateTime.minute;
+                              DateTime dateTime = DateTime.parse(
+                                  messageProvider.messages?[index].time ?? '');
+                              int hour = dateTime.hour;
+                              int minute = dateTime.minute;
 
-                                          return isSender
-                                              ? MessageBubbleRight(
-                                                  name: '$hour:$minute',
-                                                  text: rev[index]['Message'],
-                                                  image: rev[index]
-                                                          ['ProfileImage'] ??
-                                                      '',
-                                                  callBack: () async {
-                                                    const message =
-                                                        "Delete this message?";
-                                                    alertDeleteMessage(
-                                                      context,
-                                                      message,
-                                                      () async {
-                                                        await deleteMessage(
-                                                            rev[index]['id']);
-
-                                                        messageClass.calling(
-                                                            context, setState);
-                                                      },
-                                                    );
-                                                  },
-                                                )
-                                              : MessageBubbleLeft(
-                                                  name: '$hour:$minute',
-                                                  text: rev[index]['Message'],
-                                                  image: rev[index]
-                                                      ['ProfileImage'],
-                                                  person: rev[index]['Sender'],
-                                                  callBack: () {
-                                                    const message =
-                                                        "Delete this message?";
-                                                    alertDeleteMessage(
-                                                      context,
-                                                      message,
-                                                      () async {
-                                                        await deleteMessage(
-                                                            rev[index]['id']);
-
-                                                        messageClass.calling(
-                                                            context, setState);
-                                                      },
-                                                    );
-                                                  },
-                                                );
-                                        }),
-                                  );
-                                }
-                              }
-                            case ConnectionState.done:
-                              return SizedBox();
-                          }
-                          ;
-                          return SizedBox();
-                        }),
+                              return isSender
+                                  ? MessageBubbleRight(
+                                      name: '$hour:$minute',
+                                      text: messageProvider
+                                              .messages?[index].message ??
+                                          '',
+                                      image: messageProvider
+                                              .messages?[index].profileImage ??
+                                          '',
+                                      callBack: () async {
+                                        const message = "Delete this message?";
+                                        alertDeleteMessage(
+                                          context,
+                                          message,
+                                          () async {
+                                            await deleteMessage(
+                                                id: messageProvider
+                                                        .messages?[index].id ??
+                                                    '',
+                                                uniqueId: messageProvider
+                                                        .messages?[index]
+                                                        .uniqueChurchId ??
+                                                    '');
+                                          },
+                                        );
+                                      },
+                                    )
+                                  : MessageBubbleLeft(
+                                      name: '$hour:$minute',
+                                      text: messageProvider
+                                              .messages?[index].message ??
+                                          '',
+                                      image: messageProvider
+                                              .messages?[index].profileImage ??
+                                          '',
+                                      person: messageProvider
+                                              .messages?[index].sender ??
+                                          '',
+                                      callBack: () {
+                                        const message = "Delete this message?";
+                                        alertDeleteMessage(
+                                          context,
+                                          message,
+                                          () async {
+                                            await deleteMessage(
+                                                id: messageProvider
+                                                        .messages?[index].id ??
+                                                    '',
+                                                uniqueId: messageProvider
+                                                        .messages?[index]
+                                                        .uniqueChurchId ??
+                                                    '');
+                                          },
+                                        );
+                                      },
+                                    );
+                            });
+                      },
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(10.0),
                     child: Visibility(
-                      visible:
-                          Provider.of<christProvider>(context, listen: false)
-                                  .myMap['Project']?['Expire'] ??
-                              false,
+                      visible: 
+                      Provider.of<christProvider>(context, listen: false)
+                              .myMap['Project']?['Expire'] ??
+                          false,
                       child: Row(
                         children: [
                           Expanded(
@@ -268,39 +303,27 @@ class _MessageScreenState extends State<MessageScreen> {
                           Expanded(
                             flex: 1,
                             child: IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    message = messagex;
-                                  });
-                                  messageClass.getCurrentUser(context);
+                                onPressed: () async {
+                                  message = messagex;
 
-                                  messageClass.sendMessage(
-                                    context,
-                                    //Neeed to sort for name
-                                    messageClass.currentUser['UserName'] ?? '',
-                                    messageClass.currentUser['UserId'] ?? '',
-                                    message,
-                                    Provider.of<CurrentRoomIdProvider>(context,
-                                            listen: false)
-                                        .currentRoomId,
-                                    messageClass.currentUser['ProfileImage'] ??
-                                        '',
-                                    messageClass.currentUser['PhoneNumber'] ??
-                                        '',
-                                    setState,
+                                  print('Sending message: $message');
+                                  await sendMessage(
+                                    uniqueId: currentUser?.uniqueChurchId ?? '',
+                                    message: message,
+                                    sender: currentUser?.userName ?? '',
+                                    senderId: currentUser?.phoneNumber ?? '',
+                                    time: DateTime.now().toIso8601String(),
+                                    church: currentUser?.church ?? '',
                                   );
-                                  
+
                                   controller.clear();
                                   FocusScope.of(context)
                                       .requestFocus(FocusNode());
 
                                   PushNotifications.sendMessageToTopic(
-                                      topic: Provider.of<christProvider>(
-                                              context,
-                                              listen: false)
-                                          .myMap['Project']?['ChurchName'],
+                                      topic: currentUser?.uniqueChurchId ?? '',
                                       title:
-                                          messageClass.currentUser['UserName'],
+                                          currentUser?.userName ?? '',
                                       body: message);
                                 },
                                 icon: Icon(Icons.send_outlined)),
@@ -379,7 +402,14 @@ class MessageBubbleLeft extends StatelessWidget {
                             color: Colors.grey, shape: BoxShape.circle),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(50.0),
-                          child: Image.network(image ?? ""),
+                          child: Image.network(
+                            image ?? '',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(Icons.person,
+                                  color: Colors.white); // fallback
+                            },
+                          ),
                         ),
                       ),
                     ],
@@ -515,8 +545,16 @@ class _MessageBubbleRightState extends State<MessageBubbleRight> {
                     decoration: const BoxDecoration(
                         color: Colors.grey, shape: BoxShape.circle),
                     child: ClipRRect(
-                        borderRadius: BorderRadius.circular(50.0),
-                        child: Image.network(widget.image ?? "")),
+                      borderRadius: BorderRadius.circular(50.0),
+                      child: Image.network(
+                        widget.image ?? '',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.person,
+                              color: Colors.white); // fallback
+                        },
+                      ),
+                    ),
                   ),
                 ),
               ],

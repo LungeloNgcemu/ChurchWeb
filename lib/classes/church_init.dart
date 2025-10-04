@@ -41,18 +41,13 @@ class ChurchInit {
 
   static Future<bool> expiryExpire(String? uniqueId) async {
     try {
-      print('unique 1');
       final exp = await Restrictions.getExpiryDate(uniqueId);
-      print('unique 2');
 
       if (exp == 'none') {
         return true;
       }
 
-      print('unique 3');
-
       final answer = Restrictions.isExpired(exp);
-      print('unique 4');
 
       return invert(answer);
     } catch (error) {

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:master/Model/existing_user_model.dart';
 import 'package:master/Model/user_details_model.dart';
+import 'package:master/classes/sql_database.dart';
 import 'package:master/constants/constants.dart';
 import 'package:http/http.dart' as http;
 
