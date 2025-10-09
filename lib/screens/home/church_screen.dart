@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:master/Model/token_user.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/church_class.dart';
 import 'package:master/classes/push_notification/notification.dart';
@@ -8,6 +9,8 @@ import 'package:master/screens/prayer/prayer_screen.dart';
 import 'package:master/screens/profile/profile_screen.dart';
 import 'package:master/databases/database.dart';
 import 'package:master/screens/post/post_screen.dart';
+import 'package:master/services/api/token_service.dart';
+import 'package:master/services/socket/io_service.dart';
 import 'package:master/util/alerts.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -41,6 +44,7 @@ class _ChurchScreenState extends State<ChurchScreen>
     with SingleTickerProviderStateMixin {
   ChurchInit churchStart = ChurchInit();
   Authenticate auth = Authenticate();
+  bool _initialized = false;
 
   final Uri _url =
       Uri.parse('https://lungelongcemu.github.io/Church-Connect-App-Site');
@@ -122,8 +126,6 @@ class _ChurchScreenState extends State<ChurchScreen>
             .myMap['Project']?['Expire'] ??
         false;
 
-    print("Expired: $isExpired");
-
     // if (!isExpired) {
     //   return snack();
     // }
@@ -131,24 +133,35 @@ class _ChurchScreenState extends State<ChurchScreen>
 
   @override
   void initState() {
-    // countStreamInit();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _initChurch();
-    });
-
-    // TODO: implement initState
     super.initState();
   }
 
-  Future<void> _initChurch() async {
-    PushNotifications.init(context);
-    await ChurchInit.init(context);
-    // snackInit();
-    final message = " Welcome to Church Connect";
-    alertWelcome(context, message); // Wait for the initialization to complete
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
-    // setState(() {});
+    if (!_initialized) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await _initChurch();
+      });
+      _initialized = true;
+    }
+  }
+
+  Future<void> _initChurch() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await IOService.initializeWithProvider(context);
+      TokenUser? user = await TokenService.tokenUser();
+      if (user != null) {
+        IOService.joinRoom(user.uniqueChurchId!);
+      }
+      PushNotifications.init(context);
+      snackInit();
+
+      const message = "Welcome to Church Connect";
+      alertWelcome(context, message);
+    });
   }
 
   void countStreamInit() {
@@ -200,38 +213,6 @@ class _ChurchScreenState extends State<ChurchScreen>
       title: 'Account',
     ),
   ];
-
-  //
-  // List<TabItem> items = const [
-  //   TabItem(
-  //     icon: Icons.home_filled,
-  //     title: 'Home',
-  //   ),
-  //   TabItem(
-  //     icon: Icons.post_add,
-  //     title: 'Social',
-  //   ),
-  //   TabItem(
-  //     icon: Icons.mic,
-  //     title: 'Media',
-  //   ),
-  //   TabItem(
-  //     icon: Icons.book,
-  //     title: 'Events',
-  //   ),
-  //   TabItem(
-  //     icon: Icons.church,
-  //     title: 'Prayer',
-  //   ),
-  //   TabItem(
-  //     icon: Icons.people_alt_outlined,
-  //     title: 'Chat',
-  //   ),
-  //   TabItem(
-  //     icon: Icons.account_circle_outlined,
-  //     title: 'Account',
-  //   ),
-  // ];
 
   final List<Widget> _pages = const [
     HomeScreen(),

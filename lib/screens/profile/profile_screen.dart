@@ -114,9 +114,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       isLoading = true;
     });
 
-    String? churchName = Provider.of<christProvider>(context, listen: false)
-            .myMap['Project']?['ChurchName'] ??
-        null;
+    TokenUser? user = await TokenService.tokenUser();
+
+    String? churchName = user?.uniqueChurchId;
 
     if (churchName == null) {
       setState(() {
@@ -366,29 +366,16 @@ class CircleProfile extends StatelessWidget {
             color: Colors.grey[100],
             shape: BoxShape.circle,
           ),
-          child: ClipRRect(
-              borderRadius: BorderRadius.circular(80.0),
-              child: Image.network(
-                profileImage ?? "",
-              )
-
-              //  CachedNetworkImage(
-              //   imageUrl: profileImage ?? "",
-              //   placeholder: (context, url) => const Center(
-              //     child: SizedBox(
-              //       height: 40.0,
-              //       width: 40.0,
-              //       child: CircularProgressIndicator(
-              //         value: 1.0,
-              //       ),
-              //     ),
-              //   ),
-              //   errorWidget: (context, url, error) => Icon(Icons.error),
-              //   fit: BoxFit.cover,
-              //   //height: 250,
-              //   //width: double.maxFinite,
-              // ),
-              ),
+          child: ClipOval(
+            child: Image.network(
+              profileImage ?? '',
+              fit: BoxFit.fill,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.person,
+                    color: Colors.white); // fallback
+              },
+            ),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.all(5.0),

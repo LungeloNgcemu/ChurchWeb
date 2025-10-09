@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:master/classes/push_notification/notification.dart';
+import 'package:master/providers/message_provider.dart';
 import 'package:master/providers/registration_provider.dart';
 import 'package:master/providers/user_data_provider.dart';
 import 'package:master/screens/home/church_screen.dart';
@@ -30,7 +31,7 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  EnvService.envInit();
+  await EnvService.envInit();
 
   await Supabase.initialize(url: Keys.supabaseUrl, anonKey: Keys.supabaseKey);
 
@@ -124,6 +125,9 @@ void main() async {
         ),
         ChangeNotifierProvider<RegistrationProvider>(
           create: (BuildContext context) => RegistrationProvider(),
+        ),
+        ChangeNotifierProvider<MessageProvider>(
+          create: (BuildContext context) => MessageProvider(),
         ),
       ],
       child: const MyApp(),

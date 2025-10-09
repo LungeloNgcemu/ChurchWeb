@@ -1,20 +1,20 @@
 class ChurchDataModel {
-  final String? churchName;
-  final String? logoAddress;
-  final String? address;
-  final String? read;
-  final double? gpsLat;
-  final double? gpsLong;
-  final String? about;
-  final String? timeOpen;
+  final dynamic? churchName;
+  final dynamic? logoAddress;
+  final dynamic? address;
+  final dynamic? read;
+  final dynamic? gpsLat;
+  final dynamic? gpsLong;
+  final dynamic? about;
+  final dynamic? timeOpen;
   final dynamic? contactNumber;
-  final String? color;
-  final String? url;
-  final String? api;
-  final String? projectId;
-  final String? bucket;
-  final String? role;
-  final String? expire;
+  final dynamic? color;
+  final dynamic? url;
+  final dynamic? api;
+  final dynamic? projectId;
+  final dynamic? bucket;
+  final dynamic? role;
+  final dynamic? expire;
 
   ChurchDataModel({
     this.churchName,

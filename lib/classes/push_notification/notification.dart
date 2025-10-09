@@ -212,8 +212,7 @@ class PushNotifications {
     required String title,
     required String body,
   }) async {
-    String churchName = convertName(topic);
     return notificationService.sendNotificationToTopic(
-        topic: churchName, title: title, body: body);
+        topic: topic, title: title, body: body);
   }
 }

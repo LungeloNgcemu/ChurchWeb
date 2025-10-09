@@ -32,7 +32,6 @@ class Restrictions {
     try {
       ChurchDetailModel? churchData =
           await GeneralDataService.getChurchData(uniqueChurchId!);
-
       if (churchData == null) {
         return "";
       }
