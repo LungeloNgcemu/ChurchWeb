@@ -31,7 +31,7 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  EnvService.envInit();
+  await EnvService.envInit();
 
   await Supabase.initialize(url: Keys.supabaseUrl, anonKey: Keys.supabaseKey);
 
