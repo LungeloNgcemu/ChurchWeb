@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:master/Model/token_user.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/church_class.dart';
 import 'package:master/classes/push_notification/notification.dart';
@@ -8,6 +9,7 @@ import 'package:master/screens/prayer/prayer_screen.dart';
 import 'package:master/screens/profile/profile_screen.dart';
 import 'package:master/databases/database.dart';
 import 'package:master/screens/post/post_screen.dart';
+import 'package:master/services/api/token_service.dart';
 import 'package:master/services/socket/io_service.dart';
 import 'package:master/util/alerts.dart';
 import 'package:provider/provider.dart';
@@ -142,10 +144,7 @@ class _ChurchScreenState extends State<ChurchScreen>
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await _initChurch();
       });
-      // Only run this once
       _initialized = true;
-
-      // Safe to use context here
     }
   }
 
@@ -153,8 +152,10 @@ class _ChurchScreenState extends State<ChurchScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       await IOService.initializeWithProvider(context);
-      IOService.joinRoom('d103e5c2-7817-445c-a39d-eb5747ef6e88');
-      // Safe to use context here
+      TokenUser? user = await TokenService.tokenUser();
+      if (user != null) {
+        IOService.joinRoom(user.uniqueChurchId!);
+      }
       PushNotifications.init(context);
       snackInit();
 

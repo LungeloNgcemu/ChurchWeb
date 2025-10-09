@@ -18,10 +18,7 @@ class IOService {
     final messageProvider =
         Provider.of<MessageProvider>(context, listen: false);
 
-    print('Initializing IOService with provider');
-
     _initSocket(messageProvider);
-    print('IOService initialized with provider');
   }
 
   static void _initSocket(MessageProvider messageProvider) {
