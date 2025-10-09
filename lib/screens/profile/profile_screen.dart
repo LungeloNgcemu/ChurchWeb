@@ -366,11 +366,10 @@ class CircleProfile extends StatelessWidget {
             color: Colors.grey[100],
             shape: BoxShape.circle,
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(50.0),
+          child: ClipOval(
             child: Image.network(
               profileImage ?? '',
-              fit: BoxFit.contain,
+              fit: BoxFit.fill,
               errorBuilder: (context, error, stackTrace) {
                 return const Icon(Icons.person,
                     color: Colors.white); // fallback

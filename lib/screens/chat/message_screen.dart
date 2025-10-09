@@ -40,7 +40,6 @@ class MessageScreen extends StatefulWidget {
 class _MessageScreenState extends State<MessageScreen> {
   MessageClass messageClass = MessageClass();
   Authenticate auth = Authenticate();
-  IOService ioService = IOService();
   TokenUser? currentUser;
   bool isLoading = false;
 
@@ -52,7 +51,10 @@ class _MessageScreenState extends State<MessageScreen> {
 
   @override
   void initState() {
-    initChat();
+    if (mounted) {
+      initChat();
+    }
+
     super.initState();
   }
 
@@ -61,9 +63,6 @@ class _MessageScreenState extends State<MessageScreen> {
       isLoading = true;
     });
     initCurrentUser();
-
-    ioService.initializeWithProvider(context);
-    ioService.joinRoom('d103e5c2-7817-445c-a39d-eb5747ef6e88');
 
     Future.delayed(Duration(seconds: 3), () {
       setState(() {
@@ -118,7 +117,7 @@ class _MessageScreenState extends State<MessageScreen> {
   }
 
   Future<void> deleteMessage({id, uniqueId}) async {
-    print('Deleting message: $id and $uniqueId' );
+    print('Deleting message: $id and $uniqueId');
     await ChatService.deleteMessage(id: id, uniqueId: uniqueId);
   }
 
@@ -279,10 +278,10 @@ class _MessageScreenState extends State<MessageScreen> {
                   Padding(
                     padding: const EdgeInsets.all(10.0),
                     child: Visibility(
-                      visible: 
-                      Provider.of<christProvider>(context, listen: false)
-                              .myMap['Project']?['Expire'] ??
-                          false,
+                      visible:
+                          Provider.of<christProvider>(context, listen: false)
+                                  .myMap['Project']?['Expire'] ??
+                              false,
                       child: Row(
                         children: [
                           Expanded(
@@ -322,8 +321,7 @@ class _MessageScreenState extends State<MessageScreen> {
 
                                   PushNotifications.sendMessageToTopic(
                                       topic: currentUser?.uniqueChurchId ?? '',
-                                      title:
-                                          currentUser?.userName ?? '',
+                                      title: currentUser?.userName ?? '',
                                       body: message);
                                 },
                                 icon: Icon(Icons.send_outlined)),
@@ -405,9 +403,24 @@ class MessageBubbleLeft extends StatelessWidget {
                           child: Image.network(
                             image ?? '',
                             fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) {
+                                // Image is fully loaded
+                                return child;
+                              }
+                              // While loading, show a placeholder
+                              return Container(
+                                color: Colors.grey[300],
+                                child: const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            },
                             errorBuilder: (context, error, stackTrace) {
-                              return const Icon(Icons.person,
-                                  color: Colors.white); // fallback
+                              return const Icon(
+                                Icons.person,
+                                color: Colors.white,
+                              ); // fallback if image fails
                             },
                           ),
                         ),
@@ -549,9 +562,24 @@ class _MessageBubbleRightState extends State<MessageBubbleRight> {
                       child: Image.network(
                         widget.image ?? '',
                         fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) {
+                            // Image is fully loaded
+                            return child;
+                          }
+                          // While loading, show a placeholder
+                          return Container(
+                            color: Colors.grey[300],
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        },
                         errorBuilder: (context, error, stackTrace) {
-                          return const Icon(Icons.person,
-                              color: Colors.white); // fallback
+                          return const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                          ); // fallback if image fails
                         },
                       ),
                     ),

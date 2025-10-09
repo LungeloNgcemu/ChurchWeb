@@ -9,12 +9,12 @@ import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class IOService {
-  late IO.Socket socket;
-  final String serverUrl = BaseUrl.baseUrl!;
+  static late IO.Socket socket;
+  static final String serverUrl = BaseUrl.baseUrl!;
 
   IOService();
 
-  void initializeWithProvider(BuildContext context) {
+  static Future<void> initializeWithProvider(BuildContext context) async {
     final messageProvider =
         Provider.of<MessageProvider>(context, listen: false);
 
@@ -24,7 +24,7 @@ class IOService {
     print('IOService initialized with provider');
   }
 
-  void _initSocket(MessageProvider messageProvider) {
+  static void _initSocket(MessageProvider messageProvider) {
     socket = IO.io(serverUrl, <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': false,
@@ -51,7 +51,6 @@ class IOService {
     });
 
     socket.on('new message', (data) async {
-
       if (data != null) {
         try {
           if (data is Map<String, dynamic>) {
@@ -87,7 +86,7 @@ class IOService {
     socket.connect();
   }
 
-  List<MessageModel> _convertToMessageModelList(dynamic data) {
+  static List<MessageModel> _convertToMessageModelList(dynamic data) {
     if (data is List) {
       return data.map<MessageModel>((item) {
         if (item is Map<String, dynamic>) {
@@ -100,12 +99,11 @@ class IOService {
     return [];
   }
 
-  void joinRoom(String uniqueId) {
-    print('Joining room: $uniqueId');
+  static void joinRoom(String uniqueId) {
     socket.emit('join', uniqueId);
   }
 
-  Future<void> sendMessage({
+  static Future<void> sendMessage({
     required String uniqueId,
     required String message,
     required String sender,
