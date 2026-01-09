@@ -37,8 +37,8 @@ class UserService {
 
   static Future<int?> countChurchUsers(String uniqueChurchId) async {
     try {
-      final response = await http
-          .get(Uri.parse('${BaseUrl.baseUrl}/api/user/getAllUsersCount'));
+      final response = await http.get(Uri.parse(
+          '${BaseUrl.baseUrl}/api/user/getAllUsersCount/$uniqueChurchId'));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

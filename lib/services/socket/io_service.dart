@@ -3,8 +3,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:master/Model/message_model.dart';
+import 'package:master/Model/token_user.dart';
 import 'package:master/constants/constants.dart';
 import 'package:master/providers/message_provider.dart';
+import 'package:master/services/api/token_service.dart';
 import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
@@ -25,10 +27,18 @@ class IOService {
     socket = IO.io(serverUrl, <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': false,
+      'reconnection': true,
+      'reconnectionAttempts': 999,
+      'reconnectionDelay': 1000,
     });
 
-    socket.onConnect((_) {
+    socket.onConnect((_) async {
       print('Connected to server');
+
+      TokenUser? user = await TokenService.tokenUser();
+      if (user != null) {
+        socket.emit('resync', user.uniqueChurchId);
+      }
     });
 
     socket.onDisconnect((_) {
