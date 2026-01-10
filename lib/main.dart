@@ -1,3 +1,4 @@
+
 import 'package:appwrite/appwrite.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -28,9 +29,14 @@ import 'screens/auth/register/register_member.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/auth/otp/code.dart';
 import 'firebase_options.dart';
+import 'package:flutter_web_plugins/flutter_web_plugins.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+    setUrlStrategy(const HashUrlStrategy()); // Switch to hash routing
+
 
   await EnvService.envInit();
 
