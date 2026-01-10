@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:master/Model/churchItemModel.dart';
+import 'package:master/Model/church_detail_model.dart';
+import 'package:master/Model/existing_user_model.dart';
 import 'package:master/classes/restrictions.dart';
 import 'package:master/classes/sql_database.dart';
+import 'package:master/componants/multi_church_select.dart';
+import 'package:master/constants/constants.dart';
 import 'package:master/databases/database.dart';
 import 'package:master/providers/registration_provider.dart';
 import 'package:master/screens/profile/profile_screen.dart';
@@ -73,11 +77,6 @@ class _RegisterMemberState extends State<RegisterMember> {
   bool isLoading = false;
   String num = '';
 
-  final List<String> items = [
-    'Male',
-    'Female',
-  ];
-
   final TextEditingController churchController = TextEditingController();
 
   @override
@@ -100,70 +99,32 @@ class _RegisterMemberState extends State<RegisterMember> {
                         padding: const EdgeInsets.all(8.0),
                         //animate this text
                         child: Container(
-                          ///color: Colors.deepOrange,
+                          alignment: Alignment.center,
                           height: 200,
-                          child: DefaultTextStyle(
-                            style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 50.0,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'racingSansOne'),
-                            child: AnimatedTextKit(
-                              animatedTexts: [
-                                TypewriterAnimatedText('Welcome Beloved'),
-                                TypewriterAnimatedText(
-                                    'Please Enter Your Details Below...'),
-                              ],
-                              onTap: () {
-                                print("Tap Event");
-                              },
+                          child: Center(
+                            child: DefaultTextStyle(
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 50.0,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'racingSansOne'),
+                              child: AnimatedTextKit(
+                                animatedTexts: [
+                                  TypewriterAnimatedText('Login'),
+                                  TypewriterAnimatedText('Welcome Beloved'),
+                                  TypewriterAnimatedText(
+                                      'Please Enter Your Mobile Number...'),
+                                ],
+                                onTap: () {
+                                  print("Tap Event");
+                                },
+                              ),
                             ),
                           ),
                         )),
                     Column(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                                // color: Colors.grey[200],
-                                borderRadius: BorderRadius.circular(10.0)),
-                            child: Column(
-                              children: [
-                                InputAppwrite(
-                                  keyboard: TextInputType.text,
-                                  //  message: 'Enter Name',
-                                  controller: controllerName,
-                                  label: 'Name',
-                                  text: 'Name',
-                                  onChanged: (value) {
-                                    Provider.of<RegistrationProvider>(context,
-                                            listen: false)
-                                        .registrationModel
-                                        .userName = value;
-                                    userName = value;
-                                  },
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10.0, vertical: 15),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      auth.dropDownMenu(
-                                          context, items, setState),
-                                      auth.dropSearch(
-                                          context,
-                                          names_of_churches,
-                                          setState,
-                                          churchController),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                         Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10.0, vertical: 10.0),
@@ -191,7 +152,7 @@ class _RegisterMemberState extends State<RegisterMember> {
                                   labelText: 'Phone Number',
                                   hintText: 'Phone Number',
                                 ),
-                                initialCountryCode: '+27',
+                                initialCountryCode: 'ZA', // South Africa
                                 onChanged: (phone) {
                                   Provider.of<RegistrationProvider>(context,
                                           listen: false)
@@ -206,8 +167,6 @@ class _RegisterMemberState extends State<RegisterMember> {
                         ),
                       ],
                     ),
-
-                    //Search for church here...
                     ExtraButton(
                       skip: () async {
                         Provider.of<RegistrationProvider>(context,
@@ -215,83 +174,92 @@ class _RegisterMemberState extends State<RegisterMember> {
                             .registrationModel
                             .role = "Member";
 
-                        final registrationData =
-                            Provider.of<RegistrationProvider>(context,
-                                    listen: false)
-                                .registrationModel;
+                        if (number != '') {
+                          List<ExistingUser>? users =
+                              await Authenticate.getUserFromPhoneNumber(number);
 
-                        final selectedChurch =
-                            Provider.of<SelectedChurchProvider>(context,
-                                    listen: false)
-                                .selectedChurch;
+                          if (users != null) {
+                            if (users.isEmpty) {
+                              alertReturn(context,
+                                  'Your Number is not linked to any church');
+                            }
 
-                        if (registrationData.uniqueChurchId != null &&
-                            registrationData.uniqueChurchId != "") {
-                          setState(() {
-                            isLoading = true;
-                          });
-
-                          SqlDatabase.insertChurcItem(
-                              churchItem: selectedChurch);
-
-                          if (number != '') {
-                            final canAdd =
-                                await Restrictions.restrictionAlgorithm(
-                                    number: number,
-                                    selectedChurch: selectedChurch);
-
-                            if (canAdd) {
-                              Authenticate.authenticate(context);
-
-                              Future.delayed(Duration(seconds: 1), () {
-                                setState(() {
-                                  controllerName.clear();
-                                  controllerNumber.clear();
-                                });
+                            if (users.length > 1) {
+                              final selectedUser = await showChurchSelectDialog(
+                                  context, users, (user) {
+                                Navigator.pop(context, user);
                               });
+
+                              if (selectedUser?.role == Role.admin) {
+                                bool? isPasswordValid = await showAdminDialog(
+                                    context,
+                                    TextEditingController(),
+                                    selectedUser!.uniqueChurchId!);
+
+                                if (isPasswordValid == null) {
+                                  return;
+                                }
+
+                                if (!isPasswordValid) {
+                                  alertReturn(context, "Wrong Password");
+                                  return;
+                                }
+                              }
+
+                              if (selectedUser != null) {
+                                //Assign the user to the provider
+                                Provider.of<RegistrationProvider>(context,
+                                            listen: false)
+                                        .registrationModel
+                                        .uniqueChurchId =
+                                    selectedUser.uniqueChurchId;
+
+                                ChurchItemModel? churchItemModel =
+                                    await GeneralDataService
+                                        .getChurchItemModelByUniqueId(
+                                            selectedUser.uniqueChurchId!);
+
+                                if (churchItemModel != null) {
+                                  await SqlDatabase.insertChurcItem(
+                                      churchItem: churchItemModel);
+                                } else {
+                                  alertReturn(context, 'Church Not Found');
+                                }
+
+                                setState(() {
+                                  isLoading = true;
+                                });
+                                await Authenticate.authenticate(context);
+
+                                setState(() {
+                                  isLoading = false;
+                                });
+                              }
                             } else {
-                              //alert;
-                              const message =
-                                  "The church plan is currently full, please contact the church owner to increse plan ";
-                              alertReturn(context, message);
+                              //Assign the user to the provider
+                              Provider.of<RegistrationProvider>(context,
+                                      listen: false)
+                                  .registrationModel
+                                  .uniqueChurchId = users.first.uniqueChurchId;
+
+                              setState(() {
+                                isLoading = true;
+                              });
+                              await Authenticate.authenticate(context);
+
+                              setState(() {
+                                isLoading = false;
+                              });
                             }
                           } else {
-                            alertReturn(context, 'Please add a phone number');
+                            alertReturn(context, 'User Not Found');
                           }
-
-                          Future.delayed(Duration(seconds: 2), () {
-                            setState(() {
-                              num = '';
-                              number = '';
-                              isLoading = false;
-                            });
-                          });
                         } else {
-                          alertReturn(context, "Please select a church");
+                          alertReturn(context, 'Please add a phone number');
                         }
                       },
-
-                      // skip: () async {
-                      //   num = await  auth.numberCheck(this,number);
-
-                      //   setState(() {
-                      //     isLoading = true;
-                      //   });
-                      //   auth.createPhoneAccount1(context,num, userName,auth.role);
-                      //   //Navigator.pushNamed(context, '/code');
-
-                      //   Future.delayed(Duration(seconds: 3), () {
-                      //     setState(() {
-                      //       controllerName.clear();
-                      //       controllerNumber.clear();
-                      //       isLoading = false;
-                      //       num = '';
-                      //       number = '';
-                      //     });
-                      //   });
-                      // },
                       writing2: const Text(
-                        'Register/Login',
+                        'Login',
                         style: TextStyle(color: Colors.white, fontSize: 20.0),
                       ),
                     ),

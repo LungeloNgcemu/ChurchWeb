@@ -1,5 +1,6 @@
 import 'package:appwrite/models.dart';
 import 'package:master/Model/churchItemModel.dart';
+import 'package:master/Model/existing_user_model.dart';
 import 'package:master/classes/sql_database.dart';
 import 'package:master/constants/constants.dart';
 import 'package:master/databases/database.dart';
@@ -210,7 +211,7 @@ class Authenticate {
     );
   }
 
- static Future<void> submitCode(BuildContext context, String code) async {
+  static Future<void> submitCode(BuildContext context, String code) async {
     String userId = Provider.of<tockenProvider>(context, listen: false).tocken;
 
     String? phoneNumber =
@@ -236,8 +237,14 @@ class Authenticate {
             .uniqueChurchId;
 
     try {
-      bool result = await AuthService.verifyOtp(phoneNumber ?? '', code, userName ?? '',
-          gender ?? '', selectedChurch ?? '', role ?? '', uniqueChurchId ?? '');
+      bool result = await AuthService.verifyOtp(
+          phoneNumber ?? '',
+          code,
+          userName ?? '',
+          gender ?? '',
+          selectedChurch ?? '',
+          role ?? '',
+          uniqueChurchId ?? '');
 
       if (result) {
         Navigator.of(context).pushNamedAndRemoveUntil(
@@ -266,23 +273,21 @@ class Authenticate {
           registrationData.phoneNumber!, registrationData.uniqueChurchId!);
 
       if (existingUser != null) {
-        if (registrationData.role == existingUser.role) {
-          if (registrationData.role == Role.admin) {
-            final isPasswordValid = await AuthService.checkPassword(
-                registrationData.password!, registrationData.uniqueChurchId!);
+      
+          // if (registrationData.role == Role.admin) {
+          //   final isPasswordValid = await AuthService.checkPassword(
+          //       registrationData.password!, registrationData.uniqueChurchId!);
 
-            if (!isPasswordValid) {
-              alertReturn(context, "Wrong Password");
-              return;
-            }
-          }
+          //   if (!isPasswordValid) {
+          //     alertReturn(context, "Wrong Password");
+          //     return;
+          //   }
+          // }
 
           if (await AuthService.sendOtp(registrationData.phoneNumber!)) {
             Navigator.pushNamed(context, RoutePaths.code);
           }
-        } else {
-          alertReturn(context, "You are in the Wrong Registration screen");
-        }
+
       } else {
         if (registrationData.role == Role.admin) {
           final isPasswordValid = await AuthService.checkPassword(
@@ -301,6 +306,11 @@ class Authenticate {
     } catch (error) {
       alertReturn(context, "Problem with Number ${error}");
     }
+  }
+
+  static Future<List<ExistingUser>?> getUserFromPhoneNumber(
+      String phoneNumber) async {
+    return await UserService.getUserFromPhoneNumber(phoneNumber);
   }
 
   Future<String> numberCheck(context, String num) async {

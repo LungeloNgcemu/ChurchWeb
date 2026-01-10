@@ -72,4 +72,24 @@ class UserService {
       return null;
     }
   }
+
+  static Future<List<ExistingUser>?> getUserFromPhoneNumber(
+      String phoneNumber) async {
+    try {
+      final response = await http.post(
+          Uri.parse('${BaseUrl.baseUrl}/api/user/getExistingUserByPhoneNumber'),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({'phoneNumber': phoneNumber}));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as List;
+        return data.map((e) => ExistingUser.fromJson(e)).toList();
+      }
+
+      return null;
+    } catch (error) {
+      print("Get User From Phone Number Error: $error");
+      return null;
+    }
+  }
 }

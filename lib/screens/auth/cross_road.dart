@@ -72,25 +72,13 @@ class _CrossRoadState extends State<CrossRoad> {
           ),
         ),
         next: () {
-          Navigator.pushNamed(context, '/RegisterLeader');
+          Navigator.pushNamed(context, '/RegisterMember');
         },
         writing: const Text(
-          'Leader',
+          'Login',
           style: TextStyle(
             fontSize: 20.0,
             color: Colors.white,
-          ),
-        ),
-        button: ExtraButton(
-          skip: () {
-            Navigator.pushNamed(context, '/RegisterMember');
-          },
-          writing2: const Text(
-            'Member',
-            style: TextStyle(
-              fontSize: 20.0,
-              color: Colors.white,
-            ),
           ),
         ),
         button2: ExtraButton(

@@ -336,7 +336,10 @@ class InputAppwrite extends StatelessWidget {
       this.label,
       this.message,
       super.key,
-      this.keyboard});
+      this.keyboard,
+         this.hasError = false,
+    this.errorMessage,
+      });
 
   TextEditingController? controller;
   Function(String)? onChanged;
@@ -344,6 +347,8 @@ class InputAppwrite extends StatelessWidget {
   String? text;
   String? message;
   TextInputType? keyboard;
+  bool hasError;
+  String? errorMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -363,6 +368,8 @@ class InputAppwrite extends StatelessWidget {
           label: label,
           text: text,
           keyboard: keyboard ?? TextInputType.text,
+          hasError: hasError,
+          errorMessage: errorMessage,
         ),
       ],
     );
