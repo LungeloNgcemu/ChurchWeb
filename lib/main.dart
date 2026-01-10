@@ -32,12 +32,12 @@ import 'firebase_options.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-    setUrlStrategy(const HashUrlStrategy()); // Switch to hash routing
-
-
+  usePathUrlStrategy();
+  
   await EnvService.envInit();
 
   await Supabase.initialize(url: Keys.supabaseUrl, anonKey: Keys.supabaseKey);
