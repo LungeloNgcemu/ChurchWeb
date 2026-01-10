@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:master/Model/token_user.dart';
 import 'package:master/classes/church_init.dart';
 import 'package:master/componants/share_dialog.dart';
+import 'package:master/constants/constants.dart';
 import 'package:master/providers/url_provider.dart';
 import 'package:master/services/api/auth_service.dart';
 import 'package:master/services/api/token_service.dart';
@@ -45,7 +46,7 @@ class InvitationService {
         'success': true,
         'token': result['token'],
         'invitationUrl':
-            'http://localhost:54306/joinChurch?token=${result['token']}',
+            '${BaseUrl.baseUrlLaunch}/joinChurch?token=${result['token']}',
       };
     } catch (e) {
       return {
