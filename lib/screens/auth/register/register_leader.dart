@@ -154,6 +154,7 @@ class _RegisterLeaderState extends State<RegisterLeader> {
                                     children: [
                                       auth.dropDownMenu(
                                           context, items, setState),
+
                                       auth.dropSearch(
                                           context,
                                           names_of_churches,
@@ -339,6 +340,7 @@ class InputAppwrite extends StatelessWidget {
       this.keyboard,
          this.hasError = false,
     this.errorMessage,
+    this.icon,
       });
 
   TextEditingController? controller;
@@ -349,6 +351,7 @@ class InputAppwrite extends StatelessWidget {
   TextInputType? keyboard;
   bool hasError;
   String? errorMessage;
+  IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -363,6 +366,7 @@ class InputAppwrite extends StatelessWidget {
           ),
         ),
         ForTextInput(
+          con: icon,
           controller: controller,
           onChanged: onChanged ?? (String) {},
           label: label,

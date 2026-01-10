@@ -45,13 +45,18 @@ class _SplashScreenState extends State<SplashScreen> {
         ),
         onAnimationEnd: () => debugPrint("On Fade In End"),
         asyncNavigationCallback: () async {
+          final uri = Uri.base;
+          if (uri.path.contains('/joinChurch')) {
+            // deep link handling, do NOT run splash logic
+            return;
+          }
+
           try {
             await Future.delayed(const Duration(seconds: 5));
 
             final token = await SqlDatabase.getToken();
 
             if (token != "" && context.mounted) {
-
               await _initChurch();
 
               Navigator.of(context).pushNamedAndRemoveUntil(

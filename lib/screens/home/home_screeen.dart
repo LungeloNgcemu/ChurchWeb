@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/church_init.dart';
 import 'package:master/classes/home_class.dart';
+import 'package:master/componants/share_dialog.dart';
+import 'package:master/services/utils/invitation_service.dart';
 import 'package:master/util/alerts.dart';
 import 'package:provider/provider.dart';
 import 'widgets/about_us.dart';
@@ -99,40 +101,65 @@ class _HomeScreenState extends State<HomeScreen>
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(Icons.church),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 10.0),
-                              child: Text(
-                                Provider.of<christProvider>(context,
-                                            listen: false)
-                                        .myMap['Project']?['ChurchName'] ??
-                                    "Loading...",
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 25,
-                                  fontWeight: FontWeight.w900,
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Icon(Icons.church),
+                                    Padding(
+                                      padding:
+                                          const EdgeInsets.only(left: 10.0),
+                                      child: Text(
+                                        Provider.of<christProvider>(context,
+                                                        listen: false)
+                                                    .myMap['Project']
+                                                ?['ChurchName'] ??
+                                            "Loading...",
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          fontSize: 25,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.location_pin),
+                                    Padding(
+                                      padding:
+                                          const EdgeInsets.only(left: 10.0),
+                                      child: Text(
+                                        Provider.of<christProvider>(context,
+                                                    listen: false)
+                                                .myMap['Project']?['Address'] ??
+                                            "Loading...",
+                                        softWrap: true,
+                                        style: TextStyle(fontSize: 15.0),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Icon(Icons.location_pin),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 10.0),
-                              child: Text(
-                                Provider.of<christProvider>(context,
-                                            listen: false)
-                                        .myMap['Project']?['Address'] ??
-                                    "Loading...",
-                                softWrap: true,
-                                style: TextStyle(fontSize: 15.0),
-                              ),
-                            )
+                            Column(
+                              children: [
+                                IconButton(
+                                    onPressed: () async {
+                                      await InvitationService.shareInvitation(
+                                          context);
+                                    },
+                                    icon: const Icon(Icons.share)),
+                                const Text('Share')
+                              ],
+                            ),
                           ],
                         ),
                         Padding(

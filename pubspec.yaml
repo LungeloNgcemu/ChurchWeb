@@ -87,6 +87,7 @@ dependencies:
   full_screen_image: ^2.0.0
   flutter_dotenv: ^6.0.0
   socket_io_client: ^3.1.2
+  share_plus: ^12.0.1
 
   
 
