@@ -64,8 +64,18 @@ class _ShareScreenState extends State<ShareScreen> {
 
   Future<void> openExternalHost() async {
     String baseUrlLaunch = BaseUrl.baseUrlLaunch!;
-    final Uri url = Uri.parse(baseUrlLaunch);
-    html.window.location.href = url.toString();
+
+    // Force opening in a new browser tab
+    if (!await launchUrl(
+      Uri.parse(baseUrlLaunch),
+      mode: LaunchMode.externalApplication,
+    )) {
+      throw 'Could not launch $baseUrlLaunch';
+    }
+
+    // or use html.window.location.assign(url);
+
+
   }
 
   Future<void> _loadChurchData() async {
