@@ -16,7 +16,7 @@ class ChurchTokenData {
     bool? isLeader,
     this.uniqueChurchId,
   })  : isExpired = isExpired ?? DateTime.now().isAfter(expiry),
-        isLeader = isLeader ?? (role?.toLowerCase() == 'ADMIN');
+        isLeader = isLeader ?? (role?.toLowerCase() == 'Admin');
 
   // Convert from JSON
   factory ChurchTokenData.fromJson(Map<String, dynamic> json) {

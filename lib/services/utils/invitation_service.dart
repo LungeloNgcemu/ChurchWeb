@@ -31,7 +31,7 @@ class InvitationService {
       // Generate the invitation token
       final result = await AuthService.generateInvitationToken(
         uniqueChurchId: user!.uniqueChurchId!,
-        role: isAdmin ? 'ADMIN' : 'MEMBER',
+        role: isAdmin ? 'Admin' : 'Member',
       );
 
       if (result == null || result['success'] != true) {

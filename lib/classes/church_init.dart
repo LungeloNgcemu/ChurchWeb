@@ -47,7 +47,6 @@ class ChurchInit {
         return true;
       }
 
-
       final answer = Restrictions.isExpired(exp);
       print('unique 4');
 
@@ -98,7 +97,7 @@ class ChurchInit {
   }
 
   static Future<void> init(BuildContext context) async {
-    final tokenUser = await TokenService.tokenUser();
+    TokenUser? tokenUser = await TokenService.tokenUser();
 
     if (tokenUser == null) {
       Navigator.of(context).pushNamedAndRemoveUntil(
@@ -108,8 +107,19 @@ class ChurchInit {
       return;
     }
 
-    ChurchItemModel? churchData = await SqlDatabase.getChurchItem();
+    try {
+      ChurchItemModel? churchItemModel =
+          await GeneralDataService.getChurchItemModelByUniqueId(
+              tokenUser.uniqueChurchId!);
 
+      if (churchItemModel != null) {
+        await SqlDatabase.updateChurchItem(uniqueId: tokenUser.uniqueChurchId!);
+      }
+    } catch (error) {
+      print(error);
+    }
+
+    ChurchItemModel? churchData = await SqlDatabase.getChurchItem();
     bool expire = await expiryExpire(churchData!.uniqueId);
 
     if (churchData == null) {

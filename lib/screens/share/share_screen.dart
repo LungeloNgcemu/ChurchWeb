@@ -2,6 +2,7 @@ import 'dart:html' as html; // For web URL access
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:master/Model/churchItemModel.dart';
 import 'package:master/Model/church_token_model.dart';
 import 'package:master/Model/existing_user_model.dart';
 import 'package:master/classes/authentication/authenticate.dart';
@@ -11,6 +12,7 @@ import 'package:master/componants/multi_church_select.dart';
 import 'package:master/constants/constants.dart';
 import 'package:master/screens/auth/register/register_leader.dart';
 import 'package:master/screens/splash/splash_screen.dart';
+import 'package:master/services/api/general_data_service.dart';
 import 'package:master/services/api/user_service.dart';
 import 'package:master/util/alerts.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -73,10 +75,9 @@ class _ShareScreenState extends State<ShareScreen> {
     //   throw 'Could not launch $baseUrlLaunch';
     // }
 
-    html.window.location.href = baseUrlLaunch.toString(); // replaces current tab
+    html.window.location.href =
+        baseUrlLaunch.toString(); // replaces current tab
     // or use html.window.location.assign(url);
-
-
   }
 
   Future<void> _loadChurchData() async {
@@ -305,6 +306,20 @@ class _ShareScreenState extends State<ShareScreen> {
                               }
 
                               if (!nameError) {
+                                ChurchItemModel? churchItemModel =
+                                    await GeneralDataService
+                                        .getChurchItemModelByUniqueId(
+                                            churchTokenData!.uniqueChurchId!);
+
+                                if (churchItemModel?.limitReached == true) {
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                  alertReturn(context,
+                                      "Church limit reached, please ask the leader to increase plan limit");
+                                  return;
+                                }
+
                                 ExistingUser? existingUser =
                                     await UserService.userExist(
                                         _numberController.text,
