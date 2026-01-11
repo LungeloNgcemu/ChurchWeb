@@ -177,6 +177,12 @@ class _RegisterMemberState extends State<RegisterMember> {
                             if (users.isEmpty) {
                               alertReturn(context,
                                   'Your Number is not linked to any church');
+
+                              setState(() {
+                                isLoading = false;
+                              });
+
+                              return;
                             }
 
                             if (users.length > 1) {
@@ -253,7 +259,6 @@ class _RegisterMemberState extends State<RegisterMember> {
                                   .role = users.first.role;
 
                               if (users.first.role == Role.admin) {
-                                
                                 bool? isPasswordValid = await showAdminDialog(
                                     context,
                                     TextEditingController(),
