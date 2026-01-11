@@ -169,11 +169,6 @@ class _RegisterMemberState extends State<RegisterMember> {
                     ),
                     ExtraButton(
                       skip: () async {
-                        Provider.of<RegistrationProvider>(context,
-                                listen: false)
-                            .registrationModel
-                            .role = "Member";
-
                         if (number != '') {
                           List<ExistingUser>? users =
                               await Authenticate.getUserFromPhoneNumber(number);
@@ -214,6 +209,11 @@ class _RegisterMemberState extends State<RegisterMember> {
                                         .uniqueChurchId =
                                     selectedUser.uniqueChurchId;
 
+                                Provider.of<RegistrationProvider>(context,
+                                        listen: false)
+                                    .registrationModel
+                                    .role = selectedUser.role;
+
                                 ChurchItemModel? churchItemModel =
                                     await GeneralDataService
                                         .getChurchItemModelByUniqueId(
@@ -229,6 +229,7 @@ class _RegisterMemberState extends State<RegisterMember> {
                                 setState(() {
                                   isLoading = true;
                                 });
+
                                 await Authenticate.authenticate(context);
 
                                 setState(() {
@@ -236,15 +237,50 @@ class _RegisterMemberState extends State<RegisterMember> {
                                 });
                               }
                             } else {
+                              setState(() {
+                                isLoading = true;
+                              });
+
                               //Assign the user to the provider
                               Provider.of<RegistrationProvider>(context,
                                       listen: false)
                                   .registrationModel
                                   .uniqueChurchId = users.first.uniqueChurchId;
 
-                              setState(() {
-                                isLoading = true;
-                              });
+                              Provider.of<RegistrationProvider>(context,
+                                      listen: false)
+                                  .registrationModel
+                                  .role = users.first.role;
+
+                              if (users.first.role == Role.admin) {
+                                
+                                bool? isPasswordValid = await showAdminDialog(
+                                    context,
+                                    TextEditingController(),
+                                    users.first.uniqueChurchId!);
+
+                                if (isPasswordValid == null) {
+                                  return;
+                                }
+
+                                if (!isPasswordValid) {
+                                  alertReturn(context, "Wrong Password");
+                                  return;
+                                }
+                              }
+
+                              ChurchItemModel? churchItemModel =
+                                  await GeneralDataService
+                                      .getChurchItemModelByUniqueId(
+                                          users.first.uniqueChurchId!);
+
+                              if (churchItemModel != null) {
+                                await SqlDatabase.insertChurcItem(
+                                    churchItem: churchItemModel);
+                              } else {
+                                alertReturn(context, 'Church Not Found');
+                              }
+
                               await Authenticate.authenticate(context);
 
                               setState(() {
