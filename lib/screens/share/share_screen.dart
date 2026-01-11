@@ -364,12 +364,12 @@ class _ShareScreenState extends State<ShareScreen> {
                                       '/registerMember', // named route
                                       (route) => false,
                                     );
+                                    if (mounted) {
+                                      setState(() {
+                                        isLoading = false;
+                                      });
+                                    }
                                   });
-                                  if (mounted) {
-                                    setState(() {
-                                      isLoading = false;
-                                    });
-                                  }
                                 } else {
                                   setState(() {
                                     isLoading = true;
@@ -394,13 +394,13 @@ class _ShareScreenState extends State<ShareScreen> {
                                       '/registerMember', // named route
                                       (route) => false,
                                     );
-                                  });
 
-                                  if (mounted) {
-                                    setState(() {
-                                      isLoading = false;
-                                    });
-                                  }
+                                    if (mounted) {
+                                      setState(() {
+                                        isLoading = false;
+                                      });
+                                    }
+                                  });
                                 }
                               }
                             },
