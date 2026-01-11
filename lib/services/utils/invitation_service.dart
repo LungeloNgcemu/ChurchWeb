@@ -46,7 +46,7 @@ class InvitationService {
         'success': true,
         'token': result['token'],
         'invitationUrl':
-            '${BaseUrl.baseUrlLaunch}/index.html/joinChurch?token=${result['token']}',
+            '${BaseUrl.baseUrlLaunch}/joinChurch?token=${result['token']}',
       };
     } catch (e) {
       return {
