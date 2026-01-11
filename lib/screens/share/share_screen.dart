@@ -359,11 +359,7 @@ class _ShareScreenState extends State<ShareScreen> {
                                   Future.delayed(const Duration(seconds: 2),
                                       () async {
                                     await openExternalHost();
-                                    Navigator.pushNamedAndRemoveUntil(
-                                      context,
-                                      '/registerMember', // named route
-                                      (route) => false,
-                                    );
+
                                     if (mounted) {
                                       setState(() {
                                         isLoading = false;
@@ -389,11 +385,6 @@ class _ShareScreenState extends State<ShareScreen> {
                                   Future.delayed(const Duration(seconds: 2),
                                       () async {
                                     await openExternalHost();
-                                    Navigator.pushNamedAndRemoveUntil(
-                                      context,
-                                      '/registerMember', // named route
-                                      (route) => false,
-                                    );
 
                                     if (mounted) {
                                       setState(() {
