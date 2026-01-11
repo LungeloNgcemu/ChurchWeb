@@ -354,7 +354,7 @@ class _ShareScreenState extends State<ShareScreen> {
                                   );
 
                                   snack.snack(
-                                      context, "User Registered Succefully");
+                                      context, "User Registered Successfully");
 
                                   await openExternalHost();
                                   Navigator.pushNamedAndRemoveUntil(
@@ -382,7 +382,7 @@ class _ShareScreenState extends State<ShareScreen> {
                                   );
 
                                   snack.snack(
-                                      context, "User Registered Succefully");
+                                      context, "User Registered SuccessFully");
 
                                   await openExternalHost();
                                   Navigator.pushNamedAndRemoveUntil(
