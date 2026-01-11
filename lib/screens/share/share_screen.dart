@@ -6,6 +6,7 @@ import 'package:master/Model/churchItemModel.dart';
 import 'package:master/Model/church_token_model.dart';
 import 'package:master/Model/existing_user_model.dart';
 import 'package:master/classes/authentication/authenticate.dart';
+import 'package:master/classes/snack_bar.dart';
 import 'package:master/componants/extrabutton.dart';
 import 'package:master/componants/logo_header.dart';
 import 'package:master/componants/multi_church_select.dart';
@@ -41,6 +42,7 @@ class _ShareScreenState extends State<ShareScreen> {
   bool emailError = false;
   String? errorMessage;
   Authenticate auth = Authenticate();
+  SnackBarNotice snack = SnackBarNotice();
   ChurchTokenData? churchTokenData;
 
   final List<String> items = [
@@ -351,6 +353,9 @@ class _ShareScreenState extends State<ShareScreen> {
                                     role: churchTokenData!.role!,
                                   );
 
+                                  snack.snack(
+                                      context, "User Registered Succefully");
+
                                   await openExternalHost();
                                   Navigator.pushNamedAndRemoveUntil(
                                     context,
@@ -375,6 +380,10 @@ class _ShareScreenState extends State<ShareScreen> {
                                         churchTokenData!.uniqueChurchId!,
                                     role: churchTokenData!.role!,
                                   );
+
+                                  snack.snack(
+                                      context, "User Registered Succefully");
+
                                   await openExternalHost();
                                   Navigator.pushNamedAndRemoveUntil(
                                     context,
