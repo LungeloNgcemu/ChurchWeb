@@ -356,13 +356,15 @@ class _ShareScreenState extends State<ShareScreen> {
                                   snack.snack(
                                       context, "User Registered Successfully");
 
-                                  await openExternalHost();
-                                  Navigator.pushNamedAndRemoveUntil(
-                                    context,
-                                    '/registerMember', // named route
-                                    (route) => false,
-                                  );
-
+                                  Future.delayed(const Duration(seconds: 2),
+                                      () async {
+                                    await openExternalHost();
+                                    Navigator.pushNamedAndRemoveUntil(
+                                      context,
+                                      '/registerMember', // named route
+                                      (route) => false,
+                                    );
+                                  });
                                   if (mounted) {
                                     setState(() {
                                       isLoading = false;
@@ -384,12 +386,16 @@ class _ShareScreenState extends State<ShareScreen> {
                                   snack.snack(
                                       context, "User Registered SuccessFully");
 
-                                  await openExternalHost();
-                                  Navigator.pushNamedAndRemoveUntil(
-                                    context,
-                                    '/registerMember', // named route
-                                    (route) => false,
-                                  );
+                                  Future.delayed(const Duration(seconds: 2),
+                                      () async {
+                                    await openExternalHost();
+                                    Navigator.pushNamedAndRemoveUntil(
+                                      context,
+                                      '/registerMember', // named route
+                                      (route) => false,
+                                    );
+                                  });
+
                                   if (mounted) {
                                     setState(() {
                                       isLoading = false;
