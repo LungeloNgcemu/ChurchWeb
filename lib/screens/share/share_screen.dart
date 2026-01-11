@@ -66,13 +66,14 @@ class _ShareScreenState extends State<ShareScreen> {
     String baseUrlLaunch = BaseUrl.baseUrlLaunch!;
 
     // Force opening in a new browser tab
-    if (!await launchUrl(
-      Uri.parse(baseUrlLaunch),
-      mode: LaunchMode.externalApplication,
-    )) {
-      throw 'Could not launch $baseUrlLaunch';
-    }
+    // if (!await launchUrl(
+    //   Uri.parse(baseUrlLaunch),
+    //   mode: LaunchMode.externalApplication,
+    // )) {
+    //   throw 'Could not launch $baseUrlLaunch';
+    // }
 
+    html.window.location.href = baseUrlLaunch.toString(); // replaces current tab
     // or use html.window.location.assign(url);
 
 
