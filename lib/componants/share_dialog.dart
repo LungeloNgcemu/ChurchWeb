@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 Future<void> showShareDialog(BuildContext context,
-    {required bool isAdmin, String? shareUrl}) {
+    {required bool isAdmin, String? shareUrlA, String? shareUrlB}) {
   return showDialog(
     context: context,
     barrierDismissible: true,
@@ -48,7 +48,7 @@ Future<void> showShareDialog(BuildContext context,
                             : 'Copy member link'),
                         onTap: () async {
                           // Replace with your actual member share link
-                          String memberLink = shareUrl!;
+                          String memberLink = shareUrlB!;
                           await Clipboard.setData(
                               ClipboardData(text: memberLink));
                           setState(() {
@@ -61,7 +61,7 @@ Future<void> showShareDialog(BuildContext context,
                         leading: const Icon(Icons.people),
                         title: const Text('Share member link via...'),
                         onTap: () async {
-                          final uri = Uri.parse(shareUrl!);
+                          final uri = Uri.parse(shareUrlB!);
                           final params = ShareParams(uri: uri);
                           await SharePlus.instance.share(params).then((_) {
                             if (context.mounted) Navigator.pop(context);
@@ -91,7 +91,7 @@ Future<void> showShareDialog(BuildContext context,
                           onTap: () async {
                             // Replace with your actual admin share link
                             await Clipboard.setData(
-                                ClipboardData(text: shareUrl!));
+                                ClipboardData(text: shareUrlA!));
                             setState(() {
                               copyDone = true;
                               isAdminLink = true;
@@ -110,7 +110,7 @@ Future<void> showShareDialog(BuildContext context,
                       leading: const Icon(Icons.admin_panel_settings),
                       title: const Text('Share admin link via...'),
                       onTap: () async {
-                        final uri = Uri.parse(shareUrl!);
+                        final uri = Uri.parse(shareUrlA!);
                         final params = ShareParams(uri: uri);
                         await SharePlus.instance.share(params).then((_) {
                           if (context.mounted) Navigator.pop(context);

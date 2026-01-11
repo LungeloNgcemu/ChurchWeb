@@ -63,30 +63,45 @@ class InvitationService {
   }
 
   static Future<void> shareInvitation(BuildContext context) async {
+    // SHOW LOADING
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
     try {
-      // Get the current admin status
       final isAdmin = ChurchInit.visibilityToggle(context);
 
-      final result = await InvitationService.generateInvitation(
+      final resultA = await InvitationService.generateInvitation(
         context,
-        isAdmin: isAdmin,
+        isAdmin: true,
       );
 
-      if (result['success'] == true) {
-        final shareUrl = result['invitationUrl'];
+      final resultB = await InvitationService.generateInvitation(
+        context,
+        isAdmin: false,
+      );
+
+      // CLOSE LOADING
+      if (context.mounted) Navigator.pop(context);
+
+      if (resultA['success'] == true && resultB['success'] == true) {
         if (context.mounted) {
-          showShareDialog(context, isAdmin: isAdmin, shareUrl: shareUrl);
+          showShareDialog(
+            context,
+            isAdmin: isAdmin,
+            shareUrlA: resultA['invitationUrl'],
+            shareUrlB: resultB['invitationUrl'],
+          );
         }
       } else {
-        final error = result['error'] ?? 'Failed to generate invitation';
-        if (context.mounted) {
-          alertReturn(context, "Error: $error");
-        }
+        alertReturn(context, 'Failed to generate invitation');
       }
     } catch (e) {
-      if (context.mounted) {
-        alertReturn(context, "An error occurred: $e");
-      }
+      // CLOSE LOADING ON ERROR
+      if (context.mounted) Navigator.pop(context);
+      alertReturn(context, 'Error: $e');
     }
   }
 }
