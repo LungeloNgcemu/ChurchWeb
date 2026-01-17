@@ -91,22 +91,36 @@ class _CodeAppwriteState extends State<CodeAppwrite> {
                   style: TextStyle(color: Colors.white, fontSize: 20.0),
                 ),
               ),
-              Visibility(
-                visible: showResendButton,
-                child: TextButton(
-                  onPressed: () async {
-                    setState(() {
-                      isLoading = true;
-                    });
-                    await Authenticate.resendOtp(context);  
-                    if (mounted) {
-                      setState(() {
-                        isLoading = false;
-                      });
-                    }
-                  },
-                  child: const Text('Resend Code'),
-                ),
+              Divider(),
+              Column(
+                children: [
+                  ExtraButton(
+                      skip: () {
+                        Navigator.pop(context);
+                      },
+                      writing2: const Text('Back',
+                          style:
+                              TextStyle(color: Colors.white, fontSize: 20.0))),
+                  Visibility(
+                    visible: showResendButton,
+                    child: ExtraButton(
+                      skip: () async {
+                        setState(() {
+                          isLoading = true;
+                        });
+                        await Authenticate.resendOtp(context);
+                        if (mounted) {
+                          setState(() {
+                            isLoading = false;
+                          });
+                        }
+                      },
+                      writing2: const Text('Resend Code',
+                          style:
+                              TextStyle(color: Colors.white, fontSize: 20.0)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
