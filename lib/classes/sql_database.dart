@@ -32,6 +32,16 @@ class SqlDatabase {
     }
   }
 
+  static Future<void> clearToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    try {
+      await prefs.remove(_tokenKey);
+    } catch (error) {
+      print("Token not cleared: $error");
+    }
+  }
+
+
   void insertChurchName({required String churchName}) async {
     _prefs = await SharedPreferences.getInstance();
 

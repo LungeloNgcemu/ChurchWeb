@@ -182,7 +182,9 @@ class ChurchInit {
       Map<String, dynamic> projects = {};
 
       await updateProjects(context, projects);
-      sql.deleteAllChurches();
+      await sql.deleteAllChurches();
+      await SqlDatabase.clearToken();
+      
     } catch (error) {
       print('Error clearing project: $error');
       throw error;
