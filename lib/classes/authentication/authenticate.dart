@@ -360,7 +360,6 @@ class Authenticate {
       final role = payloadMap['role'] as String?;
       final uniqueChurchId = payloadMap['uniqueChurchId'] as String?;
 
-
       if (churchName == null || expiry == null) {
         return null;
       }
@@ -398,11 +397,18 @@ class Authenticate {
       required String phone,
       required String uniqueChurchId,
       required String role}) async {
-
     return await AuthService.registerUser(
-        name: name,
-        phone: phone,
-        uniqueChurchId: uniqueChurchId,
-        role: role);
+        name: name, phone: phone, uniqueChurchId: uniqueChurchId, role: role);
+  }
+
+  static Future<void> resendOtp(BuildContext context) async {
+    try {
+      final registrationData =
+          context.read<RegistrationProvider>().registrationModel;
+
+      await AuthService.sendOtp(registrationData.phoneNumber!);
+    } catch (error) {
+      alertReturn(context, "Problem resending code ${error}");
+    }
   }
 }

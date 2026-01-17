@@ -21,9 +21,23 @@ class _CodeAppwriteState extends State<CodeAppwrite> {
   Authenticate auth = Authenticate();
 
   bool isLoading = false;
+  bool showResendButton = false;
 
   String code = '';
   TextEditingController controllerCode = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Show resend button after 5 seconds
+    Future.delayed(const Duration(seconds: 8), () {
+      if (mounted) {
+        setState(() {
+          showResendButton = true;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +50,7 @@ class _CodeAppwriteState extends State<CodeAppwrite> {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: const Text(
-                  'Enter The Code Sent to your number via Sms',
+                  'Enter The Code Sent to your number via Sms/Call',
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 50.0,
@@ -75,6 +89,23 @@ class _CodeAppwriteState extends State<CodeAppwrite> {
                 writing2: const Text(
                   'Submit Code',
                   style: TextStyle(color: Colors.white, fontSize: 20.0),
+                ),
+              ),
+              Visibility(
+                visible: showResendButton,
+                child: TextButton(
+                  onPressed: () async {
+                    setState(() {
+                      isLoading = true;
+                    });
+                    await Authenticate.resendOtp(context);  
+                    if (mounted) {
+                      setState(() {
+                        isLoading = false;
+                      });
+                    }
+                  },
+                  child: const Text('Resend Code'),
                 ),
               ),
             ],
