@@ -2,6 +2,10 @@ class ChurchItemModel {
   String? churchName;
   String? uniqueId;
   String? plan;
+  int? planId;
+  int? planLimit;
+  int? userCount;
+  bool? limitReached;
   String? expire;
   String? logo;
   String? address;
@@ -17,6 +21,10 @@ class ChurchItemModel {
       {this.churchName,
       this.uniqueId,
       this.plan,
+      this.planId,
+      this.planLimit,
+      this.userCount,
+      this.limitReached,
       this.expire,
       this.logo,
       this.address,
@@ -33,6 +41,10 @@ class ChurchItemModel {
       churchName: json['ChurchName'],
       uniqueId: json['UniqueId'],
       plan: json['Plan'],
+      planId: json['PlanId'],
+      planLimit: json['PlanLimit'],
+      userCount: json['UserCount'],
+      limitReached: json['LimitReached'],
       expire: json['Expire'],
       logo: json['LogoAddress'],
       address: json['Address'],
@@ -51,6 +63,10 @@ class ChurchItemModel {
       'ChurchName': churchName,
       'UniqueId': uniqueId,
       'Plan': plan,
+      'PlanId': planId,
+      'PlanLimit': planLimit,
+      'UserCount': userCount,
+      'LimitReached': limitReached,
       'Expire': expire,
       'Logo': logo,
       'Address': address,

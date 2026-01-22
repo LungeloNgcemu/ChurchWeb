@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Church Connect App">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="master">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png" />
+
+  <title>Church</title>
+  <link rel="manifest" href="manifest.json">
+
+  <script>
+    // The value below is injected by flutter build, do not touch.
+    const serviceWorkerVersion = "3543017231";
+  </script>
+  <script src="main.dart.js" defer></script>
+  <!-- This script adds the flutter initialization JS code -->
+  <script src="flutter.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
+
+</head>
+<!-- Firebase SDKs -->
+
+<body>
+  <script>
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC68W0ODoBk8taha9W08fVZcRbHUEbYUm0",
+      authDomain: "churchconnect-8157d.firebaseapp.com",
+      projectId: "churchconnect-8157d",
+      storageBucket: "churchconnect-8157d.firebasestorage.app",
+      messagingSenderId: "301652956348",
+      appId: "1:301652956348:web:5773e288b7f491633e6cb9",
+      measurementId: "G-6BBJLB1FXN"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('flutter-first-frame', function () {
+
+        const swPath = '/firebase-messaging-sw.js';
+
+        // Register with the correct scope that matches your app's base URL
+        navigator.serviceWorker.register(swPath)
+          .then(registration => {
+            console.log('ServiceWorker registration successful:', registration);
+            // Initialize Firebase Messaging with the service worker
+            // firebase.messaging().useServiceWorker(registration);
+          })
+          .catch(err => {
+            console.error('ServiceWorker registration failed:', err);
+          });
+      });
+    }
+
+    // window.addEventListener('load', function (ev) {
+    //   entrypointUrl: "/main.dart.js",
+    //     _flutter.loader.loadEntrypoint({
+    //       serviceWorker: {
+    //         serviceWorkerVersion: serviceWorkerVersion,
+    //       },
+    //       onEntrypointLoaded: function (engineInitializer) {
+    //         engineInitializer.initializeEngine().then(function (appRunner) {
+    //           appRunner.runApp();
+    //         });
+    //       }
+    //     });
+    // });
+
+
+
+    const notification = {
+      subscribeToTopic: function (registrationTokens, topic) {
+        return getMessaging().subscribeToTopic(registrationTokens, topic);
+      },
+
+      unsubscribeFromTopic: function (registrationTokens, topic) {
+        return getMessaging().unsubscribeFromTopic(registrationTokens, topic);
+      }
+    };
+  </script>
+
+  <script>
+    let deferredPrompt;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      console.log('PWA install prompt available');
+    });
+
+    function showInstallPrompt() {
+      if (!deferredPrompt) {
+        alert('Install prompt not available yet');
+        return;
+      }
+
+      deferredPrompt.prompt();
+
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the PWA install');
+        } else {
+          console.log('User dismissed the PWA install');
+        }
+        deferredPrompt = null;
+      });
+    }
+  </script>
+
+</body>
+
+</html>

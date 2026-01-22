@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:appwrite/models.dart';
 import 'package:master/Model/churchItemModel.dart';
+import 'package:master/Model/church_token_model.dart';
+import 'package:master/Model/existing_user_model.dart';
 import 'package:master/classes/sql_database.dart';
 import 'package:master/constants/constants.dart';
 import 'package:master/databases/database.dart';
@@ -210,7 +214,7 @@ class Authenticate {
     );
   }
 
- static Future<void> submitCode(BuildContext context, String code) async {
+  static Future<void> submitCode(BuildContext context, String code) async {
     String userId = Provider.of<tockenProvider>(context, listen: false).tocken;
 
     String? phoneNumber =
@@ -236,8 +240,14 @@ class Authenticate {
             .uniqueChurchId;
 
     try {
-      bool result = await AuthService.verifyOtp(phoneNumber ?? '', code, userName ?? '',
-          gender ?? '', selectedChurch ?? '', role ?? '', uniqueChurchId ?? '');
+      bool result = await AuthService.verifyOtp(
+          phoneNumber ?? '',
+          code,
+          userName ?? '',
+          gender ?? '',
+          selectedChurch ?? '',
+          role ?? '',
+          uniqueChurchId ?? '');
 
       if (result) {
         Navigator.of(context).pushNamedAndRemoveUntil(
@@ -266,22 +276,18 @@ class Authenticate {
           registrationData.phoneNumber!, registrationData.uniqueChurchId!);
 
       if (existingUser != null) {
-        if (registrationData.role == existingUser.role) {
-          if (registrationData.role == Role.admin) {
-            final isPasswordValid = await AuthService.checkPassword(
-                registrationData.password!, registrationData.uniqueChurchId!);
+        // if (registrationData.role == Role.admin) {
+        //   final isPasswordValid = await AuthService.checkPassword(
+        //       registrationData.password!, registrationData.uniqueChurchId!);
 
-            if (!isPasswordValid) {
-              alertReturn(context, "Wrong Password");
-              return;
-            }
-          }
+        //   if (!isPasswordValid) {
+        //     alertReturn(context, "Wrong Password");
+        //     return;
+        //   }
+        // }
 
-          if (await AuthService.sendOtp(registrationData.phoneNumber!)) {
-            Navigator.pushNamed(context, RoutePaths.code);
-          }
-        } else {
-          alertReturn(context, "You are in the Wrong Registration screen");
+        if (await AuthService.sendOtp(registrationData.phoneNumber!)) {
+          Navigator.pushNamed(context, RoutePaths.code);
         }
       } else {
         if (registrationData.role == Role.admin) {
@@ -303,6 +309,11 @@ class Authenticate {
     }
   }
 
+  static Future<List<ExistingUser>?> getUserFromPhoneNumber(
+      String phoneNumber) async {
+    return await UserService.getUserFromPhoneNumber(phoneNumber);
+  }
+
   Future<String> numberCheck(context, String num) async {
     int length = num.length;
 
@@ -313,6 +324,91 @@ class Authenticate {
       var result = num.substring(1);
 
       return result;
+    }
+  }
+
+  /// Parses a JWT token from a URL and returns church data
+  /// Returns ChurchTokenData if successful, null otherwise
+  static ChurchTokenData? parseChurchTokenFromUrl(String url) {
+    try {
+      // Extract token from URL (assuming format: ...?token=JWT_TOKEN)
+      final uri = Uri.parse(url);
+      final token = uri.queryParameters['token'];
+
+      if (token == null || token.isEmpty) {
+        return null;
+      }
+
+      // JWT tokens have 3 parts separated by '.'
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        return null;
+      }
+
+      // Decode the payload (middle part)
+      final payload = parts[1];
+      // Add padding if needed
+      var normalizedPayload = base64Url.normalize(payload);
+      // Decode the base64 payload
+      final decoded = utf8.decode(base64Url.decode(normalizedPayload));
+      final payloadMap = json.decode(decoded) as Map<String, dynamic>;
+
+      // Extract required fields
+      final churchName = payloadMap['churchName'] as String?;
+      final imageUrl = payloadMap['imageUrl'] as String?;
+      final expiry = payloadMap['exp'] as int?;
+      final role = payloadMap['role'] as String?;
+      final uniqueChurchId = payloadMap['uniqueChurchId'] as String?;
+
+      if (churchName == null || expiry == null) {
+        return null;
+      }
+
+      // Convert expiry from seconds since epoch to DateTime
+      final expiryDate = DateTime.fromMillisecondsSinceEpoch(expiry * 1000);
+
+      return ChurchTokenData(
+        churchName: churchName,
+        imageUrl: imageUrl,
+        expiry: expiryDate,
+        role: role,
+        uniqueChurchId: uniqueChurchId,
+      );
+    } catch (e) {
+      debugPrint('Error parsing token: $e');
+      return null;
+    }
+  }
+
+  /// Extracts and validates token from URL, returns church data if valid
+  /// Returns ChurchTokenData if valid, null if invalid, or throws an error if expired
+  static Future<ChurchTokenData?> getChurchDataFromUrl(String url) async {
+    final churchData = parseChurchTokenFromUrl(url);
+
+    if (churchData == null) {
+      return null;
+    }
+
+    return churchData;
+  }
+
+  static Future<bool> registerUser(
+      {required String name,
+      required String phone,
+      required String uniqueChurchId,
+      required String role}) async {
+    return await AuthService.registerUser(
+        name: name, phone: phone, uniqueChurchId: uniqueChurchId, role: role);
+  }
+
+  static Future<void> resendOtp(BuildContext context) async {
+    try {
+      final registrationData =
+          context.read<RegistrationProvider>().registrationModel;
+
+      await AuthService.sendOtp(registrationData.phoneNumber!);
+    } catch (error) {
+      alertReturn(context, "Problem resending code ${error}");
     }
   }
 }

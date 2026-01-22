@@ -24,6 +24,7 @@ class Assets {
 
 class BaseUrl {
   static String? baseUrl = dotenv.env['BASEURL'];
+  static String? baseUrlLaunch = dotenv.env['BASEURLLAUNCH'];
 }
 
 

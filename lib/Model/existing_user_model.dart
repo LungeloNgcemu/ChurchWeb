@@ -3,8 +3,9 @@ class ExistingUser {
   String? role;
   String? phoneNumber;
   String? uniqueChurchId;
+  String? churchName;
 
-  ExistingUser({this.userId, this.role, this.phoneNumber, this.uniqueChurchId});
+  ExistingUser({this.userId, this.role, this.phoneNumber, this.uniqueChurchId, this.churchName});
 
   factory ExistingUser.fromJson(Map<String, dynamic> json) {
     return ExistingUser(
@@ -12,6 +13,7 @@ class ExistingUser {
       role: json['Role'],
       phoneNumber: json['PhoneNumber'],
       uniqueChurchId: json['UniqueChurchId'],
+      churchName: json['ChurchName'],
     );
   }
 
@@ -21,6 +23,7 @@ class ExistingUser {
       'Role': role,
       'PhoneNumber': phoneNumber,
       'UniqueChurchId': uniqueChurchId,
+      'ChurchName': churchName,
     };
   }
 }

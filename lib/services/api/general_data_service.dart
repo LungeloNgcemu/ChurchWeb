@@ -22,6 +22,19 @@ class GeneralDataService {
     }
   }
 
+  static Future<ChurchItemModel?> getChurchItemModelByUniqueId(String uniqueId) async {
+    final response = await http.get(
+        Uri.parse('${BaseUrl.baseUrl}/api/baseData/getChurchItemModelByChurchId/$uniqueId'));
+
+    if (response.statusCode == 200) {
+      var result = json.decode(response.body);
+
+      return ChurchItemModel.fromJson(result);
+    } else {
+      return null;
+    }
+  }
+
   static Future<ChurchDetailModel?> getChurchData(String uniqueId) async {
     final response = await http.get(
         Uri.parse('${BaseUrl.baseUrl}/api/baseData/getChurchData/$uniqueId'));

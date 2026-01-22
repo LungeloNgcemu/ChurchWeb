@@ -62,4 +62,67 @@ class AuthService {
       return false;
     }
   }
+
+  static Future<bool> registerUser(
+      {required String name,
+      required String phone,
+      required String uniqueChurchId,
+      required String role}) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${BaseUrl.baseUrl}/api/auth/registerUser'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'phone': phone,
+          'uniqueChurchId': uniqueChurchId,
+          'role': role
+        }),
+      );
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
+    }
+  }
+
+
+
+  static Future<Map<String, dynamic>?> generateInvitationToken({
+    required String uniqueChurchId,
+    required String role,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${BaseUrl.baseUrl}/api/auth/invitationToken'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'uniqueChurchId': uniqueChurchId,
+          'role': role,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return {
+          'success': true,
+          'token': responseData['token'],
+        };
+      } else {
+        final errorData = jsonDecode(response.body);
+        return {
+          'success': false,
+          'error': errorData['error'] ?? 'Failed to generate invitation token',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: $e',
+      };
+    }
+  }
 }

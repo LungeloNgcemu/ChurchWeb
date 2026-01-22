@@ -1,3 +1,4 @@
+
 import 'package:appwrite/appwrite.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:master/providers/user_data_provider.dart';
 import 'package:master/screens/home/church_screen.dart';
 import 'package:master/screens/auth/register/create_account.dart';
 import 'package:master/screens/auth/cross_road.dart';
+import 'package:master/screens/share/share_screen.dart';
 import 'package:master/screens/splash/splash_screen.dart';
 import 'package:master/services/utils/env_service.dart';
 import 'constants/constants.dart';
@@ -27,10 +29,15 @@ import 'screens/auth/register/register_member.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/auth/otp/code.dart';
 import 'firebase_options.dart';
+import 'package:flutter_web_plugins/flutter_web_plugins.dart';
+
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  usePathUrlStrategy();
+  
   await EnvService.envInit();
 
   await Supabase.initialize(url: Keys.supabaseUrl, anonKey: Keys.supabaseKey);
@@ -140,7 +147,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Check if this is a deep link to joinChurch
+    final isJoinChurchLink = Uri.base.path == '/joinChurch' || 
+                           (Uri.base.hasQuery && Uri.base.queryParameters.containsKey('token'));
+    
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      initialRoute: isJoinChurchLink ? '/joinChurch' : '/splash',
       theme: ThemeData(
         useMaterial3: false,
         textTheme: GoogleFonts.racingSansOneTextTheme(
@@ -149,21 +162,49 @@ class MyApp extends StatelessWidget {
               ),
         ),
       ),
-      debugShowCheckedModeBanner: false,
-      initialRoute: '/splash',
-      routes: {
-        '/splash': (context) => const SplashScreen(),
-        '/crossRoad': (context) => const CrossRoad(),
-        '/RegisterLeader': (context) => const RegisterLeader(),
-        '/RegisterMember': (context) => const RegisterMember(),
-        '/church': (context) => const ChurchScreen(),
-        '/loginAppwrite': (context) => LoginAppwrite(),
-        '/code': (context) => const CodeAppwrite(),
-        '/create': (context) => const CreatePage(),
-        '/createMinister': (context) => const CreateMinister(),
-        '/createPrayer': (context) => CreatePrayer(),
-        '/messageScreen': (context) => const MessageScreen(),
-        '/createAccount': (context) => const CreateAccount(),
+      onGenerateRoute: (settings) {
+        final uri = Uri.parse(settings.name ?? '');
+
+        if (uri.path == '/joinChurch' || uri.queryParameters.containsKey('token')) {
+          return MaterialPageRoute(
+            builder: (_) => WillPopScope(
+              onWillPop: () async {
+                // Prevent going back to a potentially broken state
+                return false;
+              },
+              child: const ShareScreen(),
+            ),
+          );
+        }
+
+        switch (uri.path) {
+          case '/splash':
+            return MaterialPageRoute(builder: (_) => const SplashScreen());
+          case '/crossRoad':
+            return MaterialPageRoute(builder: (_) => const CrossRoad());
+          case '/RegisterLeader':
+            return MaterialPageRoute(builder: (_) => const RegisterLeader());
+          case '/RegisterMember':
+            return MaterialPageRoute(builder: (_) => const RegisterMember());
+          case '/church':
+            return MaterialPageRoute(builder: (_) => const ChurchScreen());
+          case '/loginAppwrite':
+            return MaterialPageRoute(builder: (_) => LoginAppwrite());
+          case '/code':
+            return MaterialPageRoute(builder: (_) => const CodeAppwrite());
+          case '/create':
+            return MaterialPageRoute(builder: (_) => const CreatePage());
+          case '/createMinister':
+            return MaterialPageRoute(builder: (_) => const CreateMinister());
+          case '/createPrayer':
+            return MaterialPageRoute(builder: (_) => CreatePrayer());
+          case '/messageScreen':
+            return MaterialPageRoute(builder: (_) => const MessageScreen());
+          case '/createAccount':
+            return MaterialPageRoute(builder: (_) => const CreateAccount());
+          default:
+            return MaterialPageRoute(builder: (_) => const SplashScreen());
+        }
       },
     );
   }
