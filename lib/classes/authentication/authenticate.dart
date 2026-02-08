@@ -411,4 +411,22 @@ class Authenticate {
       alertReturn(context, "Problem resending code ${error}");
     }
   }
+
+  static Future<bool> registerOrginisationAndUser(
+    String name,
+    String email,
+    String phoneNumber,
+    String churchName,
+    String address,
+    String vision,
+    String mission,
+    String password,
+  ) async {
+    try {
+      return await AuthService.registerOrginisationAndUser(name, email,
+          phoneNumber, churchName, address, vision, mission, password);
+    } catch (error) {
+      return false;
+    }
+  }
 }
