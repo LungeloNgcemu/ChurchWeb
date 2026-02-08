@@ -108,29 +108,25 @@ class _CreateAccountState extends State<CreateAccount> {
   }
 
   void registerChurch({churchName, ChurchNumber}) async {
-    await searchChurchName(churchName);
 
-    await searchChurcNumber(ChurchNumber);
+final result = await Authenticate.registerOrginisationAndUser(name, email, phoneNumber, churchName, address, vision, mission, password);
+    
+    if(result){
 
-    if (churchExist) {
-      const message1 =
-          "This church name already exist, choose another church name please.";
-      alertReturn(context, message1);
-    } else {
-      if (numberExist) {
-        const message2 =
-            "This phone number is already registered for another church, please use another number";
-        alertReturn(context, message2);
-      } else {
-        //we can register...
+  const message =
+        "Church successfully registerd, Your will be redirected to the Login screen";
 
-        supabaseInsert();
-        const message =
-            "Church successfully registerd, Your will be redirected to the Login screen";
-        await alertSuccess(context, message);
-        clearEditor();
-        Navigator.pushNamed(context, "/RegisterLeader");
-      }
+    await alertSuccess(context, message);
+
+    
+    clearEditor();
+    Navigator.pushNamed(context, "/RegisterMember");
+    }else{
+
+       const message =
+        "Something went wrong with resigstration";
+
+    await alertReturn(context, message);
     }
   }
 

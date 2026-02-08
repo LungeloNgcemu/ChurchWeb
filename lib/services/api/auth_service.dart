@@ -89,8 +89,6 @@ class AuthService {
     }
   }
 
-
-
   static Future<Map<String, dynamic>?> generateInvitationToken({
     required String uniqueChurchId,
     required String role,
@@ -123,6 +121,42 @@ class AuthService {
         'success': false,
         'error': 'Network error: $e',
       };
+    }
+  }
+
+  static Future<bool> registerOrginisationAndUser(
+    String name,
+    String email,
+    String phoneNumber,
+    String churchName,
+    String address,
+    String vision,
+    String mission,
+    String password,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${BaseUrl.baseUrl}/api/auth/registerChurch'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          "name": name,
+          "email": email,
+          "phoneNumber": phoneNumber,
+          "churchName": churchName,
+          "address": address,
+          "vision": vision,
+          "mission": mission,
+          "password": password,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
     }
   }
 }
