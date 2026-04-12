@@ -6,6 +6,7 @@ import 'package:master/classes/sql_database.dart';
 import 'package:master/constants/constants.dart';
 import 'package:master/databases/database.dart';
 import 'package:master/providers/registration_provider.dart';
+import 'package:master/providers/url_provider.dart';
 import 'package:master/services/api/general_data_service.dart';
 import 'package:master/util/alerts.dart';
 import 'package:provider/provider.dart';
@@ -127,7 +128,7 @@ class _RegisterLeaderState extends State<RegisterLeader> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.chevron_left_rounded,
+                              Icon(Icons.chevron_left_rounded,
                                   size: 18,
                                   color: AppColors.whiteDim),
                               Text('Back',
@@ -459,7 +460,7 @@ class _RegisterLeaderState extends State<RegisterLeader> {
             Positioned.fill(
               child: Container(
                 color: Colors.black.withOpacity(0.45),
-                child: const Center(
+                child: Center(
                   child: CircularProgressIndicator(
                       color: AppColors.purple, strokeWidth: 3),
                 ),

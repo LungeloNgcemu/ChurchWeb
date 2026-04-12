@@ -179,28 +179,29 @@ class ConnectBadge extends StatelessWidget {
   final Color backgroundColor;
   final Color textColor;
 
-  const ConnectBadge({
+  ConnectBadge({
     super.key,
     required this.label,
-    this.backgroundColor = AppColors.purpleBadge,
-    this.textColor = AppColors.purple,
-  });
+    Color? backgroundColor,
+    Color? textColor,
+  })  : backgroundColor = backgroundColor ?? AppColors.purpleBadge,
+        textColor = textColor ?? AppColors.purple;
 
   /// Purple variant
-  const factory ConnectBadge.purple({Key? key, required String label}) =
-      _PurpleBadge;
+  factory ConnectBadge.purple({Key? key, required String label}) =>
+      _PurpleBadge(key: key, label: label);
 
   /// Orange variant
-  const factory ConnectBadge.orange({Key? key, required String label}) =
-      _OrangeBadge;
+  factory ConnectBadge.orange({Key? key, required String label}) =>
+      _OrangeBadge(key: key, label: label);
 
   /// Navy / dark variant
-  const factory ConnectBadge.dark({Key? key, required String label}) =
-      _DarkBadge;
+  factory ConnectBadge.dark({Key? key, required String label}) =>
+      _DarkBadge(key: key, label: label);
 
   /// Muted / grey variant
-  const factory ConnectBadge.muted({Key? key, required String label}) =
-      _MutedBadge;
+  factory ConnectBadge.muted({Key? key, required String label}) =>
+      _MutedBadge(key: key, label: label);
 
   @override
   Widget build(BuildContext context) {
@@ -219,7 +220,7 @@ class ConnectBadge extends StatelessWidget {
 }
 
 class _PurpleBadge extends ConnectBadge {
-  const _PurpleBadge({super.key, required super.label})
+  _PurpleBadge({super.key, required super.label})
       : super(
           backgroundColor: AppColors.purpleBadge,
           textColor: AppColors.purple,
@@ -227,7 +228,7 @@ class _PurpleBadge extends ConnectBadge {
 }
 
 class _OrangeBadge extends ConnectBadge {
-  const _OrangeBadge({super.key, required super.label})
+  _OrangeBadge({super.key, required super.label})
       : super(
           backgroundColor: AppColors.orangeTint,
           textColor: AppColors.orange,
@@ -235,7 +236,7 @@ class _OrangeBadge extends ConnectBadge {
 }
 
 class _DarkBadge extends ConnectBadge {
-  const _DarkBadge({super.key, required super.label})
+  _DarkBadge({super.key, required super.label})
       : super(
           backgroundColor: AppColors.navy,
           textColor: AppColors.white,
@@ -243,7 +244,7 @@ class _DarkBadge extends ConnectBadge {
 }
 
 class _MutedBadge extends ConnectBadge {
-  const _MutedBadge({super.key, required super.label})
+  _MutedBadge({super.key, required super.label})
       : super(
           backgroundColor: AppColors.surfaceAlt,
           textColor: AppColors.textMid,

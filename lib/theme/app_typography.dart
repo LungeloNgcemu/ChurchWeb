@@ -11,7 +11,7 @@ abstract class AppTypography {
   static TextStyle _inter({
     required double size,
     required FontWeight weight,
-    Color color = AppColors.textPrimary,
+    Color? color,
     double? letterSpacing,
     double? height,
     TextDecoration? decoration,
@@ -19,7 +19,7 @@ abstract class AppTypography {
     return GoogleFonts.inter(
       fontSize: size,
       fontWeight: weight,
-      color: color,
+      color: color ?? AppColors.textPrimary,
       letterSpacing: letterSpacing,
       height: height,
       decoration: decoration,

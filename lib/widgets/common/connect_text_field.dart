@@ -181,7 +181,7 @@ class _ConnectTextFieldState extends State<ConnectTextField> {
                 Padding(
                   padding: const EdgeInsets.only(right: 12),
                   child: IconTheme(
-                    data: const IconThemeData(
+                    data: IconThemeData(
                         color: AppColors.textMuted, size: 16),
                     child: widget.trailingIcon!,
                   ),

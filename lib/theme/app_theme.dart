@@ -4,37 +4,36 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'app_spacing.dart';
 
-/// Connect App — Material ThemeData
-/// Source of truth: CLAUDE.md § 4 Design System
+/// Connect App — Material ThemeData builder.
 ///
-/// Usage in main.dart:
-///   theme: AppTheme.light,
-///   darkTheme: AppTheme.dark,
-///   themeMode: ThemeMode.light,
-///
-/// NOTE: existing main.dart uses `useMaterial3: false` — we keep that.
-/// Apply this theme to the existing MaterialApp without removing
-/// any existing routes or providers.
+/// [AppTheme.build] now constructs a ThemeData from the currently active
+/// AppColors values (which are dynamic getters backed by ThemeManager).
+/// Call this inside the Consumer<ThemeManager> in main.dart so every theme
+/// change produces a fresh ThemeData for the MaterialApp.
 abstract class AppTheme {
-  // ─── Light Theme ───────────────────────────────────────────────────────────
-  static ThemeData get light {
-    final base = ThemeData.light();
+  static ThemeData build() {
+    final isDark = ThemeData.estimateBrightnessForColor(AppColors.surface) == Brightness.dark;
+    final base = isDark ? ThemeData.dark() : ThemeData.light();
     return base.copyWith(
       useMaterial3: false,
       scaffoldBackgroundColor: AppColors.surface,
       primaryColor: AppColors.navy,
-      colorScheme: const ColorScheme.light(
+      colorScheme: ColorScheme(
+        brightness: isDark ? Brightness.dark : Brightness.light,
         primary: AppColors.navy,
-        secondary: AppColors.purple,
-        tertiary: AppColors.orange,
-        surface: AppColors.surface,
-        background: AppColors.surface,
-        error: AppColors.error,
         onPrimary: AppColors.white,
+        secondary: AppColors.purple,
         onSecondary: AppColors.white,
-        onSurface: AppColors.textPrimary,
-        onBackground: AppColors.textPrimary,
+        tertiary: AppColors.orange,
+        onTertiary: AppColors.white,
+        error: AppColors.error,
         onError: AppColors.white,
+        surface: AppColors.surface,
+        onSurface: AppColors.textPrimary,
+        // ignore: deprecated_member_use
+        background: AppColors.surface,
+        // ignore: deprecated_member_use
+        onBackground: AppColors.textPrimary,
       ),
       textTheme: _textTheme(base.textTheme),
       appBarTheme: _appBarTheme(),
@@ -45,18 +44,29 @@ abstract class AppTheme {
       cardTheme: _cardTheme(),
       chipTheme: _chipTheme(),
       floatingActionButtonTheme: _fabTheme(),
-      iconTheme: const IconThemeData(color: AppColors.textMid),
-      dividerTheme: const DividerThemeData(
+      iconTheme: IconThemeData(color: AppColors.textMid),
+      dividerTheme: DividerThemeData(
         color: AppColors.surfaceAlt,
         thickness: 1,
         space: 0,
       ),
-      snackBarTheme: const SnackBarThemeData(
+      snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.navy,
-        contentTextStyle: TextStyle(color: AppColors.white),
+        contentTextStyle: const TextStyle(color: AppColors.white),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(AppSpacing.radiusCard)),
+        shape: const RoundedRectangleBorder(
+          borderRadius:
+              BorderRadius.all(Radius.circular(AppSpacing.radiusCard)),
+        ),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (s) => AppColors.white,
+        ),
+        trackColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected)
+              ? AppColors.purple
+              : AppColors.surfaceAlt,
         ),
       ),
     );
@@ -153,7 +163,9 @@ abstract class AppTheme {
       elevation: 0,
       type: BottomNavigationBarType.fixed,
       selectedLabelStyle: GoogleFonts.inter(
-          fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.purple),
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          color: AppColors.purple),
       unselectedLabelStyle: GoogleFonts.inter(
           fontSize: 9,
           fontWeight: FontWeight.w600,
@@ -161,7 +173,7 @@ abstract class AppTheme {
     );
   }
 
-  // ─── Elevated Button (orange CTA) ──────────────────────────────────────────
+  // ─── Elevated Button (orange / accent CTA) ─────────────────────────────────
   static ElevatedButtonThemeData _elevatedButtonTheme() {
     return ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -170,8 +182,10 @@ abstract class AppTheme {
         minimumSize: const Size(double.infinity, 56),
         shape: const StadiumBorder(),
         elevation: 0,
-        textStyle: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 17),
+        textStyle:
+            GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 24, vertical: 17),
         shadowColor: Colors.transparent,
       ).copyWith(
         overlayColor: WidgetStateProperty.resolveWith(
@@ -190,8 +204,9 @@ abstract class AppTheme {
         foregroundColor: AppColors.textMid,
         minimumSize: const Size(double.infinity, 50),
         shape: const StadiumBorder(),
-        side: const BorderSide(color: AppColors.surfaceAlt, width: 2),
-        textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
+        side: BorderSide(color: AppColors.surfaceAlt, width: 2),
+        textStyle:
+            GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
       ),
     );
@@ -206,15 +221,15 @@ abstract class AppTheme {
           const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
-        borderSide: const BorderSide(color: AppColors.surfaceAlt, width: 2),
+        borderSide: BorderSide(color: AppColors.surfaceAlt, width: 2),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
-        borderSide: const BorderSide(color: AppColors.surfaceAlt, width: 2),
+        borderSide: BorderSide(color: AppColors.surfaceAlt, width: 2),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
-        borderSide: const BorderSide(color: AppColors.purple, width: 2),
+        borderSide: BorderSide(color: AppColors.purple, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
@@ -261,7 +276,7 @@ abstract class AppTheme {
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: AppColors.white),
-      shape: const StadiumBorder(
+      shape: StadiumBorder(
         side: BorderSide(color: AppColors.surfaceAlt, width: 2),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

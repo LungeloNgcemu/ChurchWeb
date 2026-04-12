@@ -305,7 +305,7 @@ class _PostScreenState extends State<PostScreen>
                     },
                   );
                 }
-                return const Center(
+                return Center(
                   child: CircularProgressIndicator(
                       color: AppColors.purple),
                 );
@@ -396,7 +396,7 @@ class _EmptyFeed extends StatelessWidget {
               color: AppColors.purpleTint,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(Icons.article_outlined,
+            child: Icon(Icons.article_outlined,
                 size: 30, color: AppColors.purple),
           ),
           const SizedBox(height: 12),
@@ -501,7 +501,7 @@ class _SocialPostState extends State<SocialPost> {
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: AppColors.purpleCardGradient,
                   ),
@@ -605,7 +605,7 @@ class _SocialPostState extends State<SocialPost> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.chat_bubble_outline_rounded,
+                        Icon(Icons.chat_bubble_outline_rounded,
                             size: 15, color: AppColors.textMid),
                         const SizedBox(width: 5),
                         Text('Comment',
@@ -629,7 +629,7 @@ class _SocialPostState extends State<SocialPost> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.delete_outline_rounded,
+                          Icon(Icons.delete_outline_rounded,
                               size: 15, color: AppColors.orange),
                           const SizedBox(width: 4),
                           Text('Delete',
@@ -714,7 +714,7 @@ class _SocialPostState extends State<SocialPost> {
                     child: Container(
                       width: 42,
                       height: 42,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: AppColors.purpleCardGradient,
                       ),
@@ -749,7 +749,7 @@ class CommentBubble extends StatelessWidget {
           Container(
             width: 28,
             height: 28,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: AppColors.purpleCardGradient,
             ),

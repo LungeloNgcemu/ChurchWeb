@@ -281,7 +281,7 @@ class _RegisterMemberState extends State<RegisterMember> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(Icons.info_outline_rounded,
+                              Icon(Icons.info_outline_rounded,
                                   size: 16, color: AppColors.purple),
                               const SizedBox(width: 10),
                               Expanded(
@@ -313,7 +313,7 @@ class _RegisterMemberState extends State<RegisterMember> {
                         ),
                         const SizedBox(height: 20),
                         Row(children: [
-                          const Expanded(
+                          Expanded(
                               child: Divider(color: AppColors.surfaceAlt)),
                           Padding(
                             padding:
@@ -322,7 +322,7 @@ class _RegisterMemberState extends State<RegisterMember> {
                                 style: AppTypography.caption
                                     .copyWith(color: AppColors.textMuted)),
                           ),
-                          const Expanded(
+                          Expanded(
                               child: Divider(color: AppColors.surfaceAlt)),
                         ]),
                         const SizedBox(height: 16),
@@ -359,7 +359,7 @@ class _RegisterMemberState extends State<RegisterMember> {
             Positioned.fill(
               child: Container(
                 color: Colors.black.withOpacity(0.45),
-                child: const Center(
+                child: Center(
                   child: CircularProgressIndicator(
                       color: AppColors.purple, strokeWidth: 3),
                 ),

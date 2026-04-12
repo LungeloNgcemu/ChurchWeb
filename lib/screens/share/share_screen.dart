@@ -192,7 +192,7 @@ class _ShareScreenState extends State<ShareScreen> {
     if (isLoading && churchTokenData == null) {
       return Scaffold(
         backgroundColor: AppColors.navy,
-        body: const Center(
+        body: Center(
           child: CircularProgressIndicator(
               color: AppColors.purple, strokeWidth: 3),
         ),
@@ -566,7 +566,7 @@ class _ShareScreenState extends State<ShareScreen> {
             Positioned.fill(
               child: Container(
                 color: Colors.black.withOpacity(0.45),
-                child: const Center(
+                child: Center(
                   child: CircularProgressIndicator(
                       color: AppColors.purple, strokeWidth: 3),
                 ),
@@ -601,7 +601,7 @@ class _LinkChip extends StatelessWidget {
               color: AppColors.purple.withOpacity(0.25),
               borderRadius: BorderRadius.circular(9),
             ),
-            child: const Icon(Icons.link_rounded,
+            child: Icon(Icons.link_rounded,
                 size: 14, color: AppColors.whiteDim),
           ),
           const SizedBox(width: 10),

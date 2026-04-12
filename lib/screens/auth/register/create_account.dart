@@ -440,7 +440,7 @@ class _CreateAccountState extends State<CreateAccount> {
             Positioned.fill(
               child: Container(
                 color: Colors.black.withOpacity(0.45),
-                child: const Center(
+                child: Center(
                   child: CircularProgressIndicator(
                       color: AppColors.purple, strokeWidth: 3),
                 ),

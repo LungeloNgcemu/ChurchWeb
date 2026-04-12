@@ -18,6 +18,7 @@ import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/widgets/common/connect_avatar.dart';
+import 'package:master/widgets/common/theme_switcher.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -104,9 +105,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<bool> updateNotification(bool value) async {
     try {
       if (value) {
-        await PushNotifications.subscribeToTopic(context);
+        await PushNotifications.subscribeToChurchTopic('church');
       } else {
-        await PushNotifications.unsubscribeFromTopic(context);
+        await PushNotifications.unsubscribeFromChurchTopic('church');
       }
       return true;
     } catch (_) {
@@ -156,7 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: AppColors.surface,
         body: Center(
             child: CircularProgressIndicator(color: AppColors.purple)),
@@ -188,7 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _StatCell(value: '248', label: 'Members'),
                 _StatCell(value: '12', label: 'Events'),
               ]),
-              const Divider(height: 1, color: AppColors.surfaceAlt),
+              Divider(height: 1, color: AppColors.surfaceAlt),
             ]),
           ),
 
@@ -230,6 +231,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       value: 'Change \u2192',
                       onTap: _uploadImageToSuperbase,
                     ),
+                  ]),
+                  const SizedBox(height: 14),
+                  Text('APPEARANCE', style: AppTypography.labelTiny),
+                  const SizedBox(height: 8),
+                  _SettingsGroup(rows: [
+                    const ThemeSwitcherTile(),
                   ]),
                   const SizedBox(height: 14),
                   Text('NOTIFICATIONS', style: AppTypography.labelTiny),
@@ -315,14 +322,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 border: OutlineInputBorder(
                   borderRadius:
                       BorderRadius.circular(AppSpacing.radiusInput),
-                  borderSide: const BorderSide(
+                  borderSide: BorderSide(
                       color: AppColors.surfaceAlt, width: 2),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius:
                       BorderRadius.circular(AppSpacing.radiusInput),
                   borderSide:
-                      const BorderSide(color: AppColors.purple, width: 2),
+                      BorderSide(color: AppColors.purple, width: 2),
                 ),
               ),
               style: AppTypography.fieldValue,
@@ -369,7 +376,7 @@ class _ProfileHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -497,7 +504,7 @@ class _StatCell extends StatelessWidget {
   Widget build(BuildContext context) => Expanded(
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             border: Border(
                 right: BorderSide(color: AppColors.surfaceAlt, width: 1)),
           ),
@@ -533,7 +540,7 @@ class _SettingsGroup extends StatelessWidget {
           children: List.generate(rows.length, (i) => Column(children: [
             rows[i],
             if (i < rows.length - 1)
-              const Divider(height: 1, indent: 60, color: AppColors.surface),
+              Divider(height: 1, indent: 60, color: AppColors.surface),
           ])),
         ),
       );
@@ -576,7 +583,7 @@ class _SettingsRow extends StatelessWidget {
                   style: AppTypography.bodyMedium.copyWith(
                       color: AppColors.purple, fontWeight: FontWeight.w600)),
             const SizedBox(width: 6),
-            const Icon(Icons.chevron_right_rounded,
+            Icon(Icons.chevron_right_rounded,
                 size: 16, color: AppColors.surfaceAlt),
           ]),
         ),

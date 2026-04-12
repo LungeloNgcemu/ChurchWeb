@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen>
   bool get wantKeepAlive => true;
 
   // ── quick-action helpers ──────────────────────────────────────────────────
-  static const _quickActions = [
+  static final _quickActions = [
     (_QaData('\u{1F4DD}', 'Post', AppColors.purpleTint, AppColors.purple, '/createPost')),
     (_QaData('\u{1F4C5}', 'Events', AppColors.orangeTint, AppColors.orange, '/createEvent')),
     (_QaData('\u{1F50D}', 'Members', AppColors.blueAccentTint, AppColors.blueAccent, '/members')),
@@ -62,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     super.build(context);
     if (isLoading) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: AppColors.surface,
         body: Center(
             child: CircularProgressIndicator(color: AppColors.purple)),
@@ -205,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen>
                       child: TextButton.icon(
                         onPressed: () =>
                             homeClass.galleryInsert(context, setState),
-                        icon: const Icon(Icons.upload_rounded,
+                        icon: Icon(Icons.upload_rounded,
                             size: 16, color: AppColors.purple),
                         label: Text('Upload Images',
                             style: AppTypography.link),

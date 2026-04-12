@@ -30,6 +30,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/auth/otp/code.dart';
 import 'firebase_options.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
+import 'theme/theme_manager.dart';
+import 'theme/app_theme.dart';
 
 
 
@@ -39,6 +41,9 @@ void main() async {
   usePathUrlStrategy();
   
   await EnvService.envInit();
+
+  // Load saved theme before the first frame so colours are correct on launch.
+  await ThemeManager.instance.loadTheme();
 
   await Supabase.initialize(url: Keys.supabaseUrl, anonKey: Keys.supabaseKey);
 
@@ -64,6 +69,8 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        // Theme manager — must be first so all other providers can use colours.
+        ChangeNotifierProvider<ThemeManager>.value(value: ThemeManager.instance),
         ChangeNotifierProvider<ImageUrlProvider>(
           create: (BuildContext context) => ImageUrlProvider(),
         ),
@@ -148,20 +155,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Check if this is a deep link to joinChurch
-    final isJoinChurchLink = Uri.base.path == '/joinChurch' || 
-                           (Uri.base.hasQuery && Uri.base.queryParameters.containsKey('token'));
-    
-    return MaterialApp(
+    final isJoinChurchLink = Uri.base.path == '/joinChurch' ||
+        (Uri.base.hasQuery &&
+            Uri.base.queryParameters.containsKey('token'));
+
+    // Consumer<ThemeManager> ensures the entire MaterialApp (and all
+    // descendants) rebuilds whenever the user picks a new theme.
+    return Consumer<ThemeManager>(
+      builder: (context, themeManager, _) => MaterialApp(
       debugShowCheckedModeBanner: false,
       initialRoute: isJoinChurchLink ? '/joinChurch' : '/splash',
-      theme: ThemeData(
-        useMaterial3: false,
-        textTheme: GoogleFonts.racingSansOneTextTheme(
-          Theme.of(context).textTheme.apply(
-                fontSizeFactor: 0.8,
-              ),
-        ),
-      ),
+      theme: AppTheme.build(),
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name ?? '');
 
@@ -206,6 +210,7 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (_) => const SplashScreen());
         }
       },
-    );
+    ), // MaterialApp
+    ); // Consumer<ThemeManager>
   }
 }

@@ -1,172 +1,81 @@
 import 'package:flutter/material.dart';
+import 'connect_theme_data.dart';
+import 'theme_manager.dart';
 
 /// Connect App — Design System Colors
-/// Source of truth: CLAUDE.md § 4.1 Color Palette
-/// Matches the approved v2 mockups exactly.
-/// DO NOT add one-off colors in screens — use these tokens.
+///
+/// All themed colour tokens are now dynamic getters that delegate to the
+/// currently active [ConnectThemeData] via [ThemeManager.instance].
+///
+/// When [ThemeManager.setTheme] is called the [Consumer<ThemeManager>] in
+/// main.dart rebuilds the MaterialApp, causing the full widget tree to
+/// rebuild.  Every [AppColors.xxx] getter call during that rebuild returns
+/// the new theme's colour, so every screen updates automatically.
+///
+/// ⚠  Because these are getters (not compile-time constants) you CANNOT use
+/// them inside `const` widget constructors.  Remove `const` from any
+/// constructor that passes an AppColors value as a parameter.
+///
+/// Fixed colours (white, error, success, blueAccent) remain as true consts
+/// and may still appear in `const` contexts.
 abstract class AppColors {
-  // ─── Navy ──────────────────────────────────────────────────────────────────
-  /// Primary background, top bars, dark headers
-  static const Color navy = Color(0xFF1E293B);
+  // ── Convenience accessor ──────────────────────────────────────────────────
+  static ConnectThemeData get _t => ThemeManager.instance.colors;
 
-  /// Deepest navy — page background behind content
-  static const Color navyDeep = Color(0xFF0F172A);
+  // ─── Navy / top-bar ───────────────────────────────────────────────────────
+  static Color get navy        => _t.topBar;
+  static Color get navyDeep    => _t.backgroundDeep;
+  static Color get navyCard    => _t.cardElevated;
 
-  /// Elevated dark surface (cards on dark bg)
-  static const Color navyCard = Color(0xFF252F45);
+  // ─── Primary (purple / blue / cyan / coral / emerald) ────────────────────
+  static Color get purple      => _t.primary;
+  static Color get purpleLight => _t.primaryLight;
+  static Color get purpleTint  => _t.primaryTint;
+  static Color get purpleBorder => _t.primaryBorder;
+  static Color get purpleBadge  => _t.primaryBadge;
 
-  // ─── Purple ────────────────────────────────────────────────────────────────
-  /// Primary accent — active states, badges, icons, active nav
-  static const Color purple = Color(0xFF7C3AED);
+  // ─── Accent (orange / lime / gold) ───────────────────────────────────────
+  static Color get orange      => _t.accent;
+  static Color get orangeDeep  => _t.accentDeep;
+  static Color get orangeTint  => _t.accentTint;
 
-  /// Gradient partner to purple (header gradients, card gradients)
-  static const Color purpleLight = Color(0xFF4F46E5);
+  // ─── Neutrals ─────────────────────────────────────────────────────────────
+  static const Color white     = Color(0xFFFFFFFF);
+  static Color get surface     => _t.background;
+  static Color get surfaceAlt  => _t.backgroundAlt;
 
-  /// Purple-tinted light background (chip bg, icon bg, input active bg)
-  static const Color purpleTint = Color(0xFFF5F3FF);
+  // ─── Text ─────────────────────────────────────────────────────────────────
+  static Color get textPrimary   => _t.textPrimary;
+  static Color get textSecondary => _t.textSecondary;
+  static Color get textMuted     => _t.textMuted;
+  static Color get textDisabled  => _t.textDisabled;
+  static Color get textMid       => _t.textMid;
 
-  /// Subtle purple border
-  static const Color purpleBorder = Color(0xFFDDD6FE);
-
-  /// Purple badge / pill text background
-  static const Color purpleBadge = Color(0xFFEDE9FE);
-
-  // ─── Orange ────────────────────────────────────────────────────────────────
-  /// CTA buttons, FABs, event date blocks, notification badge
-  static const Color orange = Color(0xFFF97316);
-
-  /// Orange pressed / gradient end
-  static const Color orangeDeep = Color(0xFFEA580C);
-
-  /// Orange tint for backgrounds
-  static const Color orangeTint = Color(0xFFFFF7ED);
-
-  // ─── Neutrals ──────────────────────────────────────────────────────────────
-  /// Pure white — card surfaces, bottom nav, light panels
-  static const Color white = Color(0xFFFFFFFF);
-
-  /// Light page background
-  static const Color surface = Color(0xFFF8FAFC);
-
-  /// Dividers, inactive input backgrounds, borders
-  static const Color surfaceAlt = Color(0xFFF1F5F9);
-
-  // ─── Text ──────────────────────────────────────────────────────────────────
-  /// Primary body text on light surfaces (charcoal)
-  static const Color textPrimary = Color(0xFF1C1917);
-
-  /// Secondary body text
-  static const Color textSecondary = Color(0xFF475569);
-
-  /// Placeholders, timestamps, muted labels
-  static const Color textMuted = Color(0xFF94A3B8);
-
-  /// Inactive icon / border colour
-  static const Color textDisabled = Color(0xFFCBD5E1);
-
-  /// Mid-tone label (form labels, inactive chip text)
-  static const Color textMid = Color(0xFF64748B);
-
-  // ─── Semantic ──────────────────────────────────────────────────────────────
-  /// Online dots, success states, valid badges
-  static const Color success = Color(0xFF22C55E);
-
-  /// Destructive actions, error states
-  static const Color error = Color(0xFFDC2626);
-
-  /// Info badges, media highlights
-  static const Color blueAccent = Color(0xFF2563EB);
-
+  // ─── Semantic (fixed) ─────────────────────────────────────────────────────
+  static const Color success       = Color(0xFF22C55E);
+  static const Color error         = Color(0xFFDC2626);
+  static const Color blueAccent    = Color(0xFF2563EB);
   static const Color blueAccentDeep = Color(0xFF1D4ED8);
-
   static const Color blueAccentTint = Color(0xFFEFF6FF);
 
-  // ─── Transparent / Overlay ─────────────────────────────────────────────────
-  /// White text at reduced opacity on dark surfaces
-  static const Color whiteDim = Color(0x73FFFFFF); // ~45% opacity
+  // ─── Transparent overlays ─────────────────────────────────────────────────
+  static Color get whiteDim   => Colors.white.withOpacity(0.45);
+  static Color get whiteFaint => Colors.white.withOpacity(0.10);
+  static Color get navyIconBg => Colors.white.withOpacity(0.08);
 
-  static const Color whiteFaint = Color(0x1AFFFFFF); // ~10% opacity
+  // ─── Standard Gradients ───────────────────────────────────────────────────
+  static LinearGradient get purpleHeaderGradient => _t.primaryHeaderGradient;
+  static LinearGradient get purpleCardGradient   => _t.primaryCardGradient;
+  static LinearGradient get orangeGradient        => _t.accentGradient;
+  static LinearGradient get darkSplitGradient     => _t.darkSplitGradient;
 
-  /// Navy overlay on topbar icon buttons
-  static const Color navyIconBg = Color(0x14FFFFFF); // ~8% opacity
+  // ─── Avatar Role Gradients (fixed — not themed) ───────────────────────────
+  static const LinearGradient avatarLeader = ConnectThemeData.avatarLeader;
+  static const LinearGradient avatarCoordinator = ConnectThemeData.avatarCoordinator;
+  static const LinearGradient avatarMedia = ConnectThemeData.avatarMedia;
+  static const LinearGradient avatarMember = ConnectThemeData.avatarMember;
+  static const LinearGradient avatarNewMember = ConnectThemeData.avatarNewMember;
 
-  // ─── Standard Gradients ────────────────────────────────────────────────────
-  /// Purple hero header gradient (160°: navy → purpleLight → purple)
-  static const LinearGradient purpleHeaderGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    transform: GradientRotation(160 * 3.14159 / 180),
-    colors: [navy, purpleLight, purple],
-    stops: [0.0, 0.6, 1.0],
-  );
-
-  /// Purple card gradient (135°: purple → purpleLight)
-  static const LinearGradient purpleCardGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [purple, purpleLight],
-  );
-
-  /// Orange CTA gradient (135°: orange → orangeDeep)
-  static const LinearGradient orangeGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [orange, orangeDeep],
-  );
-
-  /// Dark split-screen top gradient (auth screens)
-  static const LinearGradient darkSplitGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    transform: GradientRotation(160 * 3.14159 / 180),
-    colors: [navy, navyCard],
-  );
-
-  // ─── Avatar Role Gradients ─────────────────────────────────────────────────
-  static const LinearGradient avatarLeader = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [purple, purpleLight],
-  );
-
-  static const LinearGradient avatarCoordinator = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [orange, orangeDeep],
-  );
-
-  static const LinearGradient avatarMedia = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [blueAccent, blueAccentDeep],
-  );
-
-  static const LinearGradient avatarMember = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFF059669), Color(0xFF047857)],
-  );
-
-  static const LinearGradient avatarNewMember = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFF0F766E), Color(0xFF0D9488)],
-  );
-
-  /// Returns the correct avatar gradient for a given role string.
-  static LinearGradient avatarGradientForRole(String? role) {
-    switch (role?.toLowerCase()) {
-      case 'leader':
-        return avatarLeader;
-      case 'coordinator':
-      case 'coord':
-        return avatarCoordinator;
-      case 'media':
-        return avatarMedia;
-      case 'new':
-        return avatarNewMember;
-      default:
-        return avatarMember;
-    }
-  }
+  static LinearGradient avatarGradientForRole(String? role) =>
+      ConnectThemeData.avatarGradientForRole(role);
 }

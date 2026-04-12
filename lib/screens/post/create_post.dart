@@ -2,35 +2,26 @@ import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/push_notification/notification.dart';
 import 'package:master/util/alerts.dart';
 import 'package:master/util/image_picker_custom.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../classes/church_init.dart';
-import '../../componants/buttonChip.dart';
-import '../../componants/overview.dart';
-import '../../componants/tittle_head.dart';
 import '../../models/model.dart';
-import 'package:path_provider/path_provider.dart';
 import '../../providers/url_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../../componants/text_input.dart';
-import 'package:readmore/readmore.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:path/path.dart' as path;
-import 'package:provider/provider.dart';
-import 'package:master/providers/url_provider.dart';
-import 'dart:io';
-import 'package:master/models/model.dart';
 import '../../models/comment_model.dart';
 import '../../util/functions_for_cloud.dart';
 import '../../componants/global_booking.dart';
+import 'package:path/path.dart' as path;
+import 'package:master/theme/app_colors.dart';
+import 'package:master/theme/app_typography.dart';
+import 'package:master/theme/app_spacing.dart';
+import 'package:master/widgets/common/connect_button.dart';
 
 // create_page and poster are linked
 String postKey = '';
@@ -52,9 +43,12 @@ class _PosterState extends State<Poster> {
 
   Uint8List? _image;
   String? npostKey;
-
-  // Change PickedFile to XFile
   String? postImageUrl;
+  String? imageUrl;
+
+  // Post category selection
+  String _selectedCategory = 'Announcement';
+  final List<String> _categories = ['All', 'Announcement', 'Event', 'Update', 'Request'];
 
   Future<void> _pickImage() async {
     final pickedImage = await _picker.pickImageToByte();
@@ -65,16 +59,20 @@ class _PosterState extends State<Poster> {
     }
   }
 
+  void _removeImage() {
+    setState(() {
+      _image = null;
+      imageUrl = null;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
   }
 
-  String? imageUrl;
-
   Future<void> _uploadImageToSuperbase(image) async {
     try {
-      print('Image picked');
       if (image != null) {
         final fileName = 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
@@ -93,7 +91,7 @@ class _PosterState extends State<Poster> {
         setState(() {
           imageUrl = publicUrl;
         });
-      } else {}
+      }
     } catch (e) {
       log("Error uploading image to Supabase: $e");
     }
@@ -111,154 +109,495 @@ class _PosterState extends State<Poster> {
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
 
+  Future<void> _handlePost() async {
+    setState(() => isLoading = true);
+
+    final description = descriptionController.text;
+
+    try {
+      if (description.isEmpty) {
+        alertSuccess(context, "Please fill in a description");
+        Future.delayed(const Duration(seconds: 1), () {
+          setState(() => isLoading = false);
+        });
+        return;
+      }
+
+      if (_image != null) {
+        await _uploadImageToSuperbase(_image);
+      }
+
+      superbasePost(description, imageUrl ?? '');
+
+      PushNotifications.sendMessageToTopic(
+          topic: Provider.of<christProvider>(context, listen: false)
+              .myMap['Project']?['ChurchName'],
+          title: 'Post',
+          body: description);
+
+      Future.delayed(const Duration(seconds: 1), () {
+        setState(() => isLoading = false);
+      });
+
+      titleController.clear();
+      descriptionController.clear();
+      Navigator.of(context).pop();
+    } catch (error) {
+      alertSuccess(context, "Something went wrong");
+      Future.delayed(const Duration(seconds: 1), () {
+        setState(() => isLoading = false);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    double h = MediaQuery.of(context).size.height;
-    return SingleChildScrollView(
-      scrollDirection: Axis.vertical,
-      child: Container(
-        // color: Colors.yellow,
-        height: h * 0.75,
-        child: Stack(
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(20.0),
-                    child: Align(
-                        alignment: Alignment.center,
-                        child: Text(
-                          "Create Post",
-                          style: TextStyle(fontSize: 30.0),
-                        )),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10.0),
-                        color: Colors.grey[100]),
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 30.0),
-                      child: EnterText(
-                        height: 50.0,
-                        text: "Description",
-                        inText: "Enter description",
-                        controller: descriptionController,
-                      ),
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      NewButton(
-                        inSideChip: "Load Image for Post",
-                        where: () {
-                          setState(() {
-                            _pickImage();
-                          });
-                        },
-                      ),
-                      ImageFrame(
-                        image: _image,
-                      )
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: NewButton(
-                          inSideChip: "Create Post",
-                          where: () async {
-                            // Show a loading overlay/modal with CircularProgressIndicator
-
-                            // Rebuild the widget to show CircularProgressIndicator
-                            setState(() {
-                              isLoading = true;
-                            });
-
-                            final description = descriptionController.text;
-
-                            try {
-                              if (_image == null) {
-                                const message = "Please select an image";
-                                alertSuccess(context, message);
-                                Future.delayed(Duration(seconds: 1), () {
-                                  setState(() {
-                                    isLoading = false;
-                                  });
-                                });
-                              } else if (description == "") {
-                                const message =
-                                    "Please fill in the description";
-                                alertSuccess(context, message);
-                                Future.delayed(Duration(seconds: 1), () {
-                                  setState(() {
-                                    isLoading = false;
-                                  });
-                                });
-                              } else {
-                                await _uploadImageToSuperbase(_image);
-                                superbasePost(description, imageUrl!);
-
-                                PushNotifications.sendMessageToTopic(
-                                    topic: Provider.of<christProvider>(context,
-                                            listen: false)
-                                        .myMap['Project']?['ChurchName'],
-                                    title: 'Post',
-                                    body: description);
-
-                                Future.delayed(Duration(seconds: 1), () {
-                                  setState(() {
-                                    isLoading = false;
-                                  });
-                                });
-
-                                titleController.clear();
-                                descriptionController.clear();
-                                Navigator.of(context).pop();
-                              }
-                            } catch (error) {
-                              // Clear text controllers and close the loading overlay/modal
-                              // Close the AlertDialog
-                              const message = "Something went wrong";
-                              alertSuccess(context, message);
-                              Future.delayed(Duration(seconds: 1), () {
-                                setState(() {
-                                  isLoading = false;
-                                });
-                              });
-                            }
-                          },
-                        ),
-                      ),
-                    ],
-                  )
-                ],
+    return Stack(
+      children: [
+        _buildSheet(),
+        if (isLoading)
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.45),
+                borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(AppSpacing.radiusBottomSheet)),
               ),
-            ),
-            if (isLoading)
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black.withOpacity(0.5),
-                  // Semi-transparent overlay
-                  child: const Center(
-                    child: SizedBox(
-                      height: 100.0,
-                      width: 100.0,
-                      child: CircularProgressIndicator(),
-                    ),
+              child: Center(
+                child: SizedBox(
+                  height: 36,
+                  width: 36,
+                  child: CircularProgressIndicator(
+                    color: AppColors.orange,
+                    strokeWidth: 3,
                   ),
                 ),
               ),
-          ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSheet() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.radiusBottomSheet),
         ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Drag handle ───────────────────────────────────────────────────
+          const SizedBox(height: 10),
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // ── Top bar: Cancel | New Post | Post button ──────────────────────
+          Container(
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lgPlus),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              border: Border(
+                bottom: BorderSide(color: AppColors.surfaceAlt, width: 1),
+              ),
+            ),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textMid,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  'New Post',
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: isLoading ? null : _handlePost,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [AppColors.orange, AppColors.orangeDeep],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius:
+                          BorderRadius.circular(AppSpacing.radiusPill),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.orange.withOpacity(0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      'Post',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Scrollable compose area ───────────────────────────────────────
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Author row ────────────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lgPlus, AppSpacing.mdPlus,
+                        AppSpacing.lgPlus, AppSpacing.mdPlus),
+                    child: Row(
+                      children: [
+                        // Avatar
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: const BoxDecoration(
+                            gradient: AppColors.avatarLeader,
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'TM',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              Provider.of<ClientNameProvider>(context,
+                                          listen: false)
+                                      .clientName
+                                      .isNotEmpty
+                                  ? Provider.of<ClientNameProvider>(context,
+                                          listen: false)
+                                      .clientName
+                                  : 'Thabo Mokoena',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.purpleTint,
+                                borderRadius: BorderRadius.circular(
+                                    AppSpacing.radiusPill),
+                                border: Border.all(
+                                    color: AppColors.purpleBorder,
+                                    width: 1.5),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.language,
+                                      size: 11, color: AppColors.purple),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    'Community',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.purple,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Divider(
+                      color: AppColors.surface, height: 1, thickness: 1),
+
+                  // ── Text input ────────────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lgPlus,
+                        vertical: AppSpacing.mdPlus),
+                    child: TextField(
+                      controller: descriptionController,
+                      maxLines: null,
+                      minLines: 4,
+                      keyboardType: TextInputType.multiline,
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textPrimary,
+                        height: 1.65,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: "What's on your mind?",
+                        hintStyle: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.textMuted,
+                        ),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+
+                  // ── Attached image preview ────────────────────────────────
+                  if (_image != null) ...[
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.lgPlus, 0,
+                          AppSpacing.lgPlus, AppSpacing.md),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                                AppSpacing.radiusCard),
+                            child: SizedBox(
+                              height: 148,
+                              width: double.infinity,
+                              child: Image.memory(
+                                _image!,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          // Remove button
+                          Positioned(
+                            top: 10,
+                            right: 10,
+                            child: GestureDetector(
+                              onTap: _removeImage,
+                              child: Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.6),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: AppColors.white,
+                                  size: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Label
+                          Positioned(
+                            bottom: 10,
+                            left: 14,
+                            child: Text(
+                              '1 photo attached',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.white.withOpacity(0.7),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  // ── Toolbar ───────────────────────────────────────────────
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lgPlus, vertical: 10),
+                    decoration: BoxDecoration(
+                      border: Border.symmetric(
+                        horizontal: BorderSide(
+                            color: AppColors.surfaceAlt, width: 1),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        // Image picker tool
+                        GestureDetector(
+                          onTap: _pickImage,
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: _image != null
+                                  ? AppColors.purpleTint
+                                  : Colors.transparent,
+                              borderRadius:
+                                  BorderRadius.circular(AppSpacing.radiusIcon),
+                            ),
+                            child: Icon(
+                              Icons.image_outlined,
+                              size: 18,
+                              color: _image != null
+                                  ? AppColors.purple
+                                  : AppColors.textMid,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Container(
+                          width: 32,
+                          height: 32,
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.tag,
+                            size: 18,
+                            color: AppColors.textMid,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Container(
+                          width: 32,
+                          height: 32,
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.short_text,
+                            size: 18,
+                            color: AppColors.textMid,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Container(
+                            width: 1, height: 20, color: AppColors.surfaceAlt),
+                        const Spacer(),
+                        // Char count
+                        ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: descriptionController,
+                          builder: (_, value, __) => Text(
+                            '${value.text.length} / 500',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // ── Category chips ────────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lgPlus, AppSpacing.md,
+                        AppSpacing.lgPlus, AppSpacing.xl),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'CATEGORY',
+                          style: AppTypography.fieldLabel,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Wrap(
+                          spacing: AppSpacing.sm,
+                          runSpacing: AppSpacing.sm,
+                          children: _categories.map((cat) {
+                            final isSelected = _selectedCategory == cat;
+                            return GestureDetector(
+                              onTap: () =>
+                                  setState(() => _selectedCategory = cat),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.navy
+                                      : AppColors.white,
+                                  borderRadius: BorderRadius.circular(
+                                      AppSpacing.radiusPill),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.navy
+                                        : AppColors.surfaceAlt,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: Text(
+                                  cat,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: isSelected
+                                        ? AppColors.white
+                                        : AppColors.textMid,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Bottom safe area padding
+                  SizedBox(
+                      height: MediaQuery.of(context).viewInsets.bottom > 0
+                          ? 0
+                          : MediaQuery.of(context).padding.bottom),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
+
+// ── Legacy helper widgets kept for backward compatibility ─────────────────────
 
 class ImageFrame extends StatefulWidget {
   const ImageFrame({this.image, Key? key}) : super(key: key);
@@ -287,87 +626,11 @@ class _ImageFrameState extends State<ImageFrame> {
   }
 
   Widget _buildImage(dynamic image) {
-    if (image == null) {
-      return Container(); // You can use a placeholder here
+    if (image == null) return Container();
+    if (image is Uint8List) {
+      return Image.memory(image, fit: BoxFit.cover,
+          width: double.infinity, height: 250.0);
     }
-
-    if (image != null) {
-      return Image.memory(
-        image,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: 250.0,
-      );
-    } else {
-      return SizedBox();
-    }
-  }
-}
-
-class EnterText extends StatelessWidget {
-  const EnterText({
-    this.height,
-    this.text,
-    this.inText,
-    this.controller, // Add this line
-    Key? key,
-  }) : super(key: key);
-
-  final double? height;
-  final String? text;
-  final String? inText;
-  final TextEditingController? controller; // Add this line
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  text!,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20.0,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: height!,
-                  child: TextField(
-                    controller: controller,
-                    // Add this line
-                    maxLines: null,
-                    expands: true,
-                    keyboardType: TextInputType.multiline,
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.only(
-                          left: 8.0, bottom: 8.0, top: 8.0),
-                      border: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(10.0),
-                        ),
-                      ),
-                      // filled: true,
-                      hintText: inText ?? "",
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+    return const SizedBox();
   }
 }

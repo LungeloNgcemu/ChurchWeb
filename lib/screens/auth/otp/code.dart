@@ -119,11 +119,11 @@ class _CodeAppwriteState extends State<CodeAppwrite> {
                         Container(
                           width: 96,
                           height: 96,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: AppColors.purpleTint,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.verified_user_outlined,
                             size: 44,
                             color: AppColors.purple,
@@ -236,7 +236,7 @@ class _CodeAppwriteState extends State<CodeAppwrite> {
                                 widthFactor: 0.66,
                                 child: Container(
                                   height: 5,
-                                  decoration: const BoxDecoration(
+                                  decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
                                         AppColors.purple,
@@ -269,7 +269,7 @@ class _CodeAppwriteState extends State<CodeAppwrite> {
             Positioned.fill(
               child: Container(
                 color: Colors.black.withOpacity(0.45),
-                child: const Center(
+                child: Center(
                   child: CircularProgressIndicator(
                       color: AppColors.purple, strokeWidth: 3),
                 ),

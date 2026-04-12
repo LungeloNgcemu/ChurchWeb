@@ -193,7 +193,7 @@ class _MediaScreenState extends State<MediaScreen>
                     },
                   );
                 }
-                return const Center(
+                return Center(
                   child: CircularProgressIndicator(
                       color: AppColors.purple),
                 );
@@ -297,7 +297,7 @@ class _EmptyMedia extends StatelessWidget {
               color: AppColors.navyIconBg,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(Icons.play_circle_outline_rounded,
+            child: Icon(Icons.play_circle_outline_rounded,
                 size: 30, color: AppColors.purple),
           ),
           const SizedBox(height: 12),

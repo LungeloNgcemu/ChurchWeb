@@ -69,7 +69,7 @@ class _CreateMinisterState extends State<CreateMinister> {
               // ── Purple gradient header ──────────────────────────────────
               Container(
                 height: 210,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: AppColors.purpleHeaderGradient,
                 ),
                 child: SafeArea(
@@ -87,7 +87,7 @@ class _CreateMinisterState extends State<CreateMinister> {
                               // Back
                               GestureDetector(
                                 onTap: () => Navigator.of(context).pop(),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.chevron_left_rounded,
                                   color: AppColors.whiteDim,
                                   size: 22,
@@ -284,7 +284,7 @@ class _CreateMinisterState extends State<CreateMinister> {
                                         borderRadius:
                                             BorderRadius.circular(12),
                                       ),
-                                      child: const Icon(
+                                      child: Icon(
                                           Icons.camera_alt_outlined,
                                           size: 20,
                                           color: AppColors.purple),
@@ -338,7 +338,7 @@ class _CreateMinisterState extends State<CreateMinister> {
             Positioned.fill(
               child: Container(
                 color: Colors.black.withOpacity(0.45),
-                child: const Center(
+                child: Center(
                   child: CircularProgressIndicator(
                       color: AppColors.purple, strokeWidth: 3),
                 ),
@@ -380,7 +380,7 @@ class _AvatarUpload extends StatelessWidget {
           Container(
             width: 88,
             height: 88,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: AppColors.purpleCardGradient,
             ),
@@ -395,7 +395,7 @@ class _AvatarUpload extends StatelessWidget {
                 child: image != null
                     ? Image.memory(image, fit: BoxFit.cover)
                     : Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppColors.navy,
                         ),
