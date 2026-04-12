@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:tab_container/tab_container.dart';
+import 'package:master/theme/app_colors.dart';
+import 'package:master/theme/app_typography.dart';
+import 'package:master/theme/app_spacing.dart';
 import '../screens/chat/message_screen.dart';
 
 class ContactScreen extends StatefulWidget {
@@ -9,59 +11,98 @@ class ContactScreen extends StatefulWidget {
   State<ContactScreen> createState() => _ContactScreenState();
 }
 
-class _ContactScreenState extends State<ContactScreen> with SingleTickerProviderStateMixin {
-  late final TabController _tabController = TabController(length: 2, vsync: this);
-
-
-
+class _ContactScreenState extends State<ContactScreen> {
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: TabContainer(
-        controller: _tabController,
-        tabEdge: TabEdge.left,
-        tabsStart: 0.1,
-        tabsEnd: 0.9,
-        tabMaxLength: 100,
-        borderRadius: BorderRadius.circular(10),
-        tabBorderRadius: BorderRadius.circular(10),
-        childPadding: const EdgeInsets.all(10.0),
-        selectedTextStyle: const TextStyle(
-          color: Colors.white,
-          fontSize: 15.0,
-        ),
-        unselectedTextStyle: const TextStyle(
-          color: Colors.black,
-          fontSize: 13.0,
-        ),
-        colors: [
-          Colors.grey.shade200,
-          Colors.grey.shade300,
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      body: Column(
+        children: [
+          // ── Navy topbar ───────────────────────────────────────────────
+          _ChatTopBar(),
+
+          // ── Chat content (preserved MessageScreen) ────────────────────
+          const Expanded(
+            child: MessageScreen(),
+          ),
         ],
-        tabs: const [
-          Icon(Icons.notes),
-          Padding(
-            padding: EdgeInsets.all(7.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+      ),
+
+      // ── Compose FAB ────────────────────────────────────────────────────
+      floatingActionButton: GestureDetector(
+        onTap: () {},
+        child: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: AppColors.purple,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x557C3AED),
+                blurRadius: 16,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: const Icon(Icons.edit_outlined,
+              color: AppColors.white, size: 22),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Chat topbar ───────────────────────────────────────────────────────────────
+class _ChatTopBar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: AppSpacing.topBarHeight + MediaQuery.of(context).padding.top,
+      color: AppColors.navy,
+      padding: EdgeInsets.fromLTRB(
+          18, MediaQuery.of(context).padding.top, 18, 13),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Icon(Icons.chat),
-                Text("Chat")
+                Text('Chat',
+                    style:
+                        AppTypography.screenTitle.copyWith(fontSize: 20)),
+                const SizedBox(width: 8),
+                // Unread badge placeholder
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.orange,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text('•',
+                      style: AppTypography.labelTiny.copyWith(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 10)),
+                ),
               ],
             ),
           ),
-        ],
-        children: [
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Center(child: Image.asset("lib/images/clear.png")),
-            // const Center(child: Text('Connect Chat', style: TextStyle(
-            //   fontSize: 25
-            // ),)),
-          ],
-        ),
-          const MessageScreen()
+          GestureDetector(
+            onTap: () {},
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: AppColors.navyIconBg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.person_add_outlined,
+                  size: 17, color: AppColors.white),
+            ),
+          ),
         ],
       ),
     );
