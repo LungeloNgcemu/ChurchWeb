@@ -442,7 +442,7 @@ class _RegisterLeaderState extends State<RegisterLeader> {
                       const SizedBox(height: 28),
 
                       // ── CTA button ────────────────────────────────────────
-                      ConnectButton.orange(
+                      ConnectButton.primary(
                         label: 'Join as Leader  \u2192',
                         isLoading: isLoading,
                         onTap: isLoading ? null : _handleJoin,

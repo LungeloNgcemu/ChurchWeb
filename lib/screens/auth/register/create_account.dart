@@ -379,7 +379,7 @@ class _CreateAccountState extends State<CreateAccount> {
                       const SizedBox(height: 28),
 
                       // ── CTA ───────────────────────────────────────────────
-                      ConnectButton.orange(
+                      ConnectButton.primary(
                         label: 'Continue  \u2192',
                         isLoading: isLoading,
                         onTap: isLoading
