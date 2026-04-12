@@ -14,6 +14,7 @@ import '../../classes/on_create_class.dart';
 import '../../providers/url_provider.dart';
 import 'create_minister.dart';
 import 'package:master/screens/home/widgets/map.dart' as location;
+import 'package:master/theme/theme_manager.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -55,12 +56,13 @@ class _HomeScreenState extends State<HomeScreen>
     (_QaData('\u{1F4DD}', 'Post', AppColors.purpleTint, AppColors.purple, '/createPost')),
     (_QaData('\u{1F4C5}', 'Events', AppColors.orangeTint, AppColors.orange, '/createEvent')),
     (_QaData('\u{1F50D}', 'Members', AppColors.blueAccentTint, AppColors.blueAccent, '/members')),
-    (_QaData('\u2B50', 'Requests', Color(0xFFF0FDF4), Color(0xFF059669), '/createRequest')),
+    (_QaData('\u2B50', 'Requests', AppColors.surfaceAlt, AppColors.success, '/createRequest')),
   ];
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    context.watch<ThemeManager>(); // re-render when theme changes
     if (isLoading) {
       return Scaffold(
         backgroundColor: AppColors.surface,

@@ -11,6 +11,7 @@ import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'create_media.dart';
+import 'package:master/theme/theme_manager.dart';
 
 // ── Category chips ─────────────────────────────────────────────────────────────
 const _kCategories = ['Special', 'Sermon', 'Study', 'Live'];
@@ -59,6 +60,7 @@ class _MediaScreenState extends State<MediaScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    context.watch<ThemeManager>(); // re-render when theme changes
     final selectedOption =
         context.watch<SelectedOptionProvider>().selectedOption;
     final idProvider = Provider.of<IdProvider>(context, listen: false);

@@ -15,6 +15,7 @@ import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'create_post.dart';
+import 'package:master/theme/theme_manager.dart';
 
 // ── preserved: DisplayImages stream helper ────────────────────────────────────
 StreamBuilder xbuildStreamBuilder(context, String path) {
@@ -203,6 +204,7 @@ class _PostScreenState extends State<PostScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    context.watch<ThemeManager>(); // re-render when theme changes
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: Column(
@@ -624,7 +626,7 @@ class _SocialPostState extends State<SocialPost> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 7),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFF7ED),
+                        color: AppColors.orangeTint,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(

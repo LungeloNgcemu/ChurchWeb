@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/theme/app_typography.dart';
-import 'package:master/theme/theme_manager.dart';
 
 /// Connect App — Bottom Navigation Bar
 /// Source of truth: CLAUDE.md § 4.7 Bottom Navigation — 5 Tabs

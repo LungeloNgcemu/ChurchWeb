@@ -153,7 +153,7 @@ class _LoginAppwriteState extends State<LoginAppwrite> {
                                     DialogButton(
                                       child: const Text("Retry",
                                           style: TextStyle(
-                                              color: Colors.white,
+                                              color: AppColors.white,
                                               fontSize: 18)),
                                       onPressed: () =>
                                           Navigator.pop(context),
@@ -199,9 +199,9 @@ class _LoginField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFF1F5F9), width: 2),
+        border: Border.all(color: AppColors.surfaceAlt, width: 2),
         boxShadow: const [
           BoxShadow(color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 1)),
         ],
@@ -209,7 +209,7 @@ class _LoginField extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
+          Icon(icon, size: 18, color: AppColors.textMuted),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
@@ -220,19 +220,19 @@ class _LoginField extends StatelessWidget {
               decoration: InputDecoration(
                 border: InputBorder.none,
                 hintText: hint,
-                hintStyle: const TextStyle(
+                hintStyle: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.textMuted,
                 ),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1C1917),
+                color: AppColors.textPrimary,
               ),
             ),
           ),

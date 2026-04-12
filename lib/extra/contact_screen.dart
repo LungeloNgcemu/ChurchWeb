@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
+import 'package:master/theme/theme_manager.dart';
 import '../screens/chat/message_screen.dart';
 
 class ContactScreen extends StatefulWidget {
@@ -14,6 +16,7 @@ class ContactScreen extends StatefulWidget {
 class _ContactScreenState extends State<ContactScreen> {
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeManager>(); // re-render when theme changes
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: Column(
