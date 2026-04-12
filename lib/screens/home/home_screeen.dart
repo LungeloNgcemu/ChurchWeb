@@ -52,11 +52,11 @@ class _HomeScreenState extends State<HomeScreen>
   bool get wantKeepAlive => true;
 
   // ── quick-action helpers ──────────────────────────────────────────────────
-  static final _quickActions = [
-    (_QaData('\u{1F4DD}', 'Post', AppColors.purpleTint, AppColors.purple, '/createPost')),
-    (_QaData('\u{1F4C5}', 'Events', AppColors.orangeTint, AppColors.orange, '/createEvent')),
-    (_QaData('\u{1F50D}', 'Members', AppColors.blueAccentTint, AppColors.blueAccent, '/members')),
-    (_QaData('\u2B50', 'Requests', AppColors.surfaceAlt, AppColors.success, '/createRequest')),
+  static List<_QaData> get _quickActions => [
+    _QaData('\u{1F4DD}', 'Post', AppColors.purpleTint, AppColors.purple, '/createPost'),
+    _QaData('\u{1F4C5}', 'Events', AppColors.orangeTint, AppColors.orange, '/createEvent'),
+    _QaData('\u{1F50D}', 'Members', AppColors.blueAccentTint, AppColors.blueAccent, '/members'),
+    _QaData('\u2B50', 'Requests', AppColors.surfaceAlt, AppColors.success, '/createRequest'),
   ];
 
   @override
@@ -111,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen>
                           padding: const EdgeInsets.symmetric(
                               vertical: 14, horizontal: 8),
                           decoration: BoxDecoration(
-                            color: AppColors.white,
+                            color: AppColors.card,
                             borderRadius:
                                 BorderRadius.circular(AppSpacing.radiusCard),
                             boxShadow: const [
@@ -473,7 +473,7 @@ class _ChipRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(
                   horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: sel ? AppColors.navy : AppColors.white,
+                color: sel ? AppColors.navy : AppColors.card,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
                 border: Border.all(
                     color: sel ? AppColors.navy : AppColors.surfaceAlt,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:master/theme/app_colors.dart';
 
 class UserCard extends StatelessWidget {
   const UserCard({super.key});
@@ -9,7 +10,7 @@ class UserCard extends StatelessWidget {
       padding: const EdgeInsets.only(top: 8.0),
       child: Container(
         decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.card,
             borderRadius: BorderRadius.circular(8.0),
             boxShadow: const [
               BoxShadow(

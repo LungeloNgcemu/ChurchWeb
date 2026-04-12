@@ -243,26 +243,26 @@ abstract class ConnectThemes {
     name: 'Midnight',
     emoji: '🌙',
     isDark: true,
-    background:     Color(0xFFF8FAFC),  // light content screens
-    backgroundAlt:  Color(0xFFF1F5F9),
-    backgroundDeep: Color(0xFF0F172A),
-    card:           Color(0xFFFFFFFF),
-    cardElevated:   Color(0xFF252F45),
-    topBar:         Color(0xFF1E293B),
+    background:     Color(0xFF0F172A),  // dark navy
+    backgroundAlt:  Color(0xFF182340),  // slightly lighter dark
+    backgroundDeep: Color(0xFF070D17),  // deepest
+    card:           Color(0xFF1E293B),  // navy card (user-specified)
+    cardElevated:   Color(0xFF252F45),  // elevated dark card
+    topBar:         Color(0xFF1E293B),  // same as card (flat look)
     topBarElevated: Color(0xFF252F45),
     primary:        Color(0xFF7C3AED),
     primaryLight:   Color(0xFF4F46E5),
-    primaryTint:    Color(0xFFF5F3FF),
-    primaryBorder:  Color(0xFFDDD6FE),
-    primaryBadge:   Color(0xFFEDE9FE),
+    primaryTint:    Color(0xFF1E1A3E),  // dark purple tint (was light #F5F3FF)
+    primaryBorder:  Color(0xFF3D2E7A),  // dark purple border
+    primaryBadge:   Color(0xFF2A1F5E),  // dark purple badge
     accent:         Color(0xFFF97316),
     accentDeep:     Color(0xFFEA580C),
-    accentTint:     Color(0xFFFFF7ED),
-    textPrimary:    Color(0xFF1C1917),
-    textSecondary:  Color(0xFF475569),
-    textMuted:      Color(0xFF94A3B8),
-    textDisabled:   Color(0xFFCBD5E1),
-    textMid:        Color(0xFF64748B),
+    accentTint:     Color(0xFF2A1800),  // dark orange tint (was light #FFF7ED)
+    textPrimary:    Color(0xFFFFFFFF),  // white text (was dark #1C1917)
+    textSecondary:  Color(0xFFB0BDCF),  // light blue-grey
+    textMuted:      Color(0xFF64748B),
+    textDisabled:   Color(0xFF334155),
+    textMid:        Color(0xFF94A3B8),
   );
 
   // ── 2. Cloud (light blue) ─────────────────────────────────────────────────

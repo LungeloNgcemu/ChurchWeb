@@ -50,7 +50,7 @@ class ConnectCard extends StatelessWidget {
     Widget card = Container(
       padding: padding ?? AppSpacing.cardPadding,
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(radius),
         border: customBorder,
         boxShadow: AppSpacing.cardShadow,
