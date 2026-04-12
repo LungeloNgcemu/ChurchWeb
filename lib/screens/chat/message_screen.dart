@@ -1,32 +1,25 @@
 import 'dart:async';
-import 'dart:convert';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
+import 'package:intl/intl.dart';
 import 'package:master/Model/message_model.dart';
 import 'package:master/Model/token_user.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/push_notification/notification.dart';
-import 'package:master/componants/text_input.dart';
 import 'package:master/databases/database.dart';
-
-import 'package:intl/intl.dart';
 import 'package:master/providers/message_provider.dart';
+import 'package:master/providers/url_provider.dart';
 import 'package:master/services/api/chat_service.dart';
 import 'package:master/services/api/token_service.dart';
 import 'package:master/services/socket/io_service.dart';
 import 'package:master/util/alerts.dart';
-import 'package:uuid/uuid.dart';
-import 'package:appwrite/appwrite.dart';
-import 'package:master/providers/url_provider.dart';
+import 'package:master/theme/app_colors.dart';
+import 'package:master/theme/app_spacing.dart';
+import 'package:master/theme/app_typography.dart';
+import 'package:master/widgets/common/connect_avatar.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:web_socket_channel/web_socket_channel.dart';
-
 import '../../classes/message_class.dart';
 import '../../componants/global_booking.dart';
 
@@ -48,14 +41,15 @@ class _MessageScreenState extends State<MessageScreen> {
   int previousMessageLength = 0;
 
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController controller = TextEditingController();
+  String messagex = '';
 
   @override
   void initState() {
+    super.initState();
     if (mounted) {
       initChat();
     }
-
-    super.initState();
   }
 
   Future<void> initChat() async {
@@ -64,12 +58,13 @@ class _MessageScreenState extends State<MessageScreen> {
     });
     initCurrentUser();
 
-    Future.delayed(Duration(seconds: 3), () {
-      setState(() {
-        isLoading = false;
-      });
-
-      _scrollToBottom();
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        _scrollToBottom();
+      }
     });
 
     final messageProvider =
@@ -90,8 +85,7 @@ class _MessageScreenState extends State<MessageScreen> {
 
   Future<void> initCurrentUser() async {
     TokenUser? user = await TokenService.tokenUser();
-
-    if (user != null) {
+    if (user != null && mounted) {
       setState(() {
         currentUser = user;
       });
@@ -99,25 +93,20 @@ class _MessageScreenState extends State<MessageScreen> {
   }
 
   String parseDateTimeToHourMinute(String timeStamp) {
-    // String timestamp = "2024-02-22T13:58:35.977+00:00";
     DateTime dateTime = DateTime.parse(timeStamp);
     int hour = dateTime.hour;
     int minute = dateTime.minute;
-    String time = '$hour : $minute';
-    return time;
+    return '$hour : $minute';
   }
-
-  String messagex = '';
-
-  TextEditingController controller = TextEditingController();
 
   @override
   void dispose() {
+    _scrollController.dispose();
+    controller.dispose();
     super.dispose();
   }
 
   Future<void> deleteMessage({id, uniqueId}) async {
-    print('Deleting message: $id and $uniqueId');
     await ChatService.deleteMessage(id: id, uniqueId: uniqueId);
   }
 
@@ -148,7 +137,6 @@ class _MessageScreenState extends State<MessageScreen> {
     super.didChangeDependencies();
     final messageProvider = Provider.of<MessageProvider>(context);
 
-    // Listen to changes
     if (messageProvider.messages != null &&
         messageProvider.messages!.length + 2 > previousMessageLength) {
       previousMessageLength = messageProvider.messages!.length;
@@ -169,184 +157,134 @@ class _MessageScreenState extends State<MessageScreen> {
   @override
   Widget build(BuildContext context) {
     AppWriteDataBase connect = AppWriteDataBase();
-    double w = MediaQuery.of(context).size.width;
-    double h = MediaQuery.of(context).size.height;
-
     final messageProvider = Provider.of<MessageProvider>(context, listen: true);
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: Stack(
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      body: SafeArea(
+        child: Column(
           children: [
-            Container(
-              color: Colors.grey.shade300,
-              width: w * 15,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  SizedBox(
-                    height: h * 0.75418,
-                    child: StreamBuilder<List<MessageModel>>(
-                      stream:
-                          Provider.of<MessageProvider>(context, listen: false)
-                              .messagesStream,
-                      builder: (context, snapshot) {
-                        final messages = snapshot.data ?? [];
-                        return ListView.builder(
-                            // reverse: true,
-                            controller: _scrollController, // Add controller
-                            itemCount: messageProvider.messages?.length,
-                            itemBuilder: (context, index) {
-                              print(
-                                  '📱 ListView building with ${messageProvider.messages?.length} messages');
-
-                              final String senderId = messageProvider
-                                      .messages?[index].phoneNumber ??
-                                  '';
-
-                              final String current =
-                                  currentUser?.phoneNumber ?? '';
-
-                              bool isSender = senderId == current;
-
-                              DateTime dateTime = DateTime.parse(
-                                  messageProvider.messages?[index].time ?? '');
-                              int hour = dateTime.hour;
-                              int minute = dateTime.minute;
-
-                              return isSender
-                                  ? MessageBubbleRight(
-                                      name: '$hour:$minute',
-                                      text: messageProvider
-                                              .messages?[index].message ??
-                                          '',
-                                      image: messageProvider
-                                              .messages?[index].profileImage ??
-                                          '',
-                                      callBack: () async {
-                                        const message = "Delete this message?";
-                                        alertDeleteMessage(
-                                          context,
-                                          message,
-                                          () async {
-                                            await deleteMessage(
-                                                id: messageProvider
-                                                        .messages?[index].id ??
-                                                    '',
-                                                uniqueId: messageProvider
-                                                        .messages?[index]
-                                                        .uniqueChurchId ??
-                                                    '');
-                                          },
-                                        );
-                                      },
-                                    )
-                                  : MessageBubbleLeft(
-                                      name: '$hour:$minute',
-                                      text: messageProvider
-                                              .messages?[index].message ??
-                                          '',
-                                      image: messageProvider
-                                              .messages?[index].profileImage ??
-                                          '',
-                                      person: messageProvider
-                                              .messages?[index].sender ??
-                                          '',
-                                      callBack: () {
-                                        const message = "Delete this message?";
-                                        alertDeleteMessage(
-                                          context,
-                                          message,
-                                          () async {
-                                            await deleteMessage(
-                                                id: messageProvider
-                                                        .messages?[index].id ??
-                                                    '',
-                                                uniqueId: messageProvider
-                                                        .messages?[index]
-                                                        .uniqueChurchId ??
-                                                    '');
-                                          },
-                                        );
-                                      },
-                                    );
-                            });
-                      },
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Visibility(
-                      visible:
-                          Provider.of<christProvider>(context, listen: false)
-                                  .myMap['Project']?['Expire'] ??
-                              false,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 11,
-                            child: ForTextInput(
-                              keyboard: TextInputType.text,
-                              text: "Nessage",
-                              controller: controller,
-                              label: 'Message',
-                              con: Icons.message_outlined,
-                              onChanged: (value) {
-                                setState(() {
-                                  messagex = value;
-                                });
-                              },
-                            ),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: IconButton(
-                                onPressed: () async {
-                                  message = messagex;
-
-                                  print('Sending message: $message');
-                                  await sendMessage(
-                                    uniqueId: currentUser?.uniqueChurchId ?? '',
-                                    message: message,
-                                    sender: currentUser?.userName ?? '',
-                                    senderId: currentUser?.phoneNumber ?? '',
-                                    time: DateTime.now().toIso8601String(),
-                                    church: currentUser?.church ?? '',
-                                  );
-
-                                  controller.clear();
-                                  FocusScope.of(context)
-                                      .requestFocus(FocusNode());
-
-                                  PushNotifications.sendMessageToTopic(
-                                      topic: currentUser?.uniqueChurchId ?? '',
-                                      title: currentUser?.userName ?? '',
-                                      body: message);
-                                },
-                                icon: Icon(Icons.send_outlined)),
-                          )
-                        ],
+            // ── Message list ────────────────────────────────────────────────
+            Expanded(
+              child: StreamBuilder<List<MessageModel>>(
+                stream: Provider.of<MessageProvider>(context, listen: false)
+                    .messagesStream,
+                builder: (context, snapshot) {
+                  final msgs = messageProvider.messages ?? [];
+                  if (isLoading) {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.purple,
+                        strokeWidth: 2.5,
                       ),
-                    ),
-                  ),
-                ],
+                    );
+                  }
+                  if (msgs.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'No messages yet.\nSay hello!',
+                        textAlign: TextAlign.center,
+                        style: AppTypography.bodyText,
+                      ),
+                    );
+                  }
+                  return ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    itemCount: msgs.length,
+                    itemBuilder: (context, index) {
+                      final msg = msgs[index];
+                      final senderId = msg.phoneNumber ?? '';
+                      final current = currentUser?.phoneNumber ?? '';
+                      final isSender = senderId == current;
+
+                      DateTime? dateTime;
+                      try {
+                        dateTime = DateTime.parse(msg.time ?? '');
+                      } catch (_) {}
+                      final timeLabel = dateTime != null
+                          ? '${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}'
+                          : '';
+
+                      return isSender
+                          ? MessageBubbleRight(
+                              text: msg.message ?? '',
+                              name: timeLabel,
+                              image: msg.profileImage ?? '',
+                              callBack: () {
+                                alertDeleteMessage(
+                                  context,
+                                  'Delete this message?',
+                                  () async {
+                                    await deleteMessage(
+                                      id: msg.id ?? '',
+                                      uniqueId: msg.uniqueChurchId ?? '',
+                                    );
+                                  },
+                                );
+                              },
+                            )
+                          : MessageBubbleLeft(
+                              text: msg.message ?? '',
+                              name: timeLabel,
+                              image: msg.profileImage ?? '',
+                              person: msg.sender ?? '',
+                              callBack: () {
+                                alertDeleteMessage(
+                                  context,
+                                  'Delete this message?',
+                                  () async {
+                                    await deleteMessage(
+                                      id: msg.id ?? '',
+                                      uniqueId: msg.uniqueChurchId ?? '',
+                                    );
+                                  },
+                                );
+                              },
+                            );
+                    },
+                  );
+                },
               ),
             ),
-            if (isLoading)
-              Positioned.fill(
-                child: Container(
-                  color: Colors.grey.shade300,
-                  // Semi-transparent overlay
-                  child: const Center(
-                    child: SizedBox(
-                      height: 100.0,
-                      width: 100.0,
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
-                ),
-              ),
+
+            // ── Input bar ───────────────────────────────────────────────────
+            _ChatInputBar(
+              controller: controller,
+              onChanged: (value) {
+                setState(() {
+                  messagex = value;
+                });
+              },
+              onSend: () async {
+                if (messagex.trim().isEmpty) return;
+                final toSend = messagex.trim();
+                controller.clear();
+                FocusScope.of(context).requestFocus(FocusNode());
+                setState(() {
+                  messagex = '';
+                });
+
+                await sendMessage(
+                  uniqueId: currentUser?.uniqueChurchId ?? '',
+                  message: toSend,
+                  sender: currentUser?.userName ?? '',
+                  senderId: currentUser?.phoneNumber ?? '',
+                  time: DateTime.now().toIso8601String(),
+                  church: currentUser?.church ?? '',
+                );
+
+                PushNotifications.sendMessageToTopic(
+                  topic: currentUser?.uniqueChurchId ?? '',
+                  title: currentUser?.userName ?? '',
+                  body: toSend,
+                );
+              },
+              isVisible: Provider.of<christProvider>(context, listen: false)
+                      .myMap['Project']?['Expire'] ??
+                  false,
+            ),
           ],
         ),
       ),
@@ -354,8 +292,105 @@ class _MessageScreenState extends State<MessageScreen> {
   }
 }
 
+// ─── Chat Input Bar ───────────────────────────────────────────────────────────
+class _ChatInputBar extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onSend;
+  final bool isVisible;
+
+  const _ChatInputBar({
+    required this.controller,
+    required this.onChanged,
+    required this.onSend,
+    required this.isVisible,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isVisible) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        border: Border(
+          top: BorderSide(
+            color: AppColors.surfaceAlt,
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // ── Text field ─────────────────────────────────────────────────
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
+                border: Border.all(
+                  color: AppColors.surfaceAlt,
+                  width: 1.5,
+                ),
+              ),
+              child: TextField(
+                controller: controller,
+                onChanged: onChanged,
+                keyboardType: TextInputType.text,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => onSend(),
+                style: AppTypography.fieldValue,
+                cursorColor: AppColors.purple,
+                decoration: InputDecoration(
+                  hintText: 'Type a message…',
+                  hintStyle: AppTypography.fieldPlaceholder,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  border: InputBorder.none,
+                  isDense: true,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          // ── Send button ────────────────────────────────────────────────
+          GestureDetector(
+            onTap: onSend,
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                gradient: AppColors.purpleCardGradient,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
+                boxShadow: AppSpacing.purpleButtonShadow,
+              ),
+              child: const Icon(
+                Icons.send_rounded,
+                color: AppColors.white,
+                size: 18,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Message Bubble — Other User (Left) ──────────────────────────────────────
 class MessageBubbleLeft extends StatelessWidget {
-  MessageBubbleLeft({
+  final String? text;
+  final String? name;
+  final String? image;
+  final String? person;
+  final VoidCallback? callBack;
+
+  const MessageBubbleLeft({
     this.text,
     this.image,
     this.name,
@@ -364,109 +399,73 @@ class MessageBubbleLeft extends StatelessWidget {
     super.key,
   });
 
-  String? text;
-  String? name;
-  String? image;
-  String? person;
-  VoidCallback? callBack;
-
   @override
   Widget build(BuildContext context) {
-    double h = MediaQuery.of(context).size.height;
-
     return GestureDetector(
       onLongPress: callBack ?? () {},
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Align(
-                alignment: Alignment.topLeft,
-                child: Padding(
-                  padding: EdgeInsets.only(right: 5.0, bottom: 5.0, left: 55.0),
-                  child: Text(name ?? ''),
-                )),
-            Stack(
-              children: [
-                Positioned(
-                  top: 1,
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 35.0,
-                        width: 35.0,
-                        decoration: const BoxDecoration(
-                            color: Colors.grey, shape: BoxShape.circle),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(50.0),
-                          child: Image.network(
-                            image ?? '',
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) {
-                                // Image is fully loaded
-                                return child;
-                              }
-                              // While loading, show a placeholder
-                              return Container(
-                                color: Colors.grey[300],
-                                child: const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(
-                                Icons.person,
-                                color: Colors.white,
-                              ); // fallback if image fails
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30.0),
-                  child: Column(
-                    children: [
-                      Column(
-                        children: [
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
-                            child: Material(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20.0),
-                              ),
-                              color: Colors.indigoAccent,
-                              child: Padding(
-                                padding: const EdgeInsets.all(13.0),
-                                child: Text(
-                                  text ?? '',
-                                  style: TextStyle(fontSize: 16.0),
-                                  overflow: TextOverflow.clip,
-                                  softWrap: true,
-                                  maxLines: 4,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            // ── Avatar ─────────────────────────────────────────────────
+            ConnectAvatar(
+              name: person ?? 'U',
+              imageUrl: (image != null && image!.isNotEmpty) ? image : null,
+              size: AvatarSize.xs,
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6.0),
-              child: SizedBox(
-                height: h * 0.03,
-                child: Text(person ?? "", softWrap: true),
-              ),
+            const SizedBox(width: 8),
+
+            // ── Bubble + timestamp ─────────────────────────────────────
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Sender name
+                if (person != null && person!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, bottom: 4),
+                    child: Text(
+                      person!,
+                      style: AppTypography.caption.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+
+                // Bubble
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.62,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceAlt,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                        bottomRight: Radius.circular(16),
+                        bottomLeft: Radius.circular(4),
+                      ),
+                    ),
+                    child: Text(
+                      text ?? '',
+                      style: AppTypography.bodyMedium.copyWith(height: 1.45),
+                    ),
+                  ),
+                ),
+
+                // Timestamp
+                if (name != null && name!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, top: 4),
+                    child: Text(
+                      name!,
+                      style: AppTypography.caption.copyWith(fontSize: 10),
+                    ),
+                  ),
+              ],
             ),
           ],
         ),
@@ -475,19 +474,20 @@ class MessageBubbleLeft extends StatelessWidget {
   }
 }
 
+// ─── Message Bubble — Own User (Right) ───────────────────────────────────────
 class MessageBubbleRight extends StatefulWidget {
-  MessageBubbleRight({
+  final String? text;
+  final String? name;
+  final String? image;
+  final VoidCallback? callBack;
+
+  const MessageBubbleRight({
     this.text,
     this.name,
     this.image,
     this.callBack,
     super.key,
   });
-
-  String? text;
-  String? name;
-  String? image;
-  VoidCallback? callBack;
 
   @override
   State<MessageBubbleRight> createState() => _MessageBubbleRightState();
@@ -496,211 +496,76 @@ class MessageBubbleRight extends StatefulWidget {
 class _MessageBubbleRightState extends State<MessageBubbleRight> {
   @override
   Widget build(BuildContext context) {
-    double h = MediaQuery.of(context).size.height;
     return GestureDetector(
       onLongPress: widget.callBack ?? () {},
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-        child: Column(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 60.0, bottom: 5.0),
-                  child: Text(
-                    widget.name ?? '',
-                    style: TextStyle(fontSize: 11.0),
-                  ),
-                )),
-            Stack(
+            // ── Bubble + timestamp ─────────────────────────────────────
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30.0),
-                    child: Column(
-                      children: [
-                        Column(
-                          children: [
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 20.0),
-                              child: Material(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20.0),
-                                ),
-                                color: Colors.grey,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(13.0),
-                                  child: Text(
-                                    widget.text ?? '',
-                                    style: const TextStyle(fontSize: 16.0),
-                                    overflow: TextOverflow.clip,
-                                    softWrap: true,
-                                    maxLines: 4,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                // Bubble
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.62,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.purpleCardGradient,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                        bottomLeft: Radius.circular(16),
+                        bottomRight: Radius.circular(4),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.purple.withOpacity(0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                  ),
-                ),
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: Container(
-                    height: 35.0,
-                    width: 35.0,
-                    decoration: const BoxDecoration(
-                        color: Colors.grey, shape: BoxShape.circle),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(50.0),
-                      child: Image.network(
-                        widget.image ?? '',
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) {
-                            // Image is fully loaded
-                            return child;
-                          }
-                          // While loading, show a placeholder
-                          return Container(
-                            color: Colors.grey[300],
-                            child: const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.person,
-                            color: Colors.white,
-                          ); // fallback if image fails
-                        },
+                    child: Text(
+                      widget.text ?? '',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.white,
+                        height: 1.45,
                       ),
                     ),
                   ),
                 ),
+
+                // Timestamp
+                if (widget.name != null && widget.name!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4, top: 4),
+                    child: Text(
+                      widget.name!,
+                      style: AppTypography.caption.copyWith(fontSize: 10),
+                    ),
+                  ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6.0),
-              child: SizedBox(
-                height: h * 0.04,
-                child: const Text("Me ", softWrap: true),
-              ),
+
+            const SizedBox(width: 8),
+
+            // ── Avatar ─────────────────────────────────────────────────
+            ConnectAvatar(
+              name: 'Me',
+              imageUrl: (widget.image != null && widget.image!.isNotEmpty)
+                  ? widget.image
+                  : null,
+              size: AvatarSize.xs,
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class HeaderMessage extends StatelessWidget {
-  HeaderMessage({
-    this.onPressedCall,
-    this.clientName,
-    super.key,
-  });
-
-  String? clientName;
-  VoidCallback? onPressedCall;
-
-  Future getCurrentUser() async {
-    try {
-      TokenUser? user = await TokenService.tokenUser();
-
-      if (user != null) {
-        print(user.userName);
-        return user;
-      }
-    } catch (error) {
-      print(error);
-      return null;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              IconButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  icon: Icon(Icons.keyboard_return)),
-              //Provider.of<ClientImageProvider>(context, listen: false).clientImage
-              Container(
-                height: 40.0,
-                width: 40.0,
-                decoration: const BoxDecoration(
-                    color: Colors.grey, shape: BoxShape.circle),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(50.0),
-                  child: Image.network(
-                      Provider.of<ClientImageProvider>(context, listen: false)
-                          .clientImage),
-
-                  // CachedNetworkImage(
-                  //   imageUrl:
-                  //       Provider.of<ClientImageProvider>(context, listen: false)
-                  //           .clientImage,
-                  //   placeholder: (context, url) => const Center(
-                  //     child: SizedBox(
-                  //       height: 40.0,
-                  //       width: 40.0,
-                  //       child: CircularProgressIndicator(
-                  //         value: 1.0,
-                  //       ),
-                  //     ),
-                  //   ),
-                  //   errorWidget: (context, url, error) => Icon(Icons.error),
-                  //   fit: BoxFit.cover,
-                  //   //height: 250,
-                  //   //width: double.maxFinite,
-                  // ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      clientName ?? 'Client Name',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    // Text(
-                    //   'Last online',
-                    //   style: TextStyle(fontSize: 14.0),
-                    // )
-                  ],
-                ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              children: [
-                IconButton(
-                    onPressed: onPressedCall ?? () {},
-                    icon: Icon(Icons.phone_rounded)),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

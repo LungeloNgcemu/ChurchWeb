@@ -1,247 +1,477 @@
 import 'package:flutter/material.dart';
+import 'package:master/theme/app_colors.dart';
+import 'package:master/theme/app_typography.dart';
+import 'package:master/theme/app_spacing.dart';
+import 'package:master/widgets/common/connect_button.dart';
 import '../../classes/minister_class.dart';
-import '../../componants/buttonChip.dart';
 
 class CreateMinister extends StatefulWidget {
   const CreateMinister({super.key});
-
   @override
   State<CreateMinister> createState() => _CreateMinisterState();
 }
 
 class _CreateMinisterState extends State<CreateMinister> {
+  // ── preserved ─────────────────────────────────────────────────────────────
   String? specialistId;
-
   bool isLoading = false;
-  TextEditingController workController = TextEditingController();
-  TextEditingController nameController = TextEditingController();
-
+  TextEditingController workController = TextEditingController();   // Position / Title
+  TextEditingController nameController = TextEditingController();   // Full Name
+  TextEditingController bioController = TextEditingController();    // Short Bio (new)
   MinisterClass ministerClass = MinisterClass();
+
+  // ── new v2 state ──────────────────────────────────────────────────────────
+  int _selectedPermission = 0; // 0=Leader,1=Coordinator,2=Moderator,3=Media
+
+  static const _permissions = ['Leader', 'Coordinator', 'Moderator', 'Media'];
+
+  @override
+  void dispose() {
+    workController.dispose();
+    nameController.dispose();
+    bioController.dispose();
+    super.dispose();
+  }
+
+  // ── preserved: upload image to Supabase ────────────────────────────────────
+  Future<void> _pickImage() async {
+    await ministerClass.uploadImageToSuperbase(context, setState);
+  }
+
+  // ── preserved: save minister to Supabase ──────────────────────────────────
+  Future<void> _saveProfile() async {
+    setState(() => isLoading = true);
+    try {
+      await ministerClass.uploadMinister(
+        nameController.text,
+        workController.text,
+        ministerClass.image,
+        context,
+      );
+    } finally {
+      workController.clear();
+      nameController.clear();
+      bioController.clear();
+      Navigator.of(context).pop(); // preserved: close modal/sheet
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final h = MediaQuery.of(context).size.height;
-    return Stack(
-      children: [
-        Container(
-          color: Colors.white,
-          height: h * 0.75,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        "Create Minister",
-                        style: TextStyle(fontSize: 30.0),
-                      )),
+    final initials = _initials(nameController.text);
+
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              // ── Purple gradient header ──────────────────────────────────
+              Container(
+                height: 210,
+                decoration: BoxDecoration(
+                  gradient: AppColors.purpleHeaderGradient,
                 ),
-                Container(
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10.0),
-                      color: Colors.grey[100]),
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 30.0),
-                    child: Column(
-                      children: [
-                        EnterText(
-                          height: 50.0,
-                          text: "Ministery Work",
-                          inText: "Enter Title",
-                          controller: workController,
+                child: SafeArea(
+                  bottom: false,
+                  child: Column(
+                    children: [
+                      // Topbar: back | title | skip
+                      SizedBox(
+                        height: 68,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              // Back
+                              GestureDetector(
+                                onTap: () => Navigator.of(context).pop(),
+                                child: Icon(
+                                  Icons.chevron_left_rounded,
+                                  color: AppColors.whiteDim,
+                                  size: 22,
+                                ),
+                              ),
+                              // Title
+                              const Expanded(
+                                child: Text(
+                                  'Your Profile',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.white,
+                                  ),
+                                ),
+                              ),
+                              // Skip
+                              GestureDetector(
+                                onTap: () => Navigator.of(context).pop(),
+                                child: Text(
+                                  'Skip',
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    color: AppColors.whiteDim,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        EnterText(
-                          height: 50.0,
-                          text: "Name and Surname",
-                          inText: " Enter Name and Surname",
-                          controller: nameController,
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    NewButton(
-                      inSideChip: "Load Image",
-                      where: () async {
-                        await ministerClass.uploadImageToSuperbase(
-                            context, setState);
+              ),
 
-                        /// Update state variables here
-                      },
-                    ),
-                    ImageFrame(
-                      image: ministerClass.xImage,
-                    )
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: NewButton(
-                        inSideChip: "Create Minister",
-                        where: () async {
-                          // Show a loading overlay/modal with CircularProgressIndicator
-
-                          // Rebuild the widget to show CircularProgressIndicator
-                          setState(() {
-                            isLoading = true;
-                          });
-
-                          try {
-                            await ministerClass.uploadMinister(
-                                nameController.text,
-                                workController.text,
-                                ministerClass.image,
-                                context);
-                          } finally {
-                            // Clear text controllers and close the loading overlay/modal
-                            workController.clear();
-                            nameController.clear();
-                            Navigator.of(context)
-                                .pop(); // Close the AlertDialog
-                          }
-                        },
+              // ── Scrollable body ─────────────────────────────────────────
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 52, 20, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Full Name ────────────────────────────────────────
+                      Text('FULL NAME', style: AppTypography.fieldLabel),
+                      const SizedBox(height: 7),
+                      _ProfileField(
+                        controller: nameController,
+                        hint: 'John Dlamini',
+                        active: true,
+                        onChanged: (_) => setState(() {}), // refresh initials
                       ),
-                    ),
-                  ],
-                )
-              ],
-            ),
+                      const SizedBox(height: 14),
+
+                      // ── Position / Title (workController) ────────────────
+                      Text('POSITION / TITLE', style: AppTypography.fieldLabel),
+                      const SizedBox(height: 7),
+                      _ProfileField(
+                        controller: workController,
+                        hint: 'e.g. Community Leader, Coordinator...',
+                      ),
+                      const SizedBox(height: 14),
+
+                      // ── Permissions chips ────────────────────────────────
+                      Text('PERMISSIONS', style: AppTypography.fieldLabel),
+                      const SizedBox(height: 7),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _permissions.asMap().entries.map((e) {
+                          final i = e.key;
+                          final label = e.value;
+                          final sel = _selectedPermission == i;
+                          return GestureDetector(
+                            onTap: () =>
+                                setState(() => _selectedPermission = i),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: sel
+                                    ? AppColors.navy
+                                    : AppColors.white,
+                                borderRadius:
+                                    BorderRadius.circular(AppSpacing.radiusPill),
+                                border: Border.all(
+                                  color: sel
+                                      ? AppColors.navy
+                                      : AppColors.surfaceAlt,
+                                  width: 2,
+                                ),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x09000000),
+                                    blurRadius: 4,
+                                    offset: Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                label,
+                                style: AppTypography.chipLabel.copyWith(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: sel
+                                      ? AppColors.white
+                                      : AppColors.textMid,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // ── Short Bio ────────────────────────────────────────
+                      Text('SHORT BIO', style: AppTypography.fieldLabel),
+                      const SizedBox(height: 7),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius:
+                              BorderRadius.circular(AppSpacing.radiusInput),
+                          border: Border.all(
+                              color: AppColors.surfaceAlt, width: 2),
+                          boxShadow: const [
+                            BoxShadow(
+                                color: Color(0x0A000000),
+                                blurRadius: 4,
+                                offset: Offset(0, 1)),
+                          ],
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        child: TextField(
+                          controller: bioController,
+                          maxLines: 3,
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            hintText:
+                                'Share a little about yourself with the community — your role, passion, or what you bring to the team...',
+                            hintStyle: AppTypography.fieldPlaceholder
+                                .copyWith(height: 1.6),
+                          ),
+                          style: AppTypography.bodyMedium
+                              .copyWith(height: 1.6, color: AppColors.textPrimary),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // ── Profile picture upload (preserved) ───────────────
+                      Text('PROFILE PHOTO', style: AppTypography.fieldLabel),
+                      const SizedBox(height: 7),
+                      GestureDetector(
+                        onTap: _pickImage,
+                        child: Container(
+                          width: double.infinity,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius:
+                                BorderRadius.circular(AppSpacing.radiusInput),
+                            border: Border.all(
+                                color: AppColors.surfaceAlt, width: 2),
+                            boxShadow: const [
+                              BoxShadow(
+                                  color: Color(0x0A000000),
+                                  blurRadius: 4,
+                                  offset: Offset(0, 1)),
+                            ],
+                          ),
+                          child: ministerClass.xImage != null
+                              ? ClipRRect(
+                                  borderRadius:
+                                      BorderRadius.circular(AppSpacing.radiusInput - 2),
+                                  child: Image.memory(
+                                    ministerClass.xImage!,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: 80,
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.purpleTint,
+                                        borderRadius:
+                                            BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                          Icons.camera_alt_outlined,
+                                          size: 20,
+                                          color: AppColors.purple),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Upload Photo',
+                                            style: AppTypography.cardTitle),
+                                        Text('Tap to choose from library',
+                                            style: AppTypography.caption),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+
+                      // ── Save button ──────────────────────────────────────
+                      ConnectButton.primary(
+                        label: 'Save Profile  \u2192',
+                        isLoading: isLoading,
+                        onTap: isLoading ? null : _saveProfile,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        if (isLoading)
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withOpacity(0.5),
-              // Semi-transparent overlay
-              child: const Center(
-                child: SizedBox(
-                  height: 100.0,
-                  width: 100.0,
-                  child: CircularProgressIndicator(),
+
+          // ── Avatar — overlaps header / body boundary ─────────────────────
+          Positioned(
+            top: 210 - 44, // half of 88px avatar
+            left: 0,
+            right: 0,
+            child: Center(child: _AvatarUpload(
+              initials: initials,
+              image: ministerClass.xImage,
+              onTap: _pickImage,
+            )),
+          ),
+
+          // Loading overlay — preserved
+          if (isLoading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.45),
+                child: Center(
+                  child: CircularProgressIndicator(
+                      color: AppColors.purple, strokeWidth: 3),
                 ),
               ),
             ),
-          ),
-      ],
-    );
-  }
-}
-
-class ImageFrame extends StatefulWidget {
-  const ImageFrame({this.image, Key? key}) : super(key: key);
-
-  final dynamic image;
-
-  @override
-  _ImageFrameState createState() => _ImageFrameState();
-}
-
-class _ImageFrameState extends State<ImageFrame> {
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20.0),
-      child: Container(
-        height: 145.0,
-        width: 145.0,
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(20.0),
-        ),
-        child: _buildImage(widget.image),
+        ],
       ),
     );
   }
 
-  Widget _buildImage(dynamic image) {
-    if (image == null) {
-      return Container(); // You can use a placeholder here
-    }
-
-    if (image != null) {
-      return Image.memory(
-        image,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: 250.0,
-      );
-    } else {
-      return Image.network(
-          "https://picsum.photos/seed/picsum/200/300"); // Handle other cases if needed
-    }
+  String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return 'JD';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
   }
 }
 
-class EnterText extends StatelessWidget {
-  const EnterText({
-    this.height,
-    this.text,
-    this.inText,
-    this.controller, // Add this line
-    Key? key,
-  }) : super(key: key);
+// ── Avatar upload circle ──────────────────────────────────────────────────────
+class _AvatarUpload extends StatelessWidget {
+  final String initials;
+  final dynamic image; // Uint8List?
+  final VoidCallback onTap;
 
-  final double? height;
-  final String? text;
-  final String? inText;
-  final TextEditingController? controller; // Add this line
+  const _AvatarUpload({
+    required this.initials,
+    required this.image,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-      child: Column(
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  text!,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20.0,
-                  ),
-                ),
+          // Gradient ring
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: AppColors.purpleCardGradient,
+            ),
+            padding: const EdgeInsets.all(3),
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.navy,
+                border: Border.all(color: AppColors.white, width: 3),
               ),
-            ],
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: height!,
-                  child: TextField(
-                    controller: controller,
-                    // Add this line
-                    maxLines: null,
-                    expands: true,
-                    keyboardType: TextInputType.multiline,
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.only(
-                          left: 8.0, bottom: 8.0, top: 8.0),
-                      border: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(10.0),
+              child: ClipOval(
+                child: image != null
+                    ? Image.memory(image, fit: BoxFit.cover)
+                    : Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.navy,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          initials,
+                          style: AppTypography.buttonPrimary.copyWith(
+                              fontSize: 26, letterSpacing: 0, height: 1),
                         ),
                       ),
-                      //  filled: true,
-                      hintText: inText ?? "",
-                    ),
-                  ),
-                ),
               ),
-            ],
+            ),
+          ),
+          // Camera FAB
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: AppColors.orange,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.white, width: 2),
+              ),
+              child: const Icon(Icons.camera_alt_rounded,
+                  size: 13, color: AppColors.white),
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Reusable profile input field ──────────────────────────────────────────────
+class _ProfileField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final bool active;
+  final Function(String)? onChanged;
+
+  const _ProfileField({
+    required this.controller,
+    required this.hint,
+    this.active = false,
+    this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
+        border: Border.all(
+          color: active ? AppColors.purple : AppColors.surfaceAlt,
+          width: 2,
+        ),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 1)),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText: hint,
+          hintStyle: AppTypography.fieldPlaceholder,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        ),
+        style: AppTypography.fieldValue,
       ),
     );
   }

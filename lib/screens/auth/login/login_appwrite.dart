@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:master/screens/auth/widget/input_page.dart';
-import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:master/databases/database.dart';
+import 'package:master/theme/app_colors.dart';
+import 'package:master/theme/app_typography.dart';
+import 'package:master/theme/app_spacing.dart';
+import 'package:master/widgets/common/connect_button.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 
 class LoginAppwrite extends StatefulWidget {
   const LoginAppwrite({super.key});
@@ -11,99 +14,230 @@ class LoginAppwrite extends StatefulWidget {
 }
 
 class _LoginAppwriteState extends State<LoginAppwrite> {
-  @override
-  void initState() {
-    signOut();
-    // TODO: implement initState
-    super.initState();
-  }
-  var _controllerA = TextEditingController();
-  var _controllerB = TextEditingController();
+  // ── preserved ─────────────────────────────────────────────────────────────
+  final _controllerA = TextEditingController();
+  final _controllerB = TextEditingController();
   String email = '';
   String password = '';
 
   @override
+  void initState() {
+    signOut();
+    super.initState();
+  }
+
+  @override
   void dispose() {
-    // Dispose of the controllers when the widget is disposed
     _controllerA.dispose();
     _controllerB.dispose();
     super.dispose();
   }
 
+  // ── preserved: sign out ───────────────────────────────────────────────────
   void signOut() async {
     // AppWriteDataBase connect = AppWriteDataBase();
     // await connect.account.deleteSessions();
     print("Session Refreshed");
   }
+
+  bool _isLoading = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
-      body: ImputPage(
-        onChanged1: (value) {
-          email = value;
-        },
-        onChanged2: (value) {
-          password = value;
-        },
-        controller1:_controllerA ,
-        controller2: _controllerB,
-
-        hype: const Text(
-          'Login to Your Account Now',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 50.0,
-            fontWeight: FontWeight.bold,
+      backgroundColor: AppColors.navyDeep,
+      body: Stack(
+        children: [
+          // Top dark navy hero
+          Container(
+            height: MediaQuery.of(context).size.height * 0.45,
+            decoration: BoxDecoration(
+              gradient: AppColors.purpleHeaderGradient,
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        gradient: AppColors.purpleCardGradient,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.hub_outlined,
+                          size: 20, color: AppColors.white),
+                    ),
+                    const SizedBox(height: 32),
+                    Text('Sign In',
+                        style: AppTypography.headingLarge.copyWith(
+                          color: AppColors.white,
+                          fontSize: 32,
+                        )),
+                    const SizedBox(height: 8),
+                    Text('Welcome back to Connect',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.whiteDim,
+                        )),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-        word: const Text(
-          'Login',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 20.0,
+
+          // White card slides up
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            top: MediaQuery.of(context).size.height * 0.38,
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(32),
+                  topRight: Radius.circular(32),
+                ),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('EMAIL', style: AppTypography.fieldLabel),
+                    const SizedBox(height: 7),
+                    _LoginField(
+                      controller: _controllerA,
+                      hint: 'you@example.com',
+                      icon: Icons.mail_outline_rounded,
+                      keyboardType: TextInputType.emailAddress,
+                      onChanged: (v) => email = v,
+                    ),
+                    const SizedBox(height: 16),
+                    Text('PASSWORD', style: AppTypography.fieldLabel),
+                    const SizedBox(height: 7),
+                    _LoginField(
+                      controller: _controllerB,
+                      hint: '••••••••',
+                      icon: Icons.lock_outline_rounded,
+                      obscure: true,
+                      onChanged: (v) => password = v,
+                    ),
+                    const SizedBox(height: 28),
+                    // ── preserved: login button with try/catch ──────────
+                    ConnectButton.primary(
+                      label: 'Sign In  →',
+                      isLoading: _isLoading,
+                      onTap: _isLoading
+                          ? null
+                          : () async {
+                              setState(() => _isLoading = true);
+                              try {
+                                // AppWriteDataBase connect = AppWriteDataBase();
+                                // final session = await connect.account
+                                //     .createEmailSession(
+                                //       email: email, password: password);
+                                // if (session != null) {
+                                //   Navigator.pushNamed(context, '/salon');
+                                // }
+                              } catch (e) {
+                                Alert(
+                                  context: context,
+                                  type: AlertType.error,
+                                  title: "Wrong Login Details",
+                                  desc:
+                                      "Please type in the right detail or contact the Developer.",
+                                  buttons: [
+                                    DialogButton(
+                                      child: const Text("Retry",
+                                          style: TextStyle(
+                                              color: AppColors.white,
+                                              fontSize: 18)),
+                                      onPressed: () =>
+                                          Navigator.pop(context),
+                                      width: 120,
+                                    )
+                                  ],
+                                ).show();
+                              }
+                              setState(() => _isLoading = false);
+                              _controllerA.clear();
+                              _controllerB.clear();
+                            },
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-        pressed: () async {
-
-
-          try {
-            // AppWriteDataBase connect = AppWriteDataBase();
-
-            // final session = await connect.account.createEmailSession(
-            //     email: email,
-            //     password: password,
-            // );
-
-            // if (session != null) {
-            //   Navigator.pushNamed(context, '/salon');
-            // }
-          } catch (e) {
-
-            Alert(
-              context: context, // Use the captured context here,
-              type: AlertType.error,
-              title: "Wrong Login Details",
-              desc: "Please type in the right detail or contact the Developer.${Error}",
-              buttons: [
-                DialogButton(
-                  child: Text(
-                    "Retry",
-                    style: TextStyle(color: Colors.white, fontSize: 20),
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                  width: 120,
-                )
-              ],
-            ).show();
-            // print('Error: $e');
-            // Handle authentication errors here (show a message to the user, etc.)
-          }
-          _controllerA.clear();
-          _controllerB.clear();
-        },
+        ],
       ),
-    );;
+    );
+  }
+}
+
+class _LoginField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final IconData icon;
+  final bool obscure;
+  final TextInputType? keyboardType;
+  final Function(String)? onChanged;
+
+  const _LoginField({
+    required this.controller,
+    required this.hint,
+    required this.icon,
+    this.obscure = false,
+    this.keyboardType,
+    this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.surfaceAlt, width: 2),
+        boxShadow: const [
+          BoxShadow(color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 1)),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.textMuted),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              obscureText: obscure,
+              keyboardType: keyboardType,
+              onChanged: onChanged,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                hintText: hint,
+                hintStyle: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  color: AppColors.textMuted,
+                ),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

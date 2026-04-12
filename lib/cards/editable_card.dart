@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:master/theme/app_colors.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:master/componants/buttonChip.dart';
@@ -76,7 +77,7 @@ class _EditableProductCardState extends State<EditableProductCard> {
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 0.0),
         decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.card,
             borderRadius: BorderRadius.circular(10.0),
             boxShadow: const [
               BoxShadow(

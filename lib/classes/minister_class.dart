@@ -19,12 +19,14 @@ class MinisterClass {
 
   Future<void> _pickImage(Function(void Function()) setState) async {
     final pickedImage = await _picker.pickImageToByte();
-
+    print('1');
     if (pickedImage != null) {
       setState(() {
         xImage = pickedImage;
+        print('image : $xImage');
       });
     }
+    print('2');
   }
 
   Future<void> uploadImageToSuperbase(
@@ -34,9 +36,14 @@ class MinisterClass {
     });
     try {
       await _pickImage(setState);
+      print('3');
 
       if (xImage != null) {
         final fileName = 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        print('4');
+
+        print(
+            'file name : ${Provider.of<christProvider>(context, listen: false).myMap['Project']?['Bucket']}');
 
         final String pathv = await supabase.storage
             .from(Provider.of<christProvider>(context, listen: false)
@@ -44,11 +51,15 @@ class MinisterClass {
             .uploadBinary(fileName, xImage!,
                 fileOptions:
                     const FileOptions(cacheControl: '3600', upsert: false));
+        print('5');
 
         final publicUrl = await supabase.storage
             .from(Provider.of<christProvider>(context, listen: false)
                 .myMap['Project']?['Bucket'])
             .getPublicUrl(fileName);
+        print('6');
+
+        print('url image : $publicUrl');
 
         setState(() {
           image = publicUrl;
