@@ -234,38 +234,10 @@ class ConnectThemeData {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-/// The five built-in Connect App themes.
+/// The two built-in Connect App themes.
 // ─────────────────────────────────────────────────────────────────────────────
 abstract class ConnectThemes {
-  // ── 1. Midnight (dark navy — default v2 design) ───────────────────────────
-  static const ConnectThemeData midnight = ConnectThemeData(
-    id: 'midnight',
-    name: 'Midnight',
-    emoji: '🌙',
-    isDark: true,
-    background:     Color(0xFF0F172A),  // dark navy
-    backgroundAlt:  Color(0xFF182340),  // slightly lighter dark
-    backgroundDeep: Color(0xFF070D17),  // deepest
-    card:           Color(0xFF1E293B),  // navy card (user-specified)
-    cardElevated:   Color(0xFF252F45),  // elevated dark card
-    topBar:         Color(0xFF1E293B),  // same as card (flat look)
-    topBarElevated: Color(0xFF252F45),
-    primary:        Color(0xFF7C3AED),
-    primaryLight:   Color(0xFF4F46E5),
-    primaryTint:    Color(0xFF1E1A3E),  // dark purple tint (was light #F5F3FF)
-    primaryBorder:  Color(0xFF3D2E7A),  // dark purple border
-    primaryBadge:   Color(0xFF2A1F5E),  // dark purple badge
-    accent:         Color(0xFFF97316),
-    accentDeep:     Color(0xFFEA580C),
-    accentTint:     Color(0xFF2A1800),  // dark orange tint (was light #FFF7ED)
-    textPrimary:    Color(0xFFFFFFFF),  // white text (was dark #1C1917)
-    textSecondary:  Color(0xFFB0BDCF),  // light blue-grey
-    textMuted:      Color(0xFF64748B),
-    textDisabled:   Color(0xFF334155),
-    textMid:        Color(0xFF94A3B8),
-  );
-
-  // ── 2. Cloud (light blue) ─────────────────────────────────────────────────
+  // ── 1. Cloud (light blue) ─────────────────────────────────────────────────
   static const ConnectThemeData cloud = ConnectThemeData(
     id: 'cloud',
     name: 'Cloud',
@@ -293,35 +265,7 @@ abstract class ConnectThemes {
     textMid:        Color(0xFF64748B),
   );
 
-  // ── 3. Ocean (deep blue) ──────────────────────────────────────────────────
-  static const ConnectThemeData ocean = ConnectThemeData(
-    id: 'ocean',
-    name: 'Ocean',
-    emoji: '🌊',
-    isDark: true,
-    background:     Color(0xFF0C1A2E),
-    backgroundAlt:  Color(0xFF122033),
-    backgroundDeep: Color(0xFF070F1C),
-    card:           Color(0xFF112240),
-    cardElevated:   Color(0xFF1A3A5C),
-    topBar:         Color(0xFF0A1628),
-    topBarElevated: Color(0xFF112240),
-    primary:        Color(0xFF06B6D4),
-    primaryLight:   Color(0xFF22D3EE),
-    primaryTint:    Color(0xFF0E3548),
-    primaryBorder:  Color(0xFF164E63),
-    primaryBadge:   Color(0xFF0E4058),
-    accent:         Color(0xFF84CC16),
-    accentDeep:     Color(0xFF65A30D),
-    accentTint:     Color(0xFF1A2E0A),
-    textPrimary:    Color(0xFFFFFFFF),
-    textSecondary:  Color(0xFFB0C4DE),
-    textMuted:      Color(0xFF6B8CAE),
-    textDisabled:   Color(0xFF3A5A7A),
-    textMid:        Color(0xFF8AA8C4),
-  );
-
-  // ── 4. Sunset (warm light) ────────────────────────────────────────────────
+  // ── 2. Sunset (warm light) ────────────────────────────────────────────────
   static const ConnectThemeData sunset = ConnectThemeData(
     id: 'sunset',
     name: 'Sunset',
@@ -349,40 +293,9 @@ abstract class ConnectThemes {
     textMid:        Color(0xFF78716C),
   );
 
-  // ── 5. Forest (dark green) ────────────────────────────────────────────────
-  static const ConnectThemeData forest = ConnectThemeData(
-    id: 'forest',
-    name: 'Forest',
-    emoji: '🌲',
-    isDark: true,
-    background:     Color(0xFF0D1F16),
-    backgroundAlt:  Color(0xFF132A1E),
-    backgroundDeep: Color(0xFF071210),
-    card:           Color(0xFF132A1E),
-    cardElevated:   Color(0xFF1A3828),
-    topBar:         Color(0xFF0A1A10),
-    topBarElevated: Color(0xFF132A1E),
-    primary:        Color(0xFF10B981),
-    primaryLight:   Color(0xFF34D399),
-    primaryTint:    Color(0xFF0A2018),
-    primaryBorder:  Color(0xFF065F46),
-    primaryBadge:   Color(0xFF0D2E1E),
-    accent:         Color(0xFFF59E0B),
-    accentDeep:     Color(0xFFD97706),
-    accentTint:     Color(0xFF1F1500),
-    textPrimary:    Color(0xFFFFFFFF),
-    textSecondary:  Color(0xFF9DC4AC),
-    textMuted:      Color(0xFF5A8C6E),
-    textDisabled:   Color(0xFF2D5C3F),
-    textMid:        Color(0xFF7AAF8A),
-  );
-
-  /// All five themes in display order.
+  /// All themes in display order.
   static const List<ConnectThemeData> all = [
-    midnight,
     cloud,
-    ocean,
     sunset,
-    forest,
   ];
 }

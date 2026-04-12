@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:master/Model/existing_user_model.dart';
 import 'package:master/componants/extrabutton.dart';
-import 'package:master/screens/auth/register/register_leader.dart';
+import 'package:master/componants/text_input.dart';
 import 'package:master/services/api/auth_service.dart';
-import 'package:master/util/alerts.dart';
 
 Future<ExistingUser?> showChurchSelectDialog(
   BuildContext context,
@@ -72,12 +71,11 @@ Future<bool?> showAdminDialog(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    InputAppwrite(
+                    ForTextInput(
                       keyboard: TextInputType.number,
-                      message: 'Enter Password',
+                      text: 'Enter Password',
                       controller: controllerCode,
                       label: 'Password',
-                      text: 'Password',
                       hasError: hasError,
                       errorMessage: 'Password is required',
                     ),

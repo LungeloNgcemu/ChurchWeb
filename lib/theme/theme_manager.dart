@@ -24,7 +24,7 @@ class ThemeManager extends ChangeNotifier {
   static ThemeManager _singleton = ThemeManager._();
   static ThemeManager get instance => _singleton;
 
-  ThemeManager._() : _current = ConnectThemes.midnight;
+  ThemeManager._() : _current = ConnectThemes.cloud;
 
   // ── Factory used by the ChangeNotifierProvider in main.dart ───────────────
   /// Creates the singleton-linked instance that Provider will own.
@@ -52,6 +52,12 @@ class ThemeManager extends ChangeNotifier {
         final found = ConnectThemes.all.where((t) => t.id == savedId);
         if (found.isNotEmpty) {
           _current = found.first;
+        } else {
+          // Saved theme no longer exists (e.g. Midnight/Ocean/Forest removed)
+          // — fall back to Cloud and persist the new default.
+          _current = ConnectThemes.cloud;
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(_kPrefKey, ConnectThemes.cloud.id);
           // Update the singleton colours immediately so AppColors.xxx
           // returns the correct values before the first frame.
           _singleton = this;

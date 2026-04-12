@@ -291,12 +291,9 @@ class _ThemeCard extends StatelessWidget {
 
   String _tagline(String id) {
     switch (id) {
-      case 'midnight': return 'Navy & purple — the classic Connect look';
-      case 'cloud':    return 'Crisp white with blue accents';
-      case 'ocean':    return 'Deep sea vibes with cyan highlights';
-      case 'sunset':   return 'Warm cream tones with coral energy';
-      case 'forest':   return 'Rich greens with golden accents';
-      default:         return '';
+      case 'cloud':  return 'Crisp white with blue accents';
+      case 'sunset': return 'Warm cream tones with coral energy';
+      default:       return '';
     }
   }
 }
