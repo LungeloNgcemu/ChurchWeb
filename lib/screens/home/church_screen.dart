@@ -17,6 +17,7 @@ import '../../providers/url_provider.dart';
 import '../../extra/contact_screen.dart';
 import 'home_screeen.dart';
 import '../media/media_screen.dart';
+import 'package:master/theme/app_colors.dart';
 import 'package:master/widgets/common/connect_bottom_nav.dart';
 import 'dart:async';
 
@@ -99,7 +100,7 @@ class _ChurchScreenState extends State<ChurchScreen> {
     final isVisible = visibilityProvider.isVisible;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: AppColors.surface,
       body: Stack(
         children: [
           // preserved: supabase message stream listener
@@ -125,7 +126,6 @@ class _ChurchScreenState extends State<ChurchScreen> {
         visible: isVisible,
         child: ConnectBottomNav(
           currentIndex: visit,
-          isDark: visit == 2, // dark variant on Media tab
           onTap: (index) {
             setState(() => visit = index);
             controller.animateToPage(index,

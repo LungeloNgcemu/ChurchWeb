@@ -160,7 +160,7 @@ class _MessageScreenState extends State<MessageScreen> {
     final messageProvider = Provider.of<MessageProvider>(context, listen: true);
 
     return Scaffold(
-      backgroundColor: AppColors.navy,
+      backgroundColor: AppColors.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -184,7 +184,7 @@ class _MessageScreenState extends State<MessageScreen> {
                       child: Text(
                         'No messages yet.\nSay hello!',
                         textAlign: TextAlign.center,
-                        style: AppTypography.onDarkDim(AppTypography.bodyText),
+                        style: AppTypography.bodyText,
                       ),
                     );
                   }
@@ -313,10 +313,10 @@ class _ChatInputBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
       decoration: BoxDecoration(
-        color: AppColors.navyCard,
+        color: AppColors.card,
         border: Border(
           top: BorderSide(
-            color: AppColors.whiteFaint,
+            color: AppColors.surfaceAlt,
             width: 1,
           ),
         ),
@@ -327,10 +327,10 @@ class _ChatInputBar extends StatelessWidget {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.navy,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
                 border: Border.all(
-                  color: AppColors.whiteFaint,
+                  color: AppColors.surfaceAlt,
                   width: 1.5,
                 ),
               ),
@@ -340,11 +340,11 @@ class _ChatInputBar extends StatelessWidget {
                 keyboardType: TextInputType.text,
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => onSend(),
-                style: AppTypography.onDark(AppTypography.fieldValue),
+                style: AppTypography.fieldValue,
                 cursorColor: AppColors.purple,
                 decoration: InputDecoration(
                   hintText: 'Type a message…',
-                  hintStyle: AppTypography.onDarkDim(AppTypography.fieldPlaceholder),
+                  hintStyle: AppTypography.fieldPlaceholder,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 12,
@@ -427,7 +427,6 @@ class MessageBubbleLeft extends StatelessWidget {
                     child: Text(
                       person!,
                       style: AppTypography.caption.copyWith(
-                        color: AppColors.whiteDim,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -442,7 +441,7 @@ class MessageBubbleLeft extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: AppColors.navyCard,
+                      color: AppColors.surfaceAlt,
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(16),
                         topRight: Radius.circular(16),
@@ -452,8 +451,7 @@ class MessageBubbleLeft extends StatelessWidget {
                     ),
                     child: Text(
                       text ?? '',
-                      style: AppTypography.onDark(AppTypography.bodyMedium)
-                          .copyWith(height: 1.45),
+                      style: AppTypography.bodyMedium.copyWith(height: 1.45),
                     ),
                   ),
                 ),
@@ -464,10 +462,7 @@ class MessageBubbleLeft extends StatelessWidget {
                     padding: const EdgeInsets.only(left: 4, top: 4),
                     child: Text(
                       name!,
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.whiteDim,
-                        fontSize: 10,
-                      ),
+                      style: AppTypography.caption.copyWith(fontSize: 10),
                     ),
                   ),
               ],
@@ -539,8 +534,10 @@ class _MessageBubbleRightState extends State<MessageBubbleRight> {
                     ),
                     child: Text(
                       widget.text ?? '',
-                      style: AppTypography.onDark(AppTypography.bodyMedium)
-                          .copyWith(height: 1.45),
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.white,
+                        height: 1.45,
+                      ),
                     ),
                   ),
                 ),
@@ -551,10 +548,7 @@ class _MessageBubbleRightState extends State<MessageBubbleRight> {
                     padding: const EdgeInsets.only(right: 4, top: 4),
                     child: Text(
                       widget.name!,
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.whiteDim,
-                        fontSize: 10,
-                      ),
+                      style: AppTypography.caption.copyWith(fontSize: 10),
                     ),
                   ),
               ],

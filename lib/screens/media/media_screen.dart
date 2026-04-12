@@ -64,10 +64,10 @@ class _MediaScreenState extends State<MediaScreen>
     final idProvider = Provider.of<IdProvider>(context, listen: false);
 
     return Scaffold(
-      backgroundColor: AppColors.navyDeep,
+      backgroundColor: AppColors.surface,
       body: Column(
         children: [
-          // ── Dark topbar ───────────────────────────────────────────────
+          // ── Topbar ───────────────────────────────────────────────────
           _MediaTopBar(
             onAddTap: ChurchInit.visibilityToggle(context)
                 ? () => create.sheeting(context, MediaPoster())
@@ -76,7 +76,7 @@ class _MediaScreenState extends State<MediaScreen>
 
           // ── Category chips ────────────────────────────────────────────
           Container(
-            color: AppColors.navyDeep,
+            color: AppColors.surface,
             padding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: SingleChildScrollView(
@@ -98,13 +98,13 @@ class _MediaScreenState extends State<MediaScreen>
                         decoration: BoxDecoration(
                           color: sel
                               ? AppColors.purple
-                              : AppColors.navyCard,
+                              : AppColors.surfaceAlt,
                           borderRadius: BorderRadius.circular(
                               AppSpacing.radiusPill),
                           border: Border.all(
                             color: sel
                                 ? AppColors.purple
-                                : AppColors.whiteFaint,
+                                : AppColors.surfaceAlt,
                             width: 1.5,
                           ),
                         ),
@@ -115,7 +115,7 @@ class _MediaScreenState extends State<MediaScreen>
                             fontWeight: FontWeight.w600,
                             color: sel
                                 ? AppColors.white
-                                : AppColors.whiteDim,
+                                : AppColors.textMuted,
                           ),
                         ),
                       ),
@@ -145,7 +145,7 @@ class _MediaScreenState extends State<MediaScreen>
                     return Center(
                       child: Text('Connecting...',
                           style: AppTypography.bodyMedium
-                              .copyWith(color: AppColors.whiteDim)),
+                              .copyWith(color: AppColors.textMuted)),
                     );
                   }
                   if (!snapshot.hasData ||
@@ -240,7 +240,7 @@ class _MediaTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: AppSpacing.topBarHeight + MediaQuery.of(context).padding.top,
-      color: AppColors.navyDeep,
+      color: AppColors.navy,
       padding: EdgeInsets.fromLTRB(
           18, MediaQuery.of(context).padding.top, 18, 13),
       child: Row(
@@ -294,7 +294,7 @@ class _EmptyMedia extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: AppColors.navyIconBg,
+              color: AppColors.purpleTint,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(Icons.play_circle_outline_rounded,
@@ -302,12 +302,10 @@ class _EmptyMedia extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text('No videos yet',
-              style: AppTypography.headingSmall
-                  .copyWith(color: AppColors.white)),
+              style: AppTypography.headingSmall),
           const SizedBox(height: 4),
           Text('Add your first video above',
-              style:
-                  AppTypography.caption.copyWith(color: AppColors.whiteDim)),
+              style: AppTypography.caption),
         ],
       ),
     );

@@ -41,6 +41,8 @@ abstract class AppColors {
 
   // ─── Neutrals ─────────────────────────────────────────────────────────────
   static const Color white     = Color(0xFFFFFFFF);
+  /// Card / panel surface (white in light themes, dark in dark themes).
+  static Color get card        => _t.card;
   static Color get surface     => _t.background;
   static Color get surfaceAlt  => _t.backgroundAlt;
 

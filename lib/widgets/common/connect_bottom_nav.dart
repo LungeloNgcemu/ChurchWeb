@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/theme/app_typography.dart';
+import 'package:master/theme/theme_manager.dart';
 
 /// Connect App — Bottom Navigation Bar
 /// Source of truth: CLAUDE.md § 4.7 Bottom Navigation — 5 Tabs
@@ -22,10 +23,6 @@ class ConnectBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  /// true → dark navy bg (used on Media, Video Player screens)
-  /// false → white bg (all other screens)
-  final bool isDark;
-
   /// Unread count shown as badge on Chat tab (0 = hidden)
   final int chatBadgeCount;
 
@@ -33,18 +30,21 @@ class ConnectBottomNav extends StatelessWidget {
     super.key,
     required this.currentIndex,
     required this.onTap,
-    this.isDark = false,
     this.chatBadgeCount = 0,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bg = isDark ? AppColors.navy : AppColors.white;
-    final borderColor = isDark
-        ? AppColors.whiteFaint
-        : AppColors.surfaceAlt;
-    final inactiveColor =
-        isDark ? AppColors.whiteDim.withOpacity(0.3) : AppColors.textMuted;
+    // Derive light/dark from the theme's card colour so the nav bar
+    // always matches the active theme without any per-screen overrides.
+    final cardColor = AppColors.card;
+    final isDark = cardColor.computeLuminance() < 0.3;
+
+    final bg = cardColor;
+    final borderColor = isDark ? AppColors.whiteFaint : AppColors.surfaceAlt;
+    final inactiveColor = isDark
+        ? Colors.white.withOpacity(0.35)
+        : AppColors.textMuted;
 
     return Container(
       height: AppSpacing.bottomNavHeight,
@@ -65,7 +65,6 @@ class ConnectBottomNav extends StatelessWidget {
               return _NavItem(
                 index: i,
                 isActive: isActive,
-                isDark: isDark,
                 inactiveColor: inactiveColor,
                 badgeCount: i == ConnectNavTab.chat.index ? chatBadgeCount : 0,
                 onTap: () => onTap(i),
@@ -82,7 +81,6 @@ class ConnectBottomNav extends StatelessWidget {
 class _NavItem extends StatelessWidget {
   final int index;
   final bool isActive;
-  final bool isDark;
   final Color inactiveColor;
   final int badgeCount;
   final VoidCallback onTap;
@@ -90,7 +88,6 @@ class _NavItem extends StatelessWidget {
   const _NavItem({
     required this.index,
     required this.isActive,
-    required this.isDark,
     required this.inactiveColor,
     required this.badgeCount,
     required this.onTap,
@@ -117,7 +114,7 @@ class _NavItem extends StatelessWidget {
                   Positioned(
                     top: -2,
                     right: -2,
-                    child: _NotifBadge(count: badgeCount, isDark: isDark),
+                    child: _NotifBadge(count: badgeCount),
                   ),
               ],
             ),
@@ -176,8 +173,7 @@ class _InactiveIcon extends StatelessWidget {
 // ─── Notification badge ───────────────────────────────────────────────────────
 class _NotifBadge extends StatelessWidget {
   final int count;
-  final bool isDark;
-  const _NotifBadge({required this.count, required this.isDark});
+  const _NotifBadge({required this.count});
 
   @override
   Widget build(BuildContext context) {
@@ -188,7 +184,7 @@ class _NotifBadge extends StatelessWidget {
         color: AppColors.orange,
         shape: BoxShape.circle,
         border: Border.all(
-          color: isDark ? AppColors.navy : AppColors.white,
+          color: AppColors.card,
           width: 2,
         ),
       ),
