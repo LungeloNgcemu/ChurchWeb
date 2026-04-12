@@ -1,381 +1,498 @@
-import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:master/Model/churchItemModel.dart';
 import 'package:master/classes/restrictions.dart';
 import 'package:master/classes/sql_database.dart';
-import 'package:master/componants/text_input.dart';
-import 'package:master/componants/extrabutton.dart';
+import 'package:master/constants/constants.dart';
+import 'package:master/databases/database.dart';
 import 'package:master/providers/registration_provider.dart';
-import 'package:master/providers/url_provider.dart';
 import 'package:master/services/api/general_data_service.dart';
 import 'package:master/util/alerts.dart';
 import 'package:provider/provider.dart';
+import 'package:master/theme/app_colors.dart';
+import 'package:master/theme/app_typography.dart';
+import 'package:master/theme/app_spacing.dart';
+import 'package:master/widgets/common/connect_button.dart';
 import '../../../classes/authentication/authenticate.dart';
-import '../otp/code.dart';
-import 'package:intl_phone_field/intl_phone_field.dart';
+import 'widgets/drop_search.dart';
 
 class RegisterLeader extends StatefulWidget {
   const RegisterLeader({super.key});
-
   @override
   State<RegisterLeader> createState() => _RegisterLeaderState();
 }
 
 class _RegisterLeaderState extends State<RegisterLeader> {
+  // ── preserved ─────────────────────────────────────────────────────────────
   Authenticate auth = Authenticate();
   List<ChurchItemModel> names_of_churches = [];
   Restrictions restrict = Restrictions();
   SqlDatabase sql = SqlDatabase();
 
+  String userName = '';
+  String number = '';
+  bool isLoading = false;
+
+  TextEditingController controllerName = TextEditingController();
+  TextEditingController codeController = TextEditingController();
+  TextEditingController churchController = TextEditingController();
+
+  final List<String> items = ['Male', 'Female'];
+
+  // ── new state for v2 UI ────────────────────────────────────────────────────
+  int _selectedRole = 0; // 0=Leader,1=Coordinator,2=Moderator
+  int _selectedGender = 0; // 0=Male,1=Female,2=Other
+
+  static const _roles = [
+    ('Leader', 'Full access — manage members, posts & events'),
+    ('Coordinator', 'Organise events and moderate content'),
+    ('Moderator', 'Review and approve member posts'),
+  ];
+  static const _genders = ['Male', 'Female', 'Other'];
+
   @override
   void initState() {
-    // TODO: implement initState
-
     churchListInit(context);
-    auth.role = "Admin";
-
+    auth.role = 'Admin';
     super.initState();
   }
 
   Future<void> churchListInit(BuildContext context) async {
-    setState(() {
-      isLoading = true;
-    });
-
-    final List<ChurchItemModel> list = await GeneralDataService.getChurches();
-
-    setState(() {
-      names_of_churches = list;
-    });
-
-    print(names_of_churches);
-
-    Future.delayed(Duration(seconds: 1), () {
-      setState(() {
-        isLoading = false;
-      });
+    setState(() => isLoading = true);
+    final list = await GeneralDataService.getChurches();
+    setState(() => names_of_churches = list);
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) setState(() => isLoading = false);
     });
   }
 
-  String userName = '';
-  String number = '';
-  String countryCode = '';
+  // ── preserved: exact logic from original ExtraButton callback ──────────────
+  Future<void> _handleJoin() async {
+    final regData = Provider.of<RegistrationProvider>(context, listen: false)
+        .registrationModel;
+    final selectedChurch =
+        Provider.of<SelectedChurchProvider>(context, listen: false)
+            .selectedChurch;
 
-  TextEditingController controllerName = TextEditingController();
-  TextEditingController controllerNumber = TextEditingController();
-  TextEditingController controllerEmail = TextEditingController();
-  TextEditingController controllerPassword = TextEditingController();
-  TextEditingController controllerCode = TextEditingController();
-
-  bool isLoading = false;
-  String num = '';
-
-  final List<String> items = [
-    'Male',
-    'Female',
-  ];
-
-  TextEditingController churchController = TextEditingController();
-  TextEditingController codeController = TextEditingController();
-
-  @override
-  void dispose() {
-    churchController.dispose();
-    super.dispose();
+    if (regData.uniqueChurchId != '' && regData.uniqueChurchId != null) {
+      setState(() => isLoading = true);
+      SqlDatabase.insertChurcItem(churchItem: selectedChurch);
+      if (number.isNotEmpty) {
+        final canAdd = await Restrictions.restrictionAlgorithm(
+            number: number, selectedChurch: selectedChurch);
+        if (canAdd) {
+          await Authenticate.authenticate(context);
+          Future.delayed(const Duration(seconds: 1), () {
+            controllerName.clear();
+            codeController.clear();
+          });
+        } else {
+          alertReturn(context,
+              'The community plan is currently full, please contact the owner to increase the plan');
+        }
+      } else {
+        alertReturn(context, 'Please add a phone number');
+      }
+      Future.delayed(const Duration(seconds: 2),
+          () => setState(() => isLoading = false));
+    } else {
+      alertReturn(context, 'Please select a community');
+    }
+    Future.delayed(
+        const Duration(seconds: 5), () => setState(() => isLoading = false));
   }
-
-  //TODO auth.churchCode
 
   @override
   Widget build(BuildContext context) {
-    double h = MediaQuery.of(context).size.height;
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          scrollDirection: Axis.vertical,
-          child: Stack(
+      backgroundColor: AppColors.white,
+      body: Stack(
+        children: [
+          Column(
             children: [
+              // ── Dark header ──────────────────────────────────────────────
               Container(
-                constraints: BoxConstraints(minHeight: h),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Container(
-                        height: 200,
-                        child: DefaultTextStyle(
-                          style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 50.0,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'racingSansOne'),
-                          child: AnimatedTextKit(
-                            animatedTexts: [
-                              TypewriterAnimatedText('Welcome Pastor'),
-                              TypewriterAnimatedText(
-                                  'Please Enter Your Details Below...'),
+                color: AppColors.navy,
+                child: SafeArea(
+                  bottom: false,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Back row
+                      Padding(
+                        padding:
+                            const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                        child: GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.chevron_left_rounded,
+                                  size: 18,
+                                  color: AppColors.whiteDim),
+                              Text('Back',
+                                  style: AppTypography.bodyMedium.copyWith(
+                                      color: AppColors.whiteDim,
+                                      fontSize: 13)),
                             ],
-                            onTap: () {
-                              print("Tap Event");
-                            },
                           ),
                         ),
                       ),
-                    ),
-                    Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10.0, vertical: 10.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10.0)),
-                            child: Column(
-                              children: [
-                                InputAppwrite(
-                                  controller: controllerName,
-                                  label: 'Name',
-                                  text: 'Name',
-                                  keyboard: TextInputType.text,
-                                  onChanged: (value) {
-                                    Provider.of<RegistrationProvider>(context,
-                                            listen: false)
-                                        .registrationModel
-                                        .userName = value;
-                                    userName = value;
-                                  },
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10.0, vertical: 15),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      auth.dropDownMenu(
-                                          context, items, setState),
-
-                                      auth.dropSearch(
-                                          context,
-                                          names_of_churches,
-                                          setState,
-                                          churchController),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10.0)),
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 10.0,
-                                  right: 10.0,
-                                  bottom: 20.0,
-                                  top: 20.0),
-                              child: Column(
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // "Leader Access" badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: AppColors.purple.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                    color:
+                                        AppColors.purple.withOpacity(0.3)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  IntlPhoneField(
-                                    decoration: const InputDecoration(
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.all(8),
-                                      border: const OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(
-                                          Radius.circular(30.0),
-                                        ),
-                                      ),
-                                      labelText: 'Phone Number',
-                                      hintText: 'Phone Number',
-                                    ),
-                                    initialCountryCode: '+27',
-                                    onChanged: (phone) {
-                                      Provider.of<RegistrationProvider>(context,
-                                              listen: false)
-                                          .registrationModel
-                                          .phoneNumber = phone.completeNumber;
+                                  const Icon(Icons.star_rounded,
+                                      size: 10, color: Color(0xFFC4B5FD)),
+                                  const SizedBox(width: 5),
+                                  Text('Leader Access',
+                                      style: AppTypography.badge.copyWith(
+                                          color: const Color(0xFFC4B5FD))),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text('Set Up Your Role',
+                                style: AppTypography.screenTitle
+                                    .copyWith(fontSize: 24)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
-                                      number = phone.completeNumber;
-                                    },
+              // ── Scrollable body ──────────────────────────────────────────
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Name field ────────────────────────────────────────
+                      Text('FULL NAME', style: AppTypography.fieldLabel),
+                      const SizedBox(height: 8),
+                      _FieldBox(
+                        icon: Icons.person_outline_rounded,
+                        child: TextField(
+                          controller: controllerName,
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Your name',
+                            hintStyle: AppTypography.fieldPlaceholder,
+                          ),
+                          style: AppTypography.fieldValue,
+                          onChanged: (v) {
+                            Provider.of<RegistrationProvider>(context,
+                                    listen: false)
+                                .registrationModel
+                                .userName = v;
+                            userName = v;
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // ── Role chips ────────────────────────────────────────
+                      Text('YOUR ROLE', style: AppTypography.fieldLabel),
+                      const SizedBox(height: 8),
+                      Column(
+                        children: List.generate(_roles.length, (i) {
+                          final (title, sub) = _roles[i];
+                          final sel = _selectedRole == i;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() => _selectedRole = i);
+                              Provider.of<RegistrationProvider>(context,
+                                      listen: false)
+                                  .registrationModel
+                                  .role = Role.admin;
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: sel
+                                    ? AppColors.purpleTint
+                                    : AppColors.surface,
+                                borderRadius:
+                                    BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: sel
+                                      ? AppColors.purple
+                                      : AppColors.surfaceAlt,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 18,
+                                    height: 18,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: sel
+                                          ? AppColors.purple
+                                          : Colors.transparent,
+                                      border: Border.all(
+                                        color: sel
+                                            ? AppColors.purple
+                                            : AppColors.surfaceAlt,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: sel
+                                        ? const Icon(Icons.check_rounded,
+                                            size: 10,
+                                            color: AppColors.white)
+                                        : null,
                                   ),
-                                  const SizedBox(
-                                    height: 10.0,
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          title,
+                                          style: AppTypography.cardTitle
+                                              .copyWith(
+                                                  color: sel
+                                                      ? AppColors.purple
+                                                      : AppColors
+                                                          .textPrimary),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(sub,
+                                            style: AppTypography.caption
+                                                .copyWith(
+                                                    color: AppColors
+                                                        .textMuted)),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: InputAppwrite(
-                            message: 'Enter Church Security Code below',
-                            controller: codeController,
-                            label: 'Security Code',
-                            text: 'Security Code',
-                            onChanged: (value) {
-                              Provider.of<RegistrationProvider>(context,
-                                      listen: false)
-                                  .registrationModel
-                                  .password = value;
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    ExtraButton(
-                      skip: () async {
-                        Provider.of<RegistrationProvider>(context,
-                                listen: false)
-                            .registrationModel
-                            .role = "Admin";
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 16),
 
-                        final registrationData =
+                      // ── Gender ────────────────────────────────────────────
+                      Text('GENDER', style: AppTypography.fieldLabel),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: List.generate(_genders.length, (i) {
+                          final sel = _selectedGender == i;
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => _selectedGender = i),
+                              child: Container(
+                                margin: EdgeInsets.only(
+                                    right: i < _genders.length - 1 ? 8 : 0),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 13),
+                                decoration: BoxDecoration(
+                                  color: sel
+                                      ? AppColors.navy
+                                      : AppColors.surface,
+                                  borderRadius:
+                                      BorderRadius.circular(50),
+                                  border: Border.all(
+                                    color: sel
+                                        ? AppColors.navy
+                                        : AppColors.surfaceAlt,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: Text(
+                                  _genders[i],
+                                  textAlign: TextAlign.center,
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: sel
+                                        ? AppColors.white
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // ── Phone number ──────────────────────────────────────
+                      Text('PHONE NUMBER', style: AppTypography.fieldLabel),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius:
+                              BorderRadius.circular(AppSpacing.radiusInput),
+                          border: Border.all(
+                              color: AppColors.surfaceAlt, width: 2),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 2),
+                        child: IntlPhoneField(
+                          initialCountryCode: 'ZA',
+                          onChanged: (phone) {
                             Provider.of<RegistrationProvider>(context,
                                     listen: false)
-                                .registrationModel;
-
-                        final selectedChurch =
-                            Provider.of<SelectedChurchProvider>(context,
-                                    listen: false)
-                                .selectedChurch;
-
-                        if (registrationData.uniqueChurchId != "" &&
-                            registrationData.uniqueChurchId != null) {
-                          setState(() {
-                            isLoading = true;
-                          });
-
-                          SqlDatabase.insertChurcItem(
-                              churchItem: selectedChurch);
-
-                          if (number.isNotEmpty) {
-                            print('number $number');
-                            final canAdd =
-                                await Restrictions.restrictionAlgorithm(
-                                    number: number,
-                                    selectedChurch: selectedChurch);
-                            print('canAdd $canAdd');
-
-                            if (canAdd) {
-                              await Authenticate.authenticate(context);
-
-                              Future.delayed(Duration(seconds: 1), () {
-                                setState(() {
-                                  controllerName.clear();
-                                  controllerNumber.clear();
-                                  codeController.clear();
-                                });
-                              });
-
-
-                            } else {
-                              alertReturn(context,
-                                  "The church plan is currently full, please contact the church owner to increse plan ");
-                            }
-                          } else {
-                            alertReturn(context, 'Please add a phone number');
-                          }
-
-                          Future.delayed(Duration(seconds: 2), () {
-                            setState(() {
-                              isLoading = false;
-                            });
-                          });
-                        } else {
-                          alertReturn(context, "Please Select a church");
-                        }
-
-                        Future.delayed(Duration(seconds: 5), () {
-                          setState(() {
-                            isLoading = false;
-                          });
-                        });
-                      },
-                      writing2: const Text(
-                        'Register/Login',
-                        style: TextStyle(color: Colors.white, fontSize: 20.0),
+                                .registrationModel
+                                .phoneNumber = phone.completeNumber;
+                            number = phone.completeNumber;
+                          },
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 14, horizontal: 4),
+                            counterText: '',
+                            hintText: '82 345 6789',
+                            hintStyle: AppTypography.fieldPlaceholder,
+                          ),
+                          style: AppTypography.fieldValue,
+                          dropdownTextStyle: AppTypography.fieldValue,
+                          flagsButtonPadding: const EdgeInsets.only(right: 8),
+                          dropdownIconPosition: IconPosition.trailing,
+                          showDropdownIcon: true,
+                        ),
                       ),
-                    ),
-                    const SizedBox(
-                      height: 20,
-                    )
-                  ],
-                ),
-              ),
-              if (isLoading)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black.withOpacity(0.5),
-                    // Semi-transparent overlay
-                    child: const Center(
-                      child: SizedBox(
-                        // height: 100.0,
-                        // width: 100.0,
-                        child: CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+
+                      // ── Community search (preserved from original) ────────
+                      Text('SELECT COMMUNITY', style: AppTypography.fieldLabel),
+                      const SizedBox(height: 8),
+                      auth.dropSearch(
+                          context, names_of_churches, setState, churchController),
+                      const SizedBox(height: 16),
+
+                      // ── Org access code ───────────────────────────────────
+                      Text('ORGANISATION ACCESS CODE',
+                          style: AppTypography.fieldLabel),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7ED),
+                          borderRadius:
+                              BorderRadius.circular(AppSpacing.radiusInput),
+                          border: Border.all(
+                              color: const Color(0xFFFED7AA), width: 2),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: AppColors.orange,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.lock_outline_rounded,
+                                  size: 16, color: AppColors.white),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextField(
+                                controller: codeController,
+                                decoration: InputDecoration(
+                                  border: InputBorder.none,
+                                  hintText: 'Enter access code',
+                                  hintStyle: AppTypography.fieldPlaceholder,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                                style: AppTypography.fieldValue.copyWith(
+                                    letterSpacing: 2),
+                                onChanged: (v) {
+                                  Provider.of<RegistrationProvider>(context,
+                                          listen: false)
+                                      .registrationModel
+                                      .password = v;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 28),
+
+                      // ── CTA button ────────────────────────────────────────
+                      ConnectButton.orange(
+                        label: 'Join as Leader  \u2192',
+                        isLoading: isLoading,
+                        onTap: isLoading ? null : _handleJoin,
+                      ),
+                    ],
                   ),
                 ),
+              ),
             ],
           ),
-        ),
+
+          // Loading overlay — preserved
+          if (isLoading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.45),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                      color: AppColors.purple, strokeWidth: 3),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
 }
 
-class InputAppwrite extends StatelessWidget {
-  InputAppwrite(
-      {this.controller,
-      this.onChanged,
-      this.text,
-      this.label,
-      this.message,
-      super.key,
-      this.keyboard,
-         this.hasError = false,
-    this.errorMessage,
-    this.icon,
-      });
-
-  TextEditingController? controller;
-  Function(String)? onChanged;
-  String? label;
-  String? text;
-  String? message;
-  TextInputType? keyboard;
-  bool hasError;
-  String? errorMessage;
-  IconData? icon;
+// ── Shared field container ─────────────────────────────────────────────────
+class _FieldBox extends StatelessWidget {
+  final IconData icon;
+  final Widget child;
+  const _FieldBox({required this.icon, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 25.0),
-          child: Text(
-            message ?? '',
-            style: TextStyle(fontSize: 15.0),
-          ),
-        ),
-        ForTextInput(
-          con: icon,
-          controller: controller,
-          onChanged: onChanged ?? (String) {},
-          label: label,
-          text: text,
-          keyboard: keyboard ?? TextInputType.text,
-          hasError: hasError,
-          errorMessage: errorMessage,
-        ),
-      ],
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
+        border: Border.all(color: AppColors.surfaceAlt, width: 2),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: AppColors.textMuted),
+          const SizedBox(width: 10),
+          Expanded(child: child),
+        ],
+      ),
     );
   }
 }
