@@ -22,16 +22,16 @@ class MediaPoster extends StatefulWidget {
     super.key,
   });
 
-  /// Show the Add Media sheet with no top rounding — eliminates the gap entirely.
+  /// Show the Add Media sheet with transparent bg so the gap above the rounded
+  /// header shows as transparent instead of white.
   static Future<void> show(BuildContext context) {
-    final theme = context.read<ThemeManager>();
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: theme.colors.background,
+      backgroundColor: Colors.transparent,
       barrierColor: Colors.black54,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.zero,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
