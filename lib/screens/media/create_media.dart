@@ -160,7 +160,7 @@ class _MediaPosterState extends State<MediaPoster> {
                       width: 30,
                       height: 30,
                       decoration: BoxDecoration(
-                        color: contrastColor.withValues(alpha: 0.15),
+                        color: contrastColor.withOpacity(0.15),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(Icons.close, color: contrastColor, size: 14),

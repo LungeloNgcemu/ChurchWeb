@@ -42,7 +42,7 @@ class _ContactScreenState extends State<ContactScreen> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: theme.colors.primary.withValues(alpha: 0.33),
+                color: theme.colors.primary.withOpacity(0.33),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
