@@ -36,72 +36,147 @@ class _MessageScreenState extends State<MessageScreen> {
   TokenUser? currentUser;
   bool isLoading = false;
 
-  List<dynamic> messages = [];
-  String message = '';
-  int previousMessageLength = 0;
+  // ── Pagination state ──────────────────────────────────────────────────────
+  int _page = 1;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
+  bool _initialLoadDone = false;
 
-  final ScrollController _scrollController = ScrollController();
+  // ── Local message list — source of truth for the ListView ────────────────
+  List<MessageModel> _messages = [];
+
+  late ScrollController scrollController;
+
   final TextEditingController controller = TextEditingController();
   String messagex = '';
+  List<String> processedMessageIds = [];
 
   @override
   void initState() {
     super.initState();
-    if (mounted) {
-      initChat();
+
+    scrollController = ScrollController();
+    scrollController.addListener(_onScroll);
+
+    if (mounted) initChat();
+  }
+
+  // ── Trigger history load when user scrolls near the top ──────────────────
+  // With reverse:true, scrolling UP increases pixels toward maxScrollExtent.
+  void _onScroll() {
+    if (!scrollController.hasClients) return;
+    final pos = scrollController.position;
+    if (pos.pixels >= pos.maxScrollExtent - 120 &&
+        _hasMore &&
+        !_isLoadingMore) {
+      _loadMoreMessages();
+    }
+  }
+
+  // ── Load older messages (page 2, 3, …) ───────────────────────────────────
+  // With reverse:true ListView, insertAll(0, newMsgs) adds items at HIGH
+  // indices (the top of the visual list). Flutter keeps existing items at
+  // their current indices — no scroll jump, no math needed.
+  Future<void> _loadMoreMessages() async {
+    if (!_hasMore || _isLoadingMore || currentUser == null) return;
+    setState(() => _isLoadingMore = true);
+
+    try {
+      final result = await ChatService.fetchMessages(
+        uniqueId: currentUser!.uniqueChurchId ?? '',
+        page: _page + 1,
+      );
+
+      final newMsgs = (result['messages'] as List)
+          .map((m) => MessageModel.fromJson(
+              Map<String, dynamic>.from(m as Map)))
+          .toList();
+      final pagination = result['pagination'] as Map<String, dynamic>;
+
+      if (!mounted) return;
+
+      setState(() {
+        _messages.insertAll(0, newMsgs);
+        _page++;
+        _hasMore = pagination['hasMore'] as bool? ?? false;
+        _isLoadingMore = false;
+      });
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingMore = false);
     }
   }
 
   Future<void> initChat() async {
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
     initCurrentUser();
 
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-        _scrollToBottom();
-      }
-    });
+    Provider.of<MessageProvider>(context, listen: false)
+        .addListener(_onMessageUpdate);
 
-    final messageProvider =
-        Provider.of<MessageProvider>(context, listen: false);
-    messageProvider.addListener(_onMessageUpdate);
+    // Call immediately — socket may have already fired before this
+    // screen attached its listener, so messages sit in the provider unseen.
+    _onMessageUpdate();
+
+    // Safety fallback: hide spinner after 5s if socket never responds.
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted && isLoading) setState(() => isLoading = false);
+    });
   }
 
+  // ── Sync provider → local list ────────────────────────────────────────────
+  // Socket's "initial messages" → provider.addMessages() → this fires.
+  // Socket's "new message"      → provider.addMessage()  → this fires.
   void _onMessageUpdate() {
-    final messageProvider =
-        Provider.of<MessageProvider>(context, listen: false);
+    final providerMsgs =
+        Provider.of<MessageProvider>(context, listen: false).messages;
 
-    if (messageProvider.messages != null &&
-        messageProvider.messages!.length > previousMessageLength) {
-      previousMessageLength = messageProvider.messages!.length;
+    if (providerMsgs.isEmpty) return;
+
+    if (!_initialLoadDone) {
+      _initialLoadDone = true;
+      setState(() {
+        _messages = List.from(providerMsgs);
+        isLoading = false; // dismiss spinner as soon as messages arrive
+      });
       _scrollToBottom();
+      return;
     }
+
+    // Detect genuinely new messages not already in local list.
+    final existingIds = _messages.map((m) => m.id).toSet();
+    final newOnes =
+        providerMsgs.where((m) => !existingIds.contains(m.id)).toList();
+
+    if (newOnes.isEmpty) return;
+
+    // With reverse:true, pixels=0 is the bottom (newest messages).
+    // Scroll to bottom only if user was already there.
+    final atBottom = scrollController.hasClients &&
+        scrollController.position.pixels <= 80;
+
+    setState(() {
+      _messages.addAll(newOnes);
+    });
+
+    if (atBottom) _scrollToBottom();
   }
 
   Future<void> initCurrentUser() async {
     TokenUser? user = await TokenService.tokenUser();
     if (user != null && mounted) {
-      setState(() {
-        currentUser = user;
-      });
+      setState(() => currentUser = user);
     }
   }
 
   String parseDateTimeToHourMinute(String timeStamp) {
-    DateTime dateTime = DateTime.parse(timeStamp);
-    int hour = dateTime.hour;
-    int minute = dateTime.minute;
-    return '$hour : $minute';
+    final dt = DateTime.parse(timeStamp);
+    return '${dt.hour} : ${dt.minute}';
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    scrollController.removeListener(_onScroll);
+    scrollController.dispose();
     controller.dispose();
     super.dispose();
   }
@@ -124,147 +199,44 @@ class _MessageScreenState extends State<MessageScreen> {
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(
-          _scrollController.position.maxScrollExtent + 400,
-        );
+      if (scrollController.hasClients) {
+        // With reverse:true, 0 is the bottom (newest messages).
+        scrollController.jumpTo(0);
       }
     });
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final messageProvider = Provider.of<MessageProvider>(context);
-
-    if (messageProvider.messages != null &&
-        messageProvider.messages!.length + 2 > previousMessageLength) {
-      previousMessageLength = messageProvider.messages!.length;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 50),
-            curve: Curves.easeInOutCubic,
-          );
-        }
-      });
-    }
-  }
-
-  List<String> processedMessageIds = [];
-
-  @override
   Widget build(BuildContext context) {
-    AppWriteDataBase connect = AppWriteDataBase();
-    final messageProvider = Provider.of<MessageProvider>(context, listen: true);
-
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
         child: Column(
           children: [
-            // ── Message list ────────────────────────────────────────────────
-            Expanded(
-              child: StreamBuilder<List<MessageModel>>(
-                stream: Provider.of<MessageProvider>(context, listen: false)
-                    .messagesStream,
-                builder: (context, snapshot) {
-                  final msgs = messageProvider.messages ?? [];
-                  if (isLoading) {
-                    return Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.purple,
-                        strokeWidth: 2.5,
-                      ),
-                    );
-                  }
-                  if (msgs.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'No messages yet.\nSay hello!',
-                        textAlign: TextAlign.center,
-                        style: AppTypography.bodyText,
-                      ),
-                    );
-                  }
-                  return ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    itemCount: msgs.length,
-                    itemBuilder: (context, index) {
-                      final msg = msgs[index];
-                      final senderId = msg.phoneNumber ?? '';
-                      final current = currentUser?.phoneNumber ?? '';
-                      final isSender = senderId == current;
-
-                      DateTime? dateTime;
-                      try {
-                        dateTime = DateTime.parse(msg.time ?? '');
-                      } catch (_) {}
-                      final timeLabel = dateTime != null
-                          ? '${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}'
-                          : '';
-
-                      return isSender
-                          ? MessageBubbleRight(
-                              text: msg.message ?? '',
-                              name: timeLabel,
-                              image: msg.profileImage ?? '',
-                              callBack: () {
-                                alertDeleteMessage(
-                                  context,
-                                  'Delete this message?',
-                                  () async {
-                                    await deleteMessage(
-                                      id: msg.id ?? '',
-                                      uniqueId: msg.uniqueChurchId ?? '',
-                                    );
-                                  },
-                                );
-                              },
-                            )
-                          : MessageBubbleLeft(
-                              text: msg.message ?? '',
-                              name: timeLabel,
-                              image: msg.profileImage ?? '',
-                              person: msg.sender ?? '',
-                              callBack: () {
-                                alertDeleteMessage(
-                                  context,
-                                  'Delete this message?',
-                                  () async {
-                                    await deleteMessage(
-                                      id: msg.id ?? '',
-                                      uniqueId: msg.uniqueChurchId ?? '',
-                                    );
-                                  },
-                                );
-                              },
-                            );
-                    },
-                  );
-                },
+            // ── Subtle top loading bar — fades in/out with _isLoadingMore ──
+            AnimatedOpacity(
+              opacity: _isLoadingMore ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: LinearProgressIndicator(
+                color: AppColors.purple,
+                backgroundColor: Colors.transparent,
+                minHeight: 2,
               ),
             ),
+
+            // ── Message list ────────────────────────────────────────────────
+            Expanded(child: _buildMessageList()),
 
             // ── Input bar ───────────────────────────────────────────────────
             _ChatInputBar(
               controller: controller,
-              onChanged: (value) {
-                setState(() {
-                  messagex = value;
-                });
-              },
+              onChanged: (value) => setState(() => messagex = value),
               onSend: () async {
                 if (messagex.trim().isEmpty) return;
                 final toSend = messagex.trim();
                 controller.clear();
                 FocusScope.of(context).requestFocus(FocusNode());
-                setState(() {
-                  messagex = '';
-                });
+                setState(() => messagex = '');
 
                 await sendMessage(
                   uniqueId: currentUser?.uniqueChurchId ?? '',
@@ -281,13 +253,103 @@ class _MessageScreenState extends State<MessageScreen> {
                   body: toSend,
                 );
               },
-              isVisible: Provider.of<christProvider>(context, listen: false)
-                      .myMap['Project']?['Expire'] ??
-                  false,
+              isVisible:
+                  Provider.of<christProvider>(context, listen: false)
+                          .myMap['Project']?['Expire'] ??
+                      false,
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMessageList() {
+    if (isLoading) {
+      return Center(
+        child: CircularProgressIndicator(
+            color: AppColors.purple, strokeWidth: 2.5),
+      );
+    }
+    if (_messages.isEmpty) {
+      return Center(
+        child: Text(
+          'No messages yet.\nSay hello!',
+          textAlign: TextAlign.center,
+          style: AppTypography.bodyText,
+        ),
+      );
+    }
+
+    // reverse:true means index 0 = newest message (bottom of screen).
+    // _messages is chronological (oldest first), so:
+    //   index i → _messages[_messages.length - 1 - i]
+    // The last slot (index == _messages.length) holds the start-of-history label.
+    final itemCount = _messages.length + 1;
+
+    return ListView.builder(
+      physics: const ClampingScrollPhysics(),
+      controller: scrollController,
+      reverse: true,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        // ── Last index: start-of-history label (visually at top) ─────
+        if (index == _messages.length) {
+          if (!_hasMore) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Center(
+                child: Text(
+                  '— start of conversation —',
+                  style: AppTypography.caption.copyWith(fontSize: 10),
+                ),
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        }
+
+        // ── Message bubbles — index 0 = newest ───────────────────────
+        final msg = _messages[_messages.length - 1 - index];
+        final isSender =
+            (msg.phoneNumber ?? '') == (currentUser?.phoneNumber ?? '');
+
+        DateTime? dateTime;
+        try {
+          dateTime = DateTime.parse(msg.time ?? '');
+        } catch (_) {}
+        final timeLabel = dateTime != null
+            ? '${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}'
+            : '';
+
+        return isSender
+            ? MessageBubbleRight(
+                text: msg.message ?? '',
+                name: timeLabel,
+                image: msg.profileImage ?? '',
+                callBack: () => alertDeleteMessage(
+                  context,
+                  'Delete this message?',
+                  () async => deleteMessage(
+                      id: msg.id ?? '',
+                      uniqueId: msg.uniqueChurchId ?? ''),
+                ),
+              )
+            : MessageBubbleLeft(
+                text: msg.message ?? '',
+                name: timeLabel,
+                image: msg.profileImage ?? '',
+                person: msg.sender ?? '',
+                callBack: () => alertDeleteMessage(
+                  context,
+                  'Delete this message?',
+                  () async => deleteMessage(
+                      id: msg.id ?? '',
+                      uniqueId: msg.uniqueChurchId ?? ''),
+                ),
+              );
+      },
     );
   }
 }
