@@ -16,7 +16,7 @@ class ContactScreen extends StatefulWidget {
 class _ContactScreenState extends State<ContactScreen> {
   @override
   Widget build(BuildContext context) {
-    context.watch<ThemeManager>(); // re-render when theme changes
+    final theme = context.watch<ThemeManager>();
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: Column(
@@ -38,11 +38,11 @@ class _ContactScreenState extends State<ContactScreen> {
           width: 52,
           height: 52,
           decoration: BoxDecoration(
-            color: AppColors.purple,
+            gradient: AppColors.purpleCardGradient,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: AppColors.purple.withValues(alpha: 0.33),
+                color: theme.colors.primary.withValues(alpha: 0.33),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
@@ -60,6 +60,7 @@ class _ContactScreenState extends State<ContactScreen> {
 class _ChatTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final theme = context.watch<ThemeManager>();
     return Container(
       height: AppSpacing.topBarHeight + MediaQuery.of(context).padding.top,
       color: AppColors.navy,
@@ -81,7 +82,7 @@ class _ChatTopBar extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.orange,
+                    color: theme.colors.primary,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text('•',
