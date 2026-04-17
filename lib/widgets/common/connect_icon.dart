@@ -4,12 +4,12 @@ import 'package:master/theme/app_colors.dart';
 /// Connect App ring-mark icon — transparent background.
 ///
 /// [size]     — bounding box side length (default 38)
-/// [darkMode] — true = white outer ring + orange inner (for dark surfaces)
-///              false = purple outer ring + orange inner (for light surfaces)
+/// [darkMode] — when true the wordmark (in ConnectLogo) uses white text;
+///              the ring colours are the same on all backgrounds.
 ///
 /// Usage:
-///   ConnectIcon(size: 38)                      // light bg
-///   ConnectIcon(size: 38, darkMode: true)      // dark bg (splash, crossroad)
+///   ConnectIcon(size: 38)
+///   ConnectIcon(size: 38, darkMode: true)
 class ConnectIcon extends StatelessWidget {
   final double size;
   final bool darkMode;
@@ -34,44 +34,32 @@ class _RingMarkPainter extends CustomPainter {
     final cx = size.width / 2;
     final cy = size.height / 2;
     final center = Offset(cx, cy);
-    final strokeWidth = size.width * 0.07;
+    final strokeW = size.width * 0.075;
 
-    final outerColor = darkMode
-        ? Colors.white.withOpacity(0.30)
-        : AppColors.purple.withOpacity(0.35);
-    final outerDotColor = darkMode ? Colors.white : AppColors.purple;
-
-    // Outer ring
+    // Outer ring — purple, 65% opacity on light / 85% on dark
     canvas.drawCircle(
       center,
-      size.width * 0.43,
+      size.width * 0.42,
       Paint()
-        ..color = outerColor
+        ..color = AppColors.purple.withOpacity(darkMode ? 0.85 : 0.62)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth,
+        ..strokeWidth = strokeW,
     );
 
-    // Inner ring — orange @ 70%
+    // Inner ring — orange, solid
     canvas.drawCircle(
       center,
-      size.width * 0.25,
+      size.width * 0.24,
       Paint()
-        ..color = AppColors.orange.withOpacity(0.70)
+        ..color = AppColors.orange
         ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth,
+        ..strokeWidth = strokeW,
     );
 
-    // Center dot — outer
+    // Centre dot — orange filled
     canvas.drawCircle(
       center,
-      size.width * 0.10,
-      Paint()..color = outerDotColor,
-    );
-
-    // Center dot — inner orange
-    canvas.drawCircle(
-      center,
-      size.width * 0.05,
+      size.width * 0.09,
       Paint()..color = AppColors.orange,
     );
   }
