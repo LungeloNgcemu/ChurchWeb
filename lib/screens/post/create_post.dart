@@ -22,6 +22,7 @@ import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/widgets/common/connect_button.dart';
+import 'package:master/theme/theme_manager.dart';
 
 // create_page and poster are linked
 String postKey = '';
@@ -152,9 +153,10 @@ class _PosterState extends State<Poster> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = context.watch<ThemeManager>();
     return Stack(
       children: [
-        _buildSheet(),
+        _buildSheet(theme),
         if (isLoading)
           Positioned.fill(
             child: Container(
@@ -179,10 +181,10 @@ class _PosterState extends State<Poster> {
     );
   }
 
-  Widget _buildSheet() {
+  Widget _buildSheet(ThemeManager theme) {
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.white,
+      decoration: BoxDecoration(
+        color: theme.colors.card,
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppSpacing.radiusBottomSheet),
         ),
@@ -209,7 +211,7 @@ class _PosterState extends State<Poster> {
             height: 52,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lgPlus),
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: theme.colors.card,
               border: Border(
                 bottom: BorderSide(color: AppColors.surfaceAlt, width: 1),
               ),
@@ -243,16 +245,12 @@ class _PosterState extends State<Poster> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 8),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppColors.orange, AppColors.orangeDeep],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                      color: theme.colors.primary,
                       borderRadius:
                           BorderRadius.circular(AppSpacing.radiusPill),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.orange.withOpacity(0.35),
+                          color: theme.colors.primary.withValues(alpha: 0.35),
                           blurRadius: 10,
                           offset: const Offset(0, 2),
                         ),
@@ -263,7 +261,7 @@ class _PosterState extends State<Poster> {
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.white,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -289,8 +287,8 @@ class _PosterState extends State<Poster> {
                         Container(
                           width: 44,
                           height: 44,
-                          decoration: const BoxDecoration(
-                            gradient: AppColors.avatarLeader,
+                          decoration: BoxDecoration(
+                            color: theme.colors.primary,
                             shape: BoxShape.circle,
                           ),
                           alignment: Alignment.center,
@@ -331,21 +329,21 @@ class _PosterState extends State<Poster> {
                                 borderRadius: BorderRadius.circular(
                                     AppSpacing.radiusPill),
                                 border: Border.all(
-                                    color: AppColors.purpleBorder,
+                                    color: theme.colors.primary,
                                     width: 1.5),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(Icons.language,
-                                      size: 11, color: AppColors.purple),
+                                      size: 11, color: theme.colors.primary),
                                   const SizedBox(width: 5),
                                   Text(
                                     'Community',
                                     style: GoogleFonts.inter(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
-                                      color: AppColors.purple,
+                                      color: theme.colors.primary,
                                     ),
                                   ),
                                 ],
@@ -536,7 +534,8 @@ class _PosterState extends State<Poster> {
                       children: [
                         Text(
                           'CATEGORY',
-                          style: AppTypography.fieldLabel,
+                          style: AppTypography.fieldLabel
+                              .copyWith(color: theme.colors.primary),
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         Wrap(
@@ -553,14 +552,12 @@ class _PosterState extends State<Poster> {
                                     horizontal: 16, vertical: 7),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? AppColors.navy
-                                      : AppColors.white,
+                                      ? theme.colors.primary
+                                      : theme.colors.card,
                                   borderRadius: BorderRadius.circular(
                                       AppSpacing.radiusPill),
                                   border: Border.all(
-                                    color: isSelected
-                                        ? AppColors.navy
-                                        : AppColors.surfaceAlt,
+                                    color: theme.colors.primary,
                                     width: 2,
                                   ),
                                 ),
@@ -570,8 +567,8 @@ class _PosterState extends State<Poster> {
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                     color: isSelected
-                                        ? AppColors.white
-                                        : AppColors.textMid,
+                                        ? Colors.white
+                                        : AppColors.textPrimary,
                                   ),
                                 ),
                               ),
