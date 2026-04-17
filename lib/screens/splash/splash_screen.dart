@@ -140,33 +140,12 @@ class _SplashContent extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // App icon tile
-              Container(
-                width: 82,
-                height: 82,
-                decoration: BoxDecoration(
-                  gradient: AppColors.purpleCardGradient,
-                  borderRadius: BorderRadius.circular(22),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.purple.withOpacity(0.45),
-                      blurRadius: 28,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: ConnectIcon(size: 42, darkMode: true),
-                ),
-              ),
-
-              const SizedBox(height: 26),
-
+              // Ring mark icon
+              const ConnectIcon(size: 72, darkMode: true),
+              const SizedBox(height: 24),
               // "Connect." wordmark
               const ConnectLogo(size: 36, darkMode: true),
-
               const SizedBox(height: 10),
-
               // Tagline
               Text(
                 'Where community happens',
