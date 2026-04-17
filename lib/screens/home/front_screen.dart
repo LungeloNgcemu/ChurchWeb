@@ -20,7 +20,7 @@ class FrontScreen extends StatelessWidget {
               height: 240,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.purple.withValues(alpha: 0.15),
+                color: AppColors.purple.withOpacity(0.15),
               ),
             ),
           ),
@@ -32,7 +32,7 @@ class FrontScreen extends StatelessWidget {
               height: 200,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.purple.withValues(alpha: 0.08),
+                color: AppColors.purple.withOpacity(0.08),
               ),
             ),
           ),
@@ -84,7 +84,7 @@ class FrontScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(50),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.orange.withValues(alpha: 0.33),
+                            color: AppColors.orange.withOpacity(0.33),
                             blurRadius: 16,
                             offset: const Offset(0, 6),
                           ),

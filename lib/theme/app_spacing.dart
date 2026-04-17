@@ -152,7 +152,7 @@ abstract class AppSpacing {
   /// Orange button shadow
   static List<BoxShadow> get orangeButtonShadow => [
         BoxShadow(
-          color: AppColors.orange.withValues(alpha: 0.35),
+          color: AppColors.orange.withOpacity(0.35),
           blurRadius: 16,
           offset: const Offset(0, 4),
         ),
@@ -161,7 +161,7 @@ abstract class AppSpacing {
   /// Primary button shadow
   static List<BoxShadow> get purpleButtonShadow => [
         BoxShadow(
-          color: AppColors.purple.withValues(alpha: 0.35),
+          color: AppColors.purple.withOpacity(0.35),
           blurRadius: 16,
           offset: const Offset(0, 4),
         ),
@@ -170,7 +170,7 @@ abstract class AppSpacing {
   /// Primary FAB shadow
   static List<BoxShadow> get fabShadow => [
         BoxShadow(
-          color: AppColors.purple.withValues(alpha: 0.45),
+          color: AppColors.purple.withOpacity(0.45),
           blurRadius: 20,
           offset: const Offset(0, 6),
         ),

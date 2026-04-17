@@ -250,7 +250,7 @@ class _PosterState extends State<Poster> {
                           BorderRadius.circular(AppSpacing.radiusPill),
                       boxShadow: [
                         BoxShadow(
-                          color: theme.colors.primary.withValues(alpha: 0.35),
+                          color: theme.colors.primary.withOpacity(0.35),
                           blurRadius: 10,
                           offset: const Offset(0, 2),
                         ),

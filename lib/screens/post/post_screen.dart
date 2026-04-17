@@ -330,7 +330,7 @@ class _PostScreenState extends State<PostScreen>
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: theme.colors.primary.withValues(alpha: 0.33),
+                  color: theme.colors.primary.withOpacity(0.33),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -626,7 +626,7 @@ class _SocialPostState extends State<SocialPost> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 7),
                       decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.1),
+                        color: AppColors.error.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
