@@ -130,19 +130,6 @@ class _MediaPosterState extends State<MediaPoster> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Drag handle ────────────────────────────────────────────────────
-          const SizedBox(height: 10),
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
-              ),
-            ),
-          ),
-
           // ── Dark navy topbar strip ─────────────────────────────────────────
           Builder(builder: (context) {
             final contrastColor =
@@ -159,7 +146,6 @@ class _MediaPosterState extends State<MediaPoster> {
                   top: Radius.circular(AppSpacing.radiusBottomSheet),
                 ),
               ),
-              margin: const EdgeInsets.only(top: 6),
               child: Row(
                 children: [
                   Icon(Icons.chevron_left, color: contrastColor, size: 22),
