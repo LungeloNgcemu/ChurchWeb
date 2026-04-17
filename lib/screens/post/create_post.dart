@@ -600,7 +600,7 @@ class _PosterState extends State<Poster> {
                 top: BorderSide(color: AppColors.surfaceAlt, width: 1),
               ),
             ),
-            child: ConnectButton.primary(
+            child: ConnectButton.purple(
               label: 'Post →',
               isLoading: isLoading,
               onTap: isLoading ? null : _handlePost,
