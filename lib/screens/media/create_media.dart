@@ -22,25 +22,20 @@ class MediaPoster extends StatefulWidget {
     super.key,
   });
 
-  /// Show the Add Media sheet with correct shape and keyboard handling.
+  /// Show the Add Media sheet. backgroundColor matches the sheet header (topBar)
+  /// so any gap between the modal layer and the sheet content is invisible.
   static Future<void> show(BuildContext context) {
+    final theme = context.read<ThemeManager>();
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.colors.topBar,
       barrierColor: Colors.black54,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
         ),
-        clipBehavior: Clip.antiAlias,
-        child: Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom,
-          ),
-          child: MediaPoster(),
-        ),
+        child: MediaPoster(),
       ),
     );
   }
