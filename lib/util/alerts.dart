@@ -118,7 +118,7 @@ Future<bool?> alertWelcome(BuildContext context, String message) {
         context: context,
         label: 'Enter',
         onPressed: () => Navigator.pop(context),
-        color: AppColors.orange,
+        color: AppColors.purple,
       ),
     ],
   );

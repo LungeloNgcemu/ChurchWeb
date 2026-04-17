@@ -70,7 +70,7 @@ class _ChurchScreenState extends State<ChurchScreen> {
       if (user != null) IOService.joinRoom(user.uniqueChurchId!);
       PushNotifications.init(context);
       snackInit();
-      const message = 'Welcome to Church Connect';
+      const message = 'Welcome to Connect';
       alertWelcome(context, message);
     });
   }
