@@ -1,4 +1,3 @@
-import 'dart:math' show pi;
 import 'package:flutter/material.dart';
 import 'package:master/classes/church_init.dart';
 import 'package:master/classes/sql_database.dart';
@@ -6,6 +5,8 @@ import 'package:master/constants/constants.dart';
 import 'package:master/databases/database.dart';
 import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_typography.dart';
+import 'package:master/widgets/common/connect_icon.dart';
+import 'package:master/widgets/common/connect_logo.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SplashScreen
@@ -154,27 +155,15 @@ class _SplashContent extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const Center(child: _ConnectIcon()),
+                child: const Center(
+                  child: ConnectIcon(size: 42, darkMode: true),
+                ),
               ),
 
               const SizedBox(height: 26),
 
               // "Connect." wordmark
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'Connect',
-                      style: AppTypography.wordmark,
-                    ),
-                    TextSpan(
-                      text: '.',
-                      style: AppTypography.wordmark
-                          .copyWith(color: AppColors.purple),
-                    ),
-                  ],
-                ),
-              ),
+              const ConnectLogo(size: 36, darkMode: true),
 
               const SizedBox(height: 10),
 
@@ -253,64 +242,3 @@ class _Dot extends StatelessWidget {
   }
 }
 
-// ─── App icon painter (WiFi-style connectivity arcs + dot) ────────────────────
-class _ConnectIcon extends StatelessWidget {
-  const _ConnectIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: const Size(38, 38),
-      painter: _ConnectIconPainter(),
-    );
-  }
-}
-
-class _ConnectIconPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final strokePaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.4
-      ..strokeCap = StrokeCap.round;
-
-    final cx = size.width / 2;
-    // Anchor point for arcs — sits slightly below center
-    final anchorY = size.height * 0.64;
-
-    // ── Centre dot ────────────────────────────────────────────────────────
-    canvas.drawCircle(
-      Offset(cx, anchorY),
-      2.6,
-      Paint()..color = Colors.white,
-    );
-
-    // ── Inner arc (above dot) ─────────────────────────────────────────────
-    // In Flutter canvas y↓: startAngle=π (left), sweepAngle=-π goes
-    // counter-clockwise through the TOP half to the right.
-    final ir = size.width * 0.22;
-    canvas.drawArc(
-      Rect.fromCenter(
-          center: Offset(cx, anchorY), width: ir * 2, height: ir * 2),
-      pi,   // start at left
-      -pi,  // sweep counter-clockwise through top → right
-      false,
-      strokePaint,
-    );
-
-    // ── Outer arc (above dot) ─────────────────────────────────────────────
-    final or_ = size.width * 0.42;
-    canvas.drawArc(
-      Rect.fromCenter(
-          center: Offset(cx, anchorY), width: or_ * 2, height: or_ * 2),
-      pi,
-      -pi,
-      false,
-      strokePaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}

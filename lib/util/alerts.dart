@@ -4,21 +4,10 @@ import 'package:master/constants/constants.dart';
 import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/theme/app_typography.dart';
+import 'package:master/widgets/common/connect_icon.dart';
 
-// ─── Connect App logo icon (purple rounded square) ────────────────────────────
-Widget _connectLogo({double size = 44}) => Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.purple, AppColors.purpleLight],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Icon(Icons.hub_outlined, color: AppColors.white, size: size * 0.45),
-    );
+// ─── Connect App logo icon ────────────────────────────────────────────────────
+Widget _connectLogo({double size = 44}) => ConnectIcon(size: size);
 
 // ─── Shared dialog shell ──────────────────────────────────────────────────────
 Future<T?> _showConnectDialog<T>({
