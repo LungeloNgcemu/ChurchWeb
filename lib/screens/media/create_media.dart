@@ -148,18 +148,20 @@ class _MediaPosterState extends State<MediaPoster> {
             height: 58,
             padding: AppSpacing.topBarPadding,
             decoration: BoxDecoration(
-              color: AppColors.navy,
-              // borderRadius: BorderRadius.vertical(
-              //   top: Radius.circular(AppSpacing.radiusBottomSheet),
-              // ),
+              // color: AppColors.navy,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppSpacing.radiusBottomSheet),
+              ),
             ),
             margin: const EdgeInsets.only(top: 6),
             child: Row(
               children: [
                 const Icon(Icons.chevron_left,
-                    color: Color(0xB3FFFFFF), size: 22),
+                    color: Colors.white, size: 22),
                 const SizedBox(width: 4),
-                Text('Add Media', style: AppTypography.screenTitle),
+                Text('Add Media',
+                    style: AppTypography.screenTitle
+                        .copyWith(color: Colors.white)),
                 const Spacer(),
                 GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
@@ -171,7 +173,7 @@ class _MediaPosterState extends State<MediaPoster> {
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.close,
-                        color: Color(0x99FFFFFF), size: 14),
+                        color: Colors.white, size: 14),
                   ),
                 ),
               ],
