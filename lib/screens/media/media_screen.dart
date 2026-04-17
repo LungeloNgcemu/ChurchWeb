@@ -216,11 +216,11 @@ class _MediaScreenState extends State<MediaScreen>
             decoration: BoxDecoration(
               color: AppColors.purple,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x557C3AED),
+                  color: AppColors.purple.withValues(alpha: 0.33),
                   blurRadius: 16,
-                  offset: Offset(0, 6),
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),

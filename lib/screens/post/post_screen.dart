@@ -328,11 +328,11 @@ class _PostScreenState extends State<PostScreen>
             decoration: BoxDecoration(
               gradient: AppColors.orangeGradient,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x55F97316),
+                  color: AppColors.orange.withValues(alpha: 0.33),
                   blurRadius: 16,
-                  offset: Offset(0, 6),
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
