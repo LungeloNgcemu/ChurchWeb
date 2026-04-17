@@ -22,15 +22,17 @@ class MediaPoster extends StatefulWidget {
     super.key,
   });
 
-  /// Show the Add Media sheet. backgroundColor matches the sheet header (topBar)
-  /// so any gap between the modal layer and the sheet content is invisible.
+  /// Show the Add Media sheet with no top rounding — eliminates the gap entirely.
   static Future<void> show(BuildContext context) {
     final theme = context.read<ThemeManager>();
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: theme.colors.topBar,
+      backgroundColor: theme.colors.background,
       barrierColor: Colors.black54,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.zero,
+      ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(ctx).viewInsets.bottom,
@@ -147,9 +149,9 @@ class _MediaPosterState extends State<MediaPoster> {
             padding: AppSpacing.topBarPadding,
             decoration: BoxDecoration(
               color: AppColors.navy,
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(AppSpacing.radiusBottomSheet),
-              ),
+              // borderRadius: BorderRadius.vertical(
+              //   top: Radius.circular(AppSpacing.radiusBottomSheet),
+              // ),
             ),
             margin: const EdgeInsets.only(top: 6),
             child: Row(
