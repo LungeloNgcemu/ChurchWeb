@@ -590,6 +590,22 @@ class _PosterState extends State<Poster> {
               ),
             ),
           ),
+
+          // ── Fixed bottom Post CTA ─────────────────────────────────────────
+          Container(
+            padding: AppSpacing.ctaStripPadding,
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              border: Border(
+                top: BorderSide(color: AppColors.surfaceAlt, width: 1),
+              ),
+            ),
+            child: ConnectButton.primary(
+              label: 'Post →',
+              isLoading: isLoading,
+              onTap: isLoading ? null : _handlePost,
+            ),
+          ),
         ],
       ),
     );
