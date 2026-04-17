@@ -208,7 +208,7 @@ class _PosterState extends State<Poster> {
 
           // ── Top bar: Cancel | New Post | Post button ──────────────────────
           Container(
-            height: 52,
+            // height: 52,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lgPlus),
             decoration: BoxDecoration(
               color: theme.colors.card,
@@ -557,7 +557,9 @@ class _PosterState extends State<Poster> {
                                   borderRadius: BorderRadius.circular(
                                       AppSpacing.radiusPill),
                                   border: Border.all(
-                                    color: theme.colors.primary,
+                                    color: isSelected
+                                        ? theme.colors.primary
+                                        : AppColors.surfaceAlt,
                                     width: 2,
                                   ),
                                 ),
@@ -568,7 +570,7 @@ class _PosterState extends State<Poster> {
                                     fontWeight: FontWeight.w600,
                                     color: isSelected
                                         ? Colors.white
-                                        : AppColors.textPrimary,
+                                        : AppColors.textMid,
                                   ),
                                 ),
                               ),
