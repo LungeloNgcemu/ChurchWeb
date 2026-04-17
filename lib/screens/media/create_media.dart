@@ -144,41 +144,46 @@ class _MediaPosterState extends State<MediaPoster> {
           ),
 
           // ── Dark navy topbar strip ─────────────────────────────────────────
-          Container(
-            height: 58,
-            padding: AppSpacing.topBarPadding,
-            decoration: BoxDecoration(
-              // color: AppColors.navy,
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(AppSpacing.radiusBottomSheet),
-              ),
-            ),
-            margin: const EdgeInsets.only(top: 6),
-            child: Row(
-              children: [
-                const Icon(Icons.chevron_left,
-                    color: Colors.white, size: 22),
-                const SizedBox(width: 4),
-                Text('Add Media',
-                    style: AppTypography.screenTitle
-                        .copyWith(color: Colors.white)),
-                const Spacer(),
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: AppColors.navyIconBg,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.close,
-                        color: Colors.white, size: 14),
-                  ),
+          Builder(builder: (context) {
+            final contrastColor =
+                ThemeData.estimateBrightnessForColor(theme.colors.primary) ==
+                        Brightness.dark
+                    ? Colors.white
+                    : Colors.black;
+            return Container(
+              height: 58,
+              padding: AppSpacing.topBarPadding,
+              decoration: BoxDecoration(
+                color: theme.colors.primary,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(AppSpacing.radiusBottomSheet),
                 ),
-              ],
-            ),
-          ),
+              ),
+              margin: const EdgeInsets.only(top: 6),
+              child: Row(
+                children: [
+                  Icon(Icons.chevron_left, color: contrastColor, size: 22),
+                  const SizedBox(width: 4),
+                  Text('Add Media',
+                      style: AppTypography.screenTitle
+                          .copyWith(color: contrastColor)),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: contrastColor.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.close, color: contrastColor, size: 14),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
 
           // ── Scrollable form area ───────────────────────────────────────────
           Flexible(
