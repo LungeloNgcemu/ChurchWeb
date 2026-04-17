@@ -72,7 +72,7 @@ class _MediaScreenState extends State<MediaScreen>
           // ── Topbar ───────────────────────────────────────────────────
           _MediaTopBar(
             onAddTap: ChurchInit.visibilityToggle(context)
-                ? () => create.sheeting(context, MediaPoster())
+                ? () => MediaPoster.show(context)
                 : null,
           ),
 
@@ -209,7 +209,7 @@ class _MediaScreenState extends State<MediaScreen>
       floatingActionButton: Visibility(
         visible: ChurchInit.visibilityToggle(context),
         child: GestureDetector(
-          onTap: () => create.sheeting(context, MediaPoster()),
+          onTap: () => MediaPoster.show(context),
           child: Container(
             width: 52,
             height: 52,

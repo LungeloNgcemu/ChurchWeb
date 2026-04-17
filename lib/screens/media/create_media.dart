@@ -14,12 +14,31 @@ import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/widgets/common/connect_button.dart';
+import 'package:master/theme/theme_manager.dart';
 
 // create_page and poster are linked
 class MediaPoster extends StatefulWidget {
   MediaPoster({
     super.key,
   });
+
+  /// Show the Add Media sheet with correct shape and keyboard handling.
+  static Future<void> show(BuildContext context) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+        ),
+        child: MediaPoster(),
+      ),
+    );
+  }
 
   @override
   State<MediaPoster> createState() => _MediaPosterState();
@@ -67,12 +86,13 @@ class _MediaPosterState extends State<MediaPoster> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = context.watch<ThemeManager>();
     String selectedOption =
         Provider.of<SelectedOptionProvider>(context).selectedOption;
 
     return Stack(
       children: [
-        _buildSheet(selectedOption),
+        _buildSheet(selectedOption, theme),
         if (medaiClass.isLoading)
           Positioned.fill(
             child: Container(
@@ -97,7 +117,7 @@ class _MediaPosterState extends State<MediaPoster> {
     );
   }
 
-  Widget _buildSheet(String selectedOption) {
+  Widget _buildSheet(String selectedOption, ThemeManager theme) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -232,13 +252,13 @@ class _MediaPosterState extends State<MediaPoster> {
                               horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? AppColors.navy
+                                ? theme.colors.primary
                                 : AppColors.white,
                             borderRadius: BorderRadius.circular(
                                 AppSpacing.radiusPill),
                             border: Border.all(
                               color: isSelected
-                                  ? AppColors.navy
+                                  ? theme.colors.primary
                                   : AppColors.surfaceAlt,
                               width: 2,
                             ),
@@ -272,7 +292,7 @@ class _MediaPosterState extends State<MediaPoster> {
               border: Border(
                   top: BorderSide(color: AppColors.surfaceAlt, width: 1)),
             ),
-            child: ConnectButton.primary(
+            child: ConnectButton.purple(
               label: 'Publish →',
               isLoading: medaiClass.isLoading,
               onTap: medaiClass.isLoading
