@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
+import 'font_manager.dart';
 
 /// Connect App — Typography System
 /// Source of truth: CLAUDE.md § 4.2 Typography — Inter
@@ -16,7 +17,7 @@ abstract class AppTypography {
     double? height,
     TextDecoration? decoration,
   }) {
-    return GoogleFonts.inter(
+    return FontManager.instance.textStyle(
       fontSize: size,
       fontWeight: weight,
       color: color ?? AppColors.textPrimary,

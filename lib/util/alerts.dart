@@ -1,221 +1,328 @@
 import 'package:flutter/material.dart';
 import 'package:master/classes/church_init.dart';
-import 'package:master/classes/sql_database.dart';
 import 'package:master/constants/constants.dart';
-import 'package:rflutter_alert/rflutter_alert.dart';
+import 'package:master/theme/app_colors.dart';
+import 'package:master/theme/app_spacing.dart';
+import 'package:master/theme/app_typography.dart';
+
+// ─── Connect App logo icon (purple rounded square) ────────────────────────────
+Widget _connectLogo({double size = 44}) => Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.purple, AppColors.purpleLight],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(Icons.hub_outlined, color: AppColors.white, size: size * 0.45),
+    );
+
+// ─── Shared dialog shell ──────────────────────────────────────────────────────
+Future<T?> _showConnectDialog<T>({
+  required BuildContext context,
+  required String message,
+  required List<Widget> actions,
+  Widget? icon,
+  bool barrierDismissible = true,
+}) {
+  return showDialog<T>(
+    context: context,
+    barrierDismissible: barrierDismissible,
+    builder: (_) => Dialog(
+      backgroundColor: AppColors.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusBottomSheet),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            icon ?? _connectLogo(),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              style: AppTypography.bodyText.copyWith(
+                color: AppColors.textPrimary,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 22),
+            ...actions,
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+// ─── _ActionButton helper ─────────────────────────────────────────────────────
+Widget _actionButton({
+  required BuildContext context,
+  required String label,
+  required VoidCallback onPressed,
+  Color? color,
+}) =>
+    SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color ?? AppColors.purple,
+          foregroundColor: AppColors.white,
+          shape: const StadiumBorder(),
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          elevation: 0,
+        ),
+        child: Text(label, style: AppTypography.buttonPrimary),
+      ),
+    );
+
+// ─── Public alert functions ───────────────────────────────────────────────────
 
 Future<bool?> alertReturn(BuildContext context, String message) {
-  return Alert(
+  return _showConnectDialog<bool>(
     context: context,
-    type: AlertType.error,
-    title: "ALERT",
-    desc: message,
-    buttons: [
-      DialogButton(
-        child: Text(
-          "Ok",
-          style: TextStyle(color: Colors.white, fontSize: 20),
-        ),
+    message: message,
+    icon: Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.error.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(Icons.error_outline_rounded,
+          color: AppColors.error, size: 24),
+    ),
+    actions: [
+      _actionButton(
+        context: context,
+        label: 'OK',
         onPressed: () => Navigator.pop(context),
-        width: 120,
-      )
+        color: AppColors.purple,
+      ),
     ],
-  ).show();
+  );
 }
 
 Future<bool?> alertWelcome(BuildContext context, String message) {
-  return Alert(
-    image: Image.asset('lib/images/clear.png'),
+  return _showConnectDialog<bool>(
     context: context,
-    // type: AlertType.info,
-    // title: "Welcome",
-    desc: message,
-    buttons: [
-      DialogButton(
-        child: Text(
-          "Enter",
-          style: TextStyle(color: Colors.white, fontSize: 20),
-        ),
+    message: message,
+    actions: [
+      _actionButton(
+        context: context,
+        label: 'Enter',
         onPressed: () => Navigator.pop(context),
-        width: 120,
-      )
+        color: AppColors.orange,
+      ),
     ],
-  ).show();
+  );
 }
 
 Future<bool?> alertDeleteMessage(BuildContext context, String message,
     Future<void> Function() delete) async {
-  return Alert(
-    image: Image.asset('lib/images/clear.png'),
+  return _showConnectDialog<bool>(
     context: context,
-    desc: message,
-    buttons: [
-      DialogButton(
-        color: Colors.red,
+    message: message,
+    icon: Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.error.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(Icons.delete_outline_rounded,
+          color: AppColors.error, size: 24),
+    ),
+    actions: [
+      _actionButton(
+        context: context,
+        label: 'Delete',
         onPressed: () async {
           await delete();
-          print("deleted message"); // Call the function
-          Navigator.of(context).pop(); // Close the dialog
+          if (context.mounted) Navigator.of(context).pop();
         },
-        width: 120,
-        child: const Text(
-          "Delete",
-          style: TextStyle(color: Colors.white, fontSize: 20),
+        color: AppColors.error,
+      ),
+      const SizedBox(height: 8),
+      SizedBox(
+        width: double.infinity,
+        child: TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Cancel', style: AppTypography.link),
         ),
-      )
+      ),
     ],
-  ).show();
+  );
 }
 
 Future<bool?> alertDelete(BuildContext context, String message,
     Future<void> Function() delete) async {
-  return Alert(
-    image: Image.asset('lib/images/clear.png'),
+  return _showConnectDialog<bool>(
     context: context,
-    desc: message,
-    buttons: [
-      DialogButton(
-        color: Colors.red,
+    message: message,
+    icon: Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.error.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(Icons.delete_outline_rounded,
+          color: AppColors.error, size: 24),
+    ),
+    actions: [
+      _actionButton(
+        context: context,
+        label: 'Delete',
         onPressed: () async {
           await delete();
-          print("deleted message"); // Call the function
-          Navigator.of(context).pop(); // Close the dialog
+          if (context.mounted) Navigator.of(context).pop();
         },
-        width: 120,
-        child: const Text(
-          "Delete",
-          style: TextStyle(color: Colors.white, fontSize: 20),
+        color: AppColors.error,
+      ),
+      const SizedBox(height: 8),
+      SizedBox(
+        width: double.infinity,
+        child: TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Cancel', style: AppTypography.link),
         ),
-      )
+      ),
     ],
-  ).show();
+  );
 }
 
 Future<bool?> alertComplete(BuildContext context, String message) {
-  return Alert(
-    image: Image.asset('lib/images/clear.png'),
+  return _showConnectDialog<bool>(
     context: context,
-    // type: AlertType.info,
-    // title: "Welcome",
-    desc: message,
-    buttons: [
-      DialogButton(
-        child: Text(
-          "Done",
-          style: TextStyle(color: Colors.white, fontSize: 20),
-        ),
+    message: message,
+    actions: [
+      _actionButton(
+        context: context,
+        label: 'Done',
         onPressed: () => Navigator.pop(context),
-        width: 120,
-      )
+        color: AppColors.purple,
+      ),
     ],
-  ).show();
+  );
 }
 
 Future<bool?> alertSuccess(BuildContext context, String message) {
-  return Alert(
-    image: Image.asset('lib/images/clear.png'),
+  return _showConnectDialog<bool>(
     context: context,
-    // type: AlertType.info,
-    // title: "Welcome",
-    desc: message,
-    buttons: [
-      DialogButton(
-        color: Colors.green,
-        child: Text(
-          "ok",
-          style: TextStyle(color: Colors.white, fontSize: 20),
-        ),
+    message: message,
+    icon: Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.success.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(Icons.check_circle_outline_rounded,
+          color: AppColors.success, size: 24),
+    ),
+    actions: [
+      _actionButton(
+        context: context,
+        label: 'Great',
         onPressed: () => Navigator.pop(context),
-        width: 120,
-      )
+        color: AppColors.success,
+      ),
     ],
-  ).show();
+  );
 }
 
 Future<bool?> alertLogout(BuildContext context, String message) async {
-  return Alert(
-    image: Image.asset('lib/images/clear.png'),
+  return _showConnectDialog<bool>(
     context: context,
-    desc: message,
-    buttons: [
-      DialogButton(
-        color: Colors.red,
+    message: message,
+    icon: Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.error.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(Icons.logout_rounded, color: AppColors.error, size: 24),
+    ),
+    actions: [
+      _actionButton(
+        context: context,
+        label: 'Log out',
         onPressed: () async {
           ChurchInit church = ChurchInit();
           Navigator.of(context).pop();
           await church.clearProject(context);
-          Future.delayed(Duration(seconds: 3), () {});
-          Navigator.of(context).pushReplacementNamed(RoutePaths.crossRoad);
+          Future.delayed(const Duration(seconds: 3), () {});
+          if (context.mounted) {
+            Navigator.of(context).pushReplacementNamed(RoutePaths.crossRoad);
+          }
         },
-        width: 120,
-        child: const Text(
-          "logout",
-          style: TextStyle(color: Colors.white, fontSize: 20),
+        color: AppColors.error,
+      ),
+      const SizedBox(height: 8),
+      SizedBox(
+        width: double.infinity,
+        child: TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Cancel', style: AppTypography.link),
         ),
-      )
+      ),
     ],
-  ).show();
+  );
 }
 
 Future<bool?> alertInstall(BuildContext context, String message,
-    Future<void> Function() install, Future<void> Function() alreadyInstall) async {
-  return Alert(
-    image: Image.asset('lib/images/clear.png'),
+    Future<void> Function() install,
+    Future<void> Function() alreadyInstall) async {
+  return _showConnectDialog<bool>(
     context: context,
-    desc: message,
-    buttons: [
-      DialogButton(
-        color: Colors.red,
+    message: message,
+    actions: [
+      _actionButton(
+        context: context,
+        label: 'Install',
         onPressed: () async {
           await install();
-          Navigator.of(context).pop(); // Close the dialog
+          if (context.mounted) Navigator.of(context).pop();
         },
-        width: 120,
-        child: const Text(
-          "Install",
-          style: TextStyle(color: Colors.white, fontSize: 20),
-        ),
+        color: AppColors.purple,
       ),
-      DialogButton(
-        color: Colors.red,
+      const SizedBox(height: 8),
+      _actionButton(
+        context: context,
+        label: 'Already installed',
         onPressed: () async {
           await alreadyInstall();
-          Navigator.of(context).pop(); // Close the dialog
+          if (context.mounted) Navigator.of(context).pop();
         },
-        width: 120,
-        child: const Text(
-          "Done",
-          style: TextStyle(color: Colors.white, fontSize: 20),
-        ),
+        color: AppColors.orange,
       ),
     ],
-  ).show();
+  );
 }
 
-Future<bool?> alertIos(
-    BuildContext context, String message, Future<void> Function() clear) async {
-  return Alert(
-    image: Image.asset('lib/images/clear.png'),
+Future<bool?> alertIos(BuildContext context, String message,
+    Future<void> Function() clear) async {
+  return _showConnectDialog<bool>(
     context: context,
-    desc: message,
-    style: const AlertStyle(
-      descStyle: TextStyle(
-        fontWeight: FontWeight.w100,
-      ),
-    ),
-    buttons: [
-      DialogButton(
-        color: Colors.red,
+    message: message,
+    actions: [
+      _actionButton(
+        context: context,
+        label: 'OK',
         onPressed: () async {
           await clear();
-          Navigator.of(context).pop(); // Close the dialog
+          if (context.mounted) Navigator.of(context).pop();
         },
-        width: 120,
-        child: const Text(
-          "Ok",
-          style: TextStyle(color: Colors.white, fontSize: 20),
-        ),
-      )
+        color: AppColors.purple,
+      ),
     ],
-  ).show();
+  );
 }

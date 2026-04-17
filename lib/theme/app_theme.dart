@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'app_spacing.dart';
+import 'font_manager.dart';
 
 /// Connect App — Material ThemeData builder.
 ///
@@ -74,58 +75,58 @@ abstract class AppTheme {
 
   // ─── Text theme ────────────────────────────────────────────────────────────
   static TextTheme _textTheme(TextTheme base) {
-    return GoogleFonts.interTextTheme(base).copyWith(
-      displayLarge: GoogleFonts.inter(
+    return FontManager.instance.textTheme(base).copyWith(
+      displayLarge: FontManager.instance.textStyle(
           fontSize: 34, fontWeight: FontWeight.w900, color: AppColors.white),
-      displayMedium: GoogleFonts.inter(
+      displayMedium: FontManager.instance.textStyle(
           fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.white),
-      headlineLarge: GoogleFonts.inter(
+      headlineLarge: FontManager.instance.textStyle(
           fontSize: 22,
           fontWeight: FontWeight.w800,
           color: AppColors.textPrimary),
-      headlineMedium: GoogleFonts.inter(
+      headlineMedium: FontManager.instance.textStyle(
           fontSize: 18,
           fontWeight: FontWeight.w800,
           color: AppColors.textPrimary),
-      headlineSmall: GoogleFonts.inter(
+      headlineSmall: FontManager.instance.textStyle(
           fontSize: 15,
           fontWeight: FontWeight.w800,
           color: AppColors.textPrimary),
-      titleLarge: GoogleFonts.inter(
+      titleLarge: FontManager.instance.textStyle(
           fontSize: 20,
           fontWeight: FontWeight.w800,
           color: AppColors.white,
           letterSpacing: -0.5),
-      titleMedium: GoogleFonts.inter(
+      titleMedium: FontManager.instance.textStyle(
           fontSize: 16,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary),
-      titleSmall: GoogleFonts.inter(
+      titleSmall: FontManager.instance.textStyle(
           fontSize: 14,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary),
-      bodyLarge: GoogleFonts.inter(
+      bodyLarge: FontManager.instance.textStyle(
           fontSize: 15,
           fontWeight: FontWeight.w500,
           color: AppColors.textSecondary),
-      bodyMedium: GoogleFonts.inter(
+      bodyMedium: FontManager.instance.textStyle(
           fontSize: 13,
           fontWeight: FontWeight.w400,
           color: AppColors.textSecondary,
           height: 1.65),
-      bodySmall: GoogleFonts.inter(
+      bodySmall: FontManager.instance.textStyle(
           fontSize: 11,
           fontWeight: FontWeight.w500,
           color: AppColors.textMuted),
-      labelLarge: GoogleFonts.inter(
+      labelLarge: FontManager.instance.textStyle(
           fontSize: 15,
           fontWeight: FontWeight.w700,
           color: AppColors.white),
-      labelMedium: GoogleFonts.inter(
+      labelMedium: FontManager.instance.textStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: AppColors.textMid),
-      labelSmall: GoogleFonts.inter(
+      labelSmall: FontManager.instance.textStyle(
           fontSize: 9,
           fontWeight: FontWeight.w600,
           color: AppColors.textMuted,
@@ -140,7 +141,7 @@ abstract class AppTheme {
       foregroundColor: AppColors.white,
       elevation: 0,
       toolbarHeight: AppSpacing.topBarHeight,
-      titleTextStyle: GoogleFonts.inter(
+      titleTextStyle: FontManager.instance.textStyle(
         fontSize: 20,
         fontWeight: FontWeight.w800,
         color: AppColors.white,
@@ -162,11 +163,11 @@ abstract class AppTheme {
       unselectedItemColor: AppColors.textMuted,
       elevation: 0,
       type: BottomNavigationBarType.fixed,
-      selectedLabelStyle: GoogleFonts.inter(
+      selectedLabelStyle: FontManager.instance.textStyle(
           fontSize: 9,
           fontWeight: FontWeight.w700,
           color: AppColors.purple),
-      unselectedLabelStyle: GoogleFonts.inter(
+      unselectedLabelStyle: FontManager.instance.textStyle(
           fontSize: 9,
           fontWeight: FontWeight.w600,
           color: AppColors.textMuted),
@@ -183,7 +184,7 @@ abstract class AppTheme {
         shape: const StadiumBorder(),
         elevation: 0,
         textStyle:
-            GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700),
+            FontManager.instance.textStyle(fontSize: 15, fontWeight: FontWeight.w700),
         padding:
             const EdgeInsets.symmetric(horizontal: 24, vertical: 17),
         shadowColor: Colors.transparent,
@@ -206,7 +207,7 @@ abstract class AppTheme {
         shape: const StadiumBorder(),
         side: BorderSide(color: AppColors.surfaceAlt, width: 2),
         textStyle:
-            GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
+            FontManager.instance.textStyle(fontSize: 13, fontWeight: FontWeight.w600),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
       ),
     );
@@ -239,11 +240,11 @@ abstract class AppTheme {
         borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
         borderSide: const BorderSide(color: AppColors.error, width: 2),
       ),
-      hintStyle: GoogleFonts.inter(
+      hintStyle: FontManager.instance.textStyle(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: AppColors.textMuted),
-      labelStyle: GoogleFonts.inter(
+      labelStyle: FontManager.instance.textStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: AppColors.purple,
@@ -268,11 +269,11 @@ abstract class AppTheme {
     return ChipThemeData(
       backgroundColor: AppColors.white,
       selectedColor: AppColors.navy,
-      labelStyle: GoogleFonts.inter(
+      labelStyle: FontManager.instance.textStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: AppColors.textMid),
-      secondaryLabelStyle: GoogleFonts.inter(
+      secondaryLabelStyle: FontManager.instance.textStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: AppColors.white),
