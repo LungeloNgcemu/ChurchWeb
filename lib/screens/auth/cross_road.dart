@@ -7,6 +7,7 @@ import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/widgets/common/connect_app_icon.dart';
+import 'package:master/widgets/common/connect_logo.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CrossRoad — Get Started / Onboarding choice screen
@@ -105,20 +106,7 @@ class _CrossRoadState extends State<CrossRoad> {
                       const SizedBox(height: 40), // safe area offset
                       const ConnectAppIcon(size: 68),
                       const SizedBox(height: 18),
-                      RichText(
-                        text: TextSpan(children: [
-                          TextSpan(
-                            text: 'Connect',
-                            style: AppTypography.wordmark
-                                .copyWith(fontSize: 30),
-                          ),
-                          TextSpan(
-                            text: '.',
-                            style: AppTypography.wordmark.copyWith(
-                                fontSize: 30, color: AppColors.purple),
-                          ),
-                        ]),
-                      ),
+                      const ConnectLogo(size: 42, darkMode: true),
                       const SizedBox(height: 7),
                       Text(
                         'Your community, your way',

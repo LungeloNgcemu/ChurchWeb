@@ -1,9 +1,9 @@
-import 'dart:math' show pi;
 import 'package:flutter/material.dart';
 import 'package:master/theme/app_colors.dart';
+import 'connect_icon.dart';
 
-/// Shared Connect App icon tile — purple gradient rounded square with
-/// custom connectivity arc icon. Used on Splash, CrossRoad, RegisterMember.
+/// Connect App icon tile — purple gradient rounded square with ring-mark icon.
+/// Used on CrossRoad, RegisterMember, and anywhere the tile form is needed.
 ///
 /// Usage:
 ///   ConnectAppIcon(size: 68)
@@ -29,45 +29,7 @@ class ConnectAppIcon extends StatelessWidget {
         ],
       ),
       alignment: Alignment.center,
-      child: CustomPaint(
-        size: Size(size * 0.48, size * 0.48),
-        painter: _ConnectIconPainter(),
-      ),
+      child: ConnectIcon(size: size * 0.52, darkMode: true),
     );
   }
-}
-
-class _ConnectIconPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    const color = Colors.white;
-    final strokePaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.2
-      ..strokeCap = StrokeCap.round;
-
-    final cx = size.width / 2;
-    final anchorY = size.height * 0.64;
-
-    // Centre dot
-    canvas.drawCircle(Offset(cx, anchorY), 2.4, Paint()..color = color);
-
-    // Inner arc — counter-clockwise through top half
-    final ir = size.width * 0.22;
-    canvas.drawArc(
-      Rect.fromCenter(center: Offset(cx, anchorY), width: ir * 2, height: ir * 2),
-      pi, -pi, false, strokePaint,
-    );
-
-    // Outer arc
-    final or_ = size.width * 0.42;
-    canvas.drawArc(
-      Rect.fromCenter(center: Offset(cx, anchorY), width: or_ * 2, height: or_ * 2),
-      pi, -pi, false, strokePaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

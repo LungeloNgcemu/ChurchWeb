@@ -204,7 +204,7 @@ class _PostScreenState extends State<PostScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    context.watch<ThemeManager>(); // re-render when theme changes
+    final theme = context.watch<ThemeManager>();
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: Column(
@@ -232,12 +232,12 @@ class _PostScreenState extends State<PostScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: sel ? AppColors.navy : AppColors.surface,
+                          color: sel ? theme.colors.primary : AppColors.surface,
                           borderRadius: BorderRadius.circular(
                               AppSpacing.radiusPill),
                           border: Border.all(
                             color: sel
-                                ? AppColors.navy
+                                ? theme.colors.primary
                                 : AppColors.surfaceAlt,
                             width: 2,
                           ),
@@ -317,7 +317,7 @@ class _PostScreenState extends State<PostScreen>
         ],
       ),
 
-      // ── Orange FAB ─────────────────────────────────────────────────────
+      // ── Primary FAB ─────────────────────────────────────────────────────
       floatingActionButton: Visibility(
         visible: ChurchInit.visibilityToggle(context),
         child: GestureDetector(
@@ -326,13 +326,13 @@ class _PostScreenState extends State<PostScreen>
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              gradient: AppColors.orangeGradient,
+              gradient: AppColors.purpleCardGradient,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x55F97316),
+                  color: theme.colors.primary.withValues(alpha: 0.33),
                   blurRadius: 16,
-                  offset: Offset(0, 6),
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
@@ -626,18 +626,18 @@ class _SocialPostState extends State<SocialPost> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 7),
                       decoration: BoxDecoration(
-                        color: AppColors.orangeTint,
+                        color: AppColors.error.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
                         children: [
                           Icon(Icons.delete_outline_rounded,
-                              size: 15, color: AppColors.orange),
+                              size: 15, color: AppColors.error),
                           const SizedBox(width: 4),
                           Text('Delete',
                               style: AppTypography.caption.copyWith(
                                   fontSize: 11,
-                                  color: AppColors.orange)),
+                                  color: AppColors.error)),
                         ],
                       ),
                     ),

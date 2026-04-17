@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_colors.dart';
 
 /// Connect App — Spacing & Radius System
 /// Source of truth: CLAUDE.md § 4.3 & § 4.8
@@ -151,25 +152,25 @@ abstract class AppSpacing {
   /// Orange button shadow
   static List<BoxShadow> get orangeButtonShadow => [
         BoxShadow(
-          color: const Color(0xFFF97316).withOpacity(0.35),
+          color: AppColors.orange.withValues(alpha: 0.35),
           blurRadius: 16,
           offset: const Offset(0, 4),
         ),
       ];
 
-  /// Purple button shadow
+  /// Primary button shadow
   static List<BoxShadow> get purpleButtonShadow => [
         BoxShadow(
-          color: const Color(0xFF7C3AED).withOpacity(0.35),
+          color: AppColors.purple.withValues(alpha: 0.35),
           blurRadius: 16,
           offset: const Offset(0, 4),
         ),
       ];
 
-  /// Purple FAB shadow
+  /// Primary FAB shadow
   static List<BoxShadow> get fabShadow => [
         BoxShadow(
-          color: const Color(0xFF7C3AED).withOpacity(0.45),
+          color: AppColors.purple.withValues(alpha: 0.45),
           blurRadius: 20,
           offset: const Offset(0, 6),
         ),

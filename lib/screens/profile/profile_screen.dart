@@ -19,6 +19,9 @@ import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/widgets/common/connect_avatar.dart';
 import 'package:master/widgets/common/theme_switcher.dart';
+import 'package:master/widgets/common/font_switcher.dart';
+import 'package:master/widgets/common/connect_button.dart';
+import 'package:master/widgets/common/connect_text_field.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -237,6 +240,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 8),
                   _SettingsGroup(rows: [
                     const ThemeSwitcherTile(),
+                    const FontSwitcherTile(),
                   ]),
                   const SizedBox(height: 14),
                   Text('NOTIFICATIONS', style: AppTypography.labelTiny),
@@ -298,59 +302,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showModalBottomSheet(
       context: ctx,
       isScrollControlled: true,
-      backgroundColor: AppColors.white,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-              top: Radius.circular(AppSpacing.xl4))),
-      builder: (_) => Padding(
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppSpacing.xl4)),
+        ),
         padding: EdgeInsets.fromLTRB(
             24, 20, 24, MediaQuery.of(ctx).viewInsets.bottom + 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Drag handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 18),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
             Text('Edit Display Name', style: AppTypography.headingSmall),
             const SizedBox(height: 16),
-            TextField(
+            ConnectTextField(
+              label: 'Display Name',
+              placeholder: 'Your name',
               controller: controllerName,
               autofocus: true,
-              decoration: InputDecoration(
-                hintText: 'Your name',
-                hintStyle: AppTypography.fieldPlaceholder,
-                filled: true,
-                fillColor: AppColors.surface,
-                border: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppSpacing.radiusInput),
-                  borderSide: BorderSide(
-                      color: AppColors.surfaceAlt, width: 2),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppSpacing.radiusInput),
-                  borderSide:
-                      BorderSide(color: AppColors.purple, width: 2),
-                ),
-              ),
-              style: AppTypography.fieldValue,
+              leadingIcon: Icon(Icons.person_outline_rounded,
+                  color: AppColors.purple, size: 16),
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.purple,
-                  shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppSpacing.radiusPill)),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  update();
-                },
-                child: Text('Save', style: AppTypography.buttonPrimary),
-              ),
+            const SizedBox(height: 20),
+            ConnectButton.purple(
+              label: 'Save Changes',
+              onTap: () {
+                Navigator.pop(ctx);
+                update();
+              },
             ),
           ],
         ),

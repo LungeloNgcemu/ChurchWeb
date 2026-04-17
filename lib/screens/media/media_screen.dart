@@ -72,7 +72,7 @@ class _MediaScreenState extends State<MediaScreen>
           // ── Topbar ───────────────────────────────────────────────────
           _MediaTopBar(
             onAddTap: ChurchInit.visibilityToggle(context)
-                ? () => create.sheeting(context, MediaPoster())
+                ? () => MediaPoster.show(context)
                 : null,
           ),
 
@@ -209,18 +209,18 @@ class _MediaScreenState extends State<MediaScreen>
       floatingActionButton: Visibility(
         visible: ChurchInit.visibilityToggle(context),
         child: GestureDetector(
-          onTap: () => create.sheeting(context, MediaPoster()),
+          onTap: () => MediaPoster.show(context),
           child: Container(
             width: 52,
             height: 52,
             decoration: BoxDecoration(
               color: AppColors.purple,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x557C3AED),
+                  color: AppColors.purple.withValues(alpha: 0.33),
                   blurRadius: 16,
-                  offset: Offset(0, 6),
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),

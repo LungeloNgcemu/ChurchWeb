@@ -14,12 +14,33 @@ import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/widgets/common/connect_button.dart';
+import 'package:master/theme/theme_manager.dart';
 
 // create_page and poster are linked
 class MediaPoster extends StatefulWidget {
   MediaPoster({
     super.key,
   });
+
+  /// Show the Add Media sheet with transparent bg so the gap above the rounded
+  /// header shows as transparent instead of white.
+  static Future<void> show(BuildContext context) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black54,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+        ),
+        child: MediaPoster(),
+      ),
+    );
+  }
 
   @override
   State<MediaPoster> createState() => _MediaPosterState();
@@ -67,12 +88,13 @@ class _MediaPosterState extends State<MediaPoster> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = context.watch<ThemeManager>();
     String selectedOption =
         Provider.of<SelectedOptionProvider>(context).selectedOption;
 
     return Stack(
       children: [
-        _buildSheet(selectedOption),
+        _buildSheet(selectedOption, theme),
         if (medaiClass.isLoading)
           Positioned.fill(
             child: Container(
@@ -97,7 +119,7 @@ class _MediaPosterState extends State<MediaPoster> {
     );
   }
 
-  Widget _buildSheet(String selectedOption) {
+  Widget _buildSheet(String selectedOption, ThemeManager theme) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -108,53 +130,46 @@ class _MediaPosterState extends State<MediaPoster> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Drag handle ────────────────────────────────────────────────────
-          const SizedBox(height: 10),
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
-              ),
-            ),
-          ),
-
           // ── Dark navy topbar strip ─────────────────────────────────────────
-          Container(
-            height: 58,
-            padding: AppSpacing.topBarPadding,
-            decoration: BoxDecoration(
-              color: AppColors.navy,
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(AppSpacing.radiusBottomSheet),
-              ),
-            ),
-            margin: const EdgeInsets.only(top: 6),
-            child: Row(
-              children: [
-                const Icon(Icons.chevron_left,
-                    color: Color(0xB3FFFFFF), size: 22),
-                const SizedBox(width: 4),
-                Text('Add Media', style: AppTypography.screenTitle),
-                const Spacer(),
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: AppColors.navyIconBg,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.close,
-                        color: Color(0x99FFFFFF), size: 14),
-                  ),
+          Builder(builder: (context) {
+            final contrastColor =
+                ThemeData.estimateBrightnessForColor(theme.colors.primary) ==
+                        Brightness.dark
+                    ? Colors.white
+                    : Colors.black;
+            return Container(
+              height: 58,
+              padding: AppSpacing.topBarPadding,
+              decoration: BoxDecoration(
+                color: theme.colors.primary,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(AppSpacing.radiusBottomSheet),
                 ),
-              ],
-            ),
-          ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.chevron_left, color: contrastColor, size: 22),
+                  const SizedBox(width: 4),
+                  Text('Add Media',
+                      style: AppTypography.screenTitle
+                          .copyWith(color: contrastColor)),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: contrastColor.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.close, color: contrastColor, size: 14),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
 
           // ── Scrollable form area ───────────────────────────────────────────
           Flexible(
@@ -232,13 +247,13 @@ class _MediaPosterState extends State<MediaPoster> {
                               horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? AppColors.navy
+                                ? theme.colors.primary
                                 : AppColors.white,
                             borderRadius: BorderRadius.circular(
                                 AppSpacing.radiusPill),
                             border: Border.all(
                               color: isSelected
-                                  ? AppColors.navy
+                                  ? theme.colors.primary
                                   : AppColors.surfaceAlt,
                               width: 2,
                             ),
@@ -272,7 +287,7 @@ class _MediaPosterState extends State<MediaPoster> {
               border: Border(
                   top: BorderSide(color: AppColors.surfaceAlt, width: 1)),
             ),
-            child: ConnectButton.primary(
+            child: ConnectButton.purple(
               label: 'Publish →',
               isLoading: medaiClass.isLoading,
               onTap: medaiClass.isLoading

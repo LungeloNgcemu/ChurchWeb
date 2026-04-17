@@ -31,6 +31,7 @@ import 'screens/auth/otp/code.dart';
 import 'firebase_options.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'theme/theme_manager.dart';
+import 'theme/font_manager.dart';
 import 'theme/app_theme.dart';
 
 
@@ -44,6 +45,7 @@ void main() async {
 
   // Load saved theme before the first frame so colours are correct on launch.
   await ThemeManager.instance.loadTheme();
+  await FontManager.instance.loadFont();
 
   await Supabase.initialize(url: Keys.supabaseUrl, anonKey: Keys.supabaseKey);
 
@@ -71,6 +73,7 @@ void main() async {
       providers: [
         // Theme manager — must be first so all other providers can use colours.
         ChangeNotifierProvider<ThemeManager>.value(value: ThemeManager.instance),
+        ChangeNotifierProvider<FontManager>.value(value: FontManager.instance),
         ChangeNotifierProvider<ImageUrlProvider>(
           create: (BuildContext context) => ImageUrlProvider(),
         ),
@@ -161,8 +164,8 @@ class MyApp extends StatelessWidget {
 
     // Consumer<ThemeManager> ensures the entire MaterialApp (and all
     // descendants) rebuilds whenever the user picks a new theme.
-    return Consumer<ThemeManager>(
-      builder: (context, themeManager, _) => MaterialApp(
+    return Consumer2<ThemeManager, FontManager>(
+      builder: (context, themeManager, fontManager, _) => MaterialApp(
       debugShowCheckedModeBanner: false,
       initialRoute: isJoinChurchLink ? '/joinChurch' : '/splash',
       theme: AppTheme.build(),
@@ -211,6 +214,6 @@ class MyApp extends StatelessWidget {
         }
       },
     ), // MaterialApp
-    ); // Consumer<ThemeManager>
+    ); // Consumer2<ThemeManager, FontManager>
   }
 }
