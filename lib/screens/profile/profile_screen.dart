@@ -185,7 +185,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       await supabase
           .from('Church')
-          .update({'LogoAddress': publicUrl})
+          .update({'Logo': publicUrl})
           .eq('ChurchName', orgName);
 
       provider.myMap['Project']?['LogoAddress'] = publicUrl;
