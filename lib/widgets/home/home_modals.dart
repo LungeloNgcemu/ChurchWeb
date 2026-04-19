@@ -544,18 +544,26 @@ class _ComingSoonSheet extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            // Notify button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: color,
-                  foregroundColor: Colors.white,
-                  shape: const StadiumBorder(),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  elevation: 0,
+            // Notify button — gradient CTA matching design system
+            GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 17),
+                decoration: BoxDecoration(
+                  gradient: useAccent
+                      ? colors.accentGradient
+                      : colors.primaryCardGradient,
+                  borderRadius: BorderRadius.circular(50),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.35),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
+                alignment: Alignment.center,
                 child: Text(
                   'Notify me when ready',
                   style: AppTypography.buttonPrimary,
