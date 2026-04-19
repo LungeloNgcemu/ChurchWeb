@@ -265,36 +265,6 @@ class _MessageScreenState extends State<MessageScreen> {
         ),
       ),
 
-      // ── Send FAB ────────────────────────────────────────────────────────
-      floatingActionButton: isExpired
-          ? AnimatedOpacity(
-              opacity: messagex.trim().isNotEmpty ? 1.0 : 0.5,
-              duration: const Duration(milliseconds: 200),
-              child: GestureDetector(
-                onTap: messagex.trim().isNotEmpty ? _doSend : null,
-                child: Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.purpleCardGradient,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.purple.withOpacity(0.33),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.send,
-                    color: AppColors.white,
-                    size: 22,
-                  ),
-                ),
-              ),
-            )
-          : null,
     );
   }
 
