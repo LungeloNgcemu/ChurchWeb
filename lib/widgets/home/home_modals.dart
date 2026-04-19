@@ -393,8 +393,8 @@ class _MembersSheet extends StatelessWidget {
               Divider(height: 1, color: colors.backgroundAlt),
               StreamBuilder<List<Map<String, dynamic>>>(
                 stream: supabase
-                    .from('Users')
-                    .stream(primaryKey: ['id'])
+                    .from('User')
+                    .stream(primaryKey: ['UserId'])
                     .eq('UniqueChurchId', uniqueChurchId),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState ==
