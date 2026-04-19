@@ -180,16 +180,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await supabase.storage.from(bucket).uploadBinary(
         'org_logo',
         imageBytes,
-        fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+        fileOptions: const FileOptions(cacheControl: '0', upsert: true),
       );
       final publicUrl = supabase.storage.from(bucket).getPublicUrl('org_logo');
 
+      // Store the clean URL in the DB (no query params).
       await supabase
           .from('Church')
           .update({'Logo': publicUrl})
           .eq('ChurchName', orgName);
 
-      provider.myMap['Project']?['LogoAddress'] = publicUrl;
+      // Cache-bust the in-memory URL so OrgLogo discards its cached future
+      // and re-fetches the newly uploaded image.
+      final bustUrl = '$publicUrl?t=${DateTime.now().millisecondsSinceEpoch}';
+      provider.myMap['Project']?['LogoAddress'] = bustUrl;
       provider.updatemyMap(newValue: provider.myMap);
 
       if (mounted) {
