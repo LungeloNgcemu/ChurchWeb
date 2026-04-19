@@ -227,6 +227,7 @@ class _MessageScreenState extends State<MessageScreen> {
             // ── Input bar ───────────────────────────────────────────────────
             _ChatInputBar(
               controller: controller,
+              hasText: messagex.trim().isNotEmpty,
               onChanged: (value) => setState(() => messagex = value),
               onSend: () async {
                 if (messagex.trim().isEmpty) return;
@@ -354,12 +355,14 @@ class _ChatInputBar extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final VoidCallback onSend;
   final bool isVisible;
+  final bool hasText;
 
   const _ChatInputBar({
     required this.controller,
     required this.onChanged,
     required this.onSend,
     required this.isVisible,
+    this.hasText = false,
   });
 
   @override
@@ -415,20 +418,24 @@ class _ChatInputBar extends StatelessWidget {
           const SizedBox(width: 10),
 
           // ── Send button ────────────────────────────────────────────────
-          GestureDetector(
-            onTap: onSend,
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                gradient: AppColors.purpleCardGradient,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
-                boxShadow: AppSpacing.purpleButtonShadow,
-              ),
-              child: const Icon(
-                Icons.send_rounded,
-                color: AppColors.white,
-                size: 18,
+          AnimatedOpacity(
+            opacity: hasText ? 1.0 : 0.5,
+            duration: const Duration(milliseconds: 200),
+            child: GestureDetector(
+              onTap: hasText ? onSend : null,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: AppColors.purpleCardGradient,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
+                  boxShadow: hasText ? AppSpacing.purpleButtonShadow : [],
+                ),
+                child: const Icon(
+                  Icons.send_rounded,
+                  color: AppColors.white,
+                  size: 18,
+                ),
               ),
             ),
           ),
