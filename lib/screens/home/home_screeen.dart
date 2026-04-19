@@ -39,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen>
   ChurchInit visbibity = ChurchInit();
   Authenticate auth = Authenticate();
   bool isLoading = false;
+  bool _logoUploading = false;
   String selectedOption = 'About Us';
 
   // ── Stats state ───────────────────────────────────────────────────────────
@@ -108,11 +109,11 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ── Org logo upload (Admin only) ─────────────────────────────────────────
   Future<void> _uploadOrgLogo() async {
-    setState(() => isLoading = true);
+    setState(() => _logoUploading = true);
     try {
       final ImagePickerCustom picker = ImagePickerCustom();
       final Uint8List? imageBytes = await picker.pickImageToByte();
-      if (imageBytes == null) { setState(() => isLoading = false); return; }
+      if (imageBytes == null) { setState(() => _logoUploading = false); return; }
 
       final provider = Provider.of<christProvider>(context, listen: false);
       final bucket   = provider.myMap['Project']?['Bucket'] ?? '';
@@ -135,12 +136,12 @@ class _HomeScreenState extends State<HomeScreen>
 
       if (mounted) {
         alertComplete(context, 'Logo updated');
-        setState(() => isLoading = false);
+        setState(() => _logoUploading = false);
       }
     } catch (_) {
       if (mounted) {
         alertReturn(context, 'Failed to update logo');
-        setState(() => isLoading = false);
+        setState(() => _logoUploading = false);
       }
     }
   }
@@ -219,6 +220,7 @@ class _HomeScreenState extends State<HomeScreen>
                   statsLoading: _statsLoading,
                   logoUrl: logoUrl,
                   isAdmin: _role == 'Admin',
+                  logoUploading: _logoUploading,
                   onLogoTap: _uploadOrgLogo,
                 ),
                 const SizedBox(height: 12),
@@ -422,6 +424,7 @@ class _GreetingCard extends StatelessWidget {
   final bool statsLoading;
   final String logoUrl;
   final bool isAdmin;
+  final bool logoUploading;
   final VoidCallback? onLogoTap;
   const _GreetingCard({
     required this.churchName,
@@ -431,6 +434,7 @@ class _GreetingCard extends StatelessWidget {
     required this.statsLoading,
     this.logoUrl = '',
     this.isAdmin = false,
+    this.logoUploading = false,
     this.onLogoTap,
   });
 
@@ -475,7 +479,7 @@ class _GreetingCard extends StatelessWidget {
             top: 0,
             right: 0,
             child: GestureDetector(
-              onTap: isAdmin ? onLogoTap : null,
+              onTap: (isAdmin && !logoUploading) ? onLogoTap : null,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -485,8 +489,27 @@ class _GreetingCard extends StatelessWidget {
                     size: 48,
                     radius: 12,
                   ),
-                  // Admin: camera badge to signal tap-to-change
-                  if (isAdmin)
+                  // Upload spinner overlay
+                  if (logoUploading)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.45),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        alignment: Alignment.center,
+                        child: const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
+                          ),
+                        ),
+                      ),
+                    ),
+                  // Admin: camera badge (hidden while uploading)
+                  if (isAdmin && !logoUploading)
                     Positioned(
                       bottom: -3,
                       right: -3,

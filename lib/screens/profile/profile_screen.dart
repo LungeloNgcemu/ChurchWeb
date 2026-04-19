@@ -41,6 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   PushNotifications push = PushNotifications();
 
   bool isLoading = false;
+  bool _logoUploading = false;
   TextEditingController controllerName = TextEditingController();
   TextEditingController controllerPhone = TextEditingController();
   String image = '';
@@ -167,10 +168,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── Org logo upload (Admin only) ─────────────────────────────────────────
   Future<void> _uploadOrgLogo() async {
-    setState(() => isLoading = true);
+    setState(() => _logoUploading = true);
     try {
       final imageBytes = await _picker.pickImageToByte();
-      if (imageBytes == null) { setState(() => isLoading = false); return; }
+      if (imageBytes == null) { setState(() => _logoUploading = false); return; }
 
       final provider = Provider.of<christProvider>(context, listen: false);
       final bucket  = provider.myMap['Project']?['Bucket'] ?? '';
@@ -193,13 +194,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (mounted) {
         alertSuccess(context, 'Organisation logo updated');
-        setState(() => isLoading = false);
+        setState(() => _logoUploading = false);
       }
     } catch (e) {
       log('Org logo upload error: $e');
       if (mounted) {
         alertReturn(context, 'Failed to update organisation logo');
-        setState(() => isLoading = false);
+        setState(() => _logoUploading = false);
       }
     }
   }
@@ -293,7 +294,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _OrgLogoRow(
                         orgName: orgName,
                         logoUrl: orgLogoUrl.isEmpty ? null : orgLogoUrl,
-                        onTap: _uploadOrgLogo,
+                        isUploading: _logoUploading,
+                        onTap: _logoUploading ? null : _uploadOrgLogo,
                       ),
                     _SettingsRow(
                       icon: Icons.swap_horiz_rounded,
@@ -657,8 +659,14 @@ class _SettingsRow extends StatelessWidget {
 class _OrgLogoRow extends StatelessWidget {
   final String orgName;
   final String? logoUrl;
+  final bool isUploading;
   final VoidCallback? onTap;
-  const _OrgLogoRow({required this.orgName, this.logoUrl, this.onTap});
+  const _OrgLogoRow({
+    required this.orgName,
+    this.logoUrl,
+    this.isUploading = false,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) => GestureDetector(
@@ -667,16 +675,46 @@ class _OrgLogoRow extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(children: [
-            OrgLogo(name: orgName, logoUrl: logoUrl, size: 36, radius: 10),
+            // Logo with upload spinner overlay
+            SizedBox(
+              width: 36,
+              height: 36,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  OrgLogo(name: orgName, logoUrl: logoUrl, size: 36, radius: 10),
+                  if (isUploading)
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.45),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      alignment: Alignment.center,
+                      child: const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Text('Organisation Logo',
                   style: AppTypography.fieldValue
                       .copyWith(fontWeight: FontWeight.w600)),
             ),
-            Text('Change \u2192',
-                style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.purple, fontWeight: FontWeight.w600)),
+            isUploading
+                ? Text('Uploading…',
+                    style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textMuted, fontWeight: FontWeight.w500))
+                : Text('Change \u2192',
+                    style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.purple, fontWeight: FontWeight.w600)),
             const SizedBox(width: 6),
             Icon(Icons.chevron_right_rounded,
                 size: 16, color: AppColors.surfaceAlt),
