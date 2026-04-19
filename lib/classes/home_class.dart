@@ -141,7 +141,7 @@ class HomeClass {
                                     height: 24,
                                     decoration: BoxDecoration(
                                       color: Colors.black
-                                          .withValues(alpha: 0.60),
+                                          .withOpacity(0.60),
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
@@ -164,7 +164,7 @@ class HomeClass {
             if (isRefreshing)
               Positioned.fill(
                 child: ColoredBox(
-                  color: Colors.white.withValues(alpha: 0.55),
+                  color: Colors.white.withOpacity(0.55),
                   child: const Center(child: ConnectLoader()),
                 ),
               ),
