@@ -40,6 +40,182 @@
   <script src="main.dart.js" defer></script>
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
+
+  <!-- PWA auto-update: detects new Flutter service worker and shows update popup -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register(
+          '/flutter_service_worker.js'
+        ).then(function(registration) {
+
+          // Check on load
+          registration.update();
+
+          // Check every 30 minutes
+          setInterval(function() {
+            registration.update();
+          }, 30 * 60 * 1000);
+
+          // Check when user comes back to app
+          document.addEventListener(
+            'visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+              registration.update();
+            }
+          });
+
+          // Detect new version found
+          registration.addEventListener(
+            'updatefound', function() {
+            var newWorker = registration.installing;
+            newWorker.addEventListener(
+              'statechange', function() {
+              if (newWorker.state === 'installed'
+                && navigator.serviceWorker.controller) {
+                showUpdatePopup(newWorker);
+              }
+            });
+          });
+        });
+
+        // Handle controller change (after skip waiting)
+        var refreshing = false;
+        navigator.serviceWorker.addEventListener(
+          'controllerchange', function() {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
+        });
+      });
+    }
+
+    function showUpdatePopup(newWorker) {
+      // Remove existing popup if any
+      var existing = document.getElementById('update-popup');
+      if (existing) existing.remove();
+
+      // Create overlay
+      var overlay = document.createElement('div');
+      overlay.id = 'update-popup';
+      overlay.style.cssText = [
+        'position:fixed',
+        'inset:0',
+        'background:rgba(0,0,0,0.6)',
+        'display:flex',
+        'align-items:center',
+        'justify-content:center',
+        'z-index:999999',
+        'font-family:-apple-system,sans-serif'
+      ].join(';');
+
+      // Create popup card
+      var card = document.createElement('div');
+      card.style.cssText = [
+        'background:#ffffff',
+        'border-radius:20px',
+        'padding:32px 24px',
+        'max-width:320px',
+        'width:90%',
+        'text-align:center',
+        'display:flex',
+        'flex-direction:column',
+        'align-items:center',
+        'gap:12px'
+      ].join(';');
+
+      // Icon container
+      var iconWrap = document.createElement('div');
+      iconWrap.style.cssText = [
+        'width:64px',
+        'height:64px',
+        'background:#EDE9FE',
+        'border-radius:16px',
+        'display:flex',
+        'align-items:center',
+        'justify-content:center',
+        'margin-bottom:4px'
+      ].join(';');
+      iconWrap.innerHTML = '<svg width="32" height="32" viewBox="0 0 32 32" fill="none">'
+        + '<circle cx="16" cy="16" r="14" stroke="#7C3AED" stroke-width="2" fill="none" opacity="0.3"/>'
+        + '<circle cx="16" cy="16" r="8" stroke="#F97316" stroke-width="2" fill="none" opacity="0.7"/>'
+        + '<circle cx="16" cy="16" r="4" fill="#7C3AED"/>'
+        + '<circle cx="16" cy="16" r="2" fill="#F97316"/>'
+        + '</svg>';
+
+      // Title
+      var title = document.createElement('p');
+      title.style.cssText = [
+        'font-size:18px',
+        'font-weight:700',
+        'color:#0F172A',
+        'margin:0',
+        'letter-spacing:-0.3px'
+      ].join(';');
+      title.textContent = 'Update available';
+
+      // Body text
+      var body = document.createElement('p');
+      body.style.cssText = [
+        'font-size:14px',
+        'color:#64748B',
+        'margin:0',
+        'line-height:1.5'
+      ].join(';');
+      body.textContent = 'A new version of Connect is ready. Refresh now to get the latest features and fixes.';
+
+      // Update now button
+      var updateBtn = document.createElement('button');
+      updateBtn.id = 'update-btn';
+      updateBtn.style.cssText = [
+        'width:100%',
+        'background:#F97316',
+        'color:white',
+        'border:none',
+        'border-radius:50px',
+        'padding:14px',
+        'font-size:15px',
+        'font-weight:600',
+        'cursor:pointer',
+        'margin-top:8px'
+      ].join(';');
+      updateBtn.textContent = 'Update now';
+
+      // Later button
+      var laterBtn = document.createElement('button');
+      laterBtn.id = 'later-btn';
+      laterBtn.style.cssText = [
+        'width:100%',
+        'background:transparent',
+        'color:#94A3B8',
+        'border:none',
+        'border-radius:50px',
+        'padding:10px',
+        'font-size:14px',
+        'cursor:pointer'
+      ].join(';');
+      laterBtn.textContent = 'Later';
+
+      card.appendChild(iconWrap);
+      card.appendChild(title);
+      card.appendChild(body);
+      card.appendChild(updateBtn);
+      card.appendChild(laterBtn);
+      overlay.appendChild(card);
+      document.body.appendChild(overlay);
+
+      // Update now — skip waiting and reload
+      updateBtn.addEventListener('click', function() {
+        newWorker.postMessage({ type: 'SKIP_WAITING' });
+      });
+
+      // Later — just close popup
+      laterBtn.addEventListener('click', function() {
+        overlay.remove();
+      });
+    }
+  </script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
 
