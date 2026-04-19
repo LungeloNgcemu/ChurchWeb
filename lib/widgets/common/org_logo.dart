@@ -1,5 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:master/theme/app_colors.dart';
 
 /// Displays an organisation logo with an initials fallback.
@@ -63,14 +64,40 @@ class OrgLogo extends StatelessWidget {
             ),
           ),
           // ── Logo image (overlays initials when loaded successfully) ─────
-          if (hasImage)
-            CachedNetworkImage(
-              imageUrl: logoUrl!,
-              fit: BoxFit.cover,
-              errorWidget: (_, __, ___) => const SizedBox.shrink(),
-            ),
+          if (hasImage) _buildImage(logoUrl!),
         ],
       ),
+    );
+  }
+
+  Widget _buildImage(String url) {
+    // On Flutter Web + CanvasKit, cross-origin images uploaded via a plain
+    // <img> element cause a WebGL SecurityError at the texImage2D stage —
+    // even after the image visually loads — because CORS headers are required
+    // for GPU texture uploads.
+    //
+    // Workaround: set cacheWidth/cacheHeight so Flutter decodes the image
+    // through its codec pipeline (bytes → ui.Image) rather than routing it
+    // through an HTML ImageElement. This bypasses the CanvasKit CORS issue.
+    // The errorBuilder silently falls back to the initials layer on any
+    // load or decode failure.
+    if (kIsWeb) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        // Force decode through Flutter's codec on web — avoids the
+        // HTML <img> → WebGL texImage2D cross-origin SecurityError.
+        cacheWidth: size.toInt() * 2,
+        cacheHeight: size.toInt() * 2,
+        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+      );
+    }
+
+    // Native (Android / iOS): use CachedNetworkImage for disk caching.
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: BoxFit.cover,
+      errorWidget: (_, __, ___) => const SizedBox.shrink(),
     );
   }
 }
