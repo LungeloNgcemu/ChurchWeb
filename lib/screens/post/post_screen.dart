@@ -18,6 +18,14 @@ import 'create_post.dart';
 import 'package:master/theme/theme_manager.dart';
 import 'package:master/widgets/common/connect_loader.dart';
 
+// ── Avatar initials helper ────────────────────────────────────────────────────
+String _orgInitials(String name) {
+  final parts = name.trim().split(RegExp(r'\s+'));
+  if (parts.isEmpty || parts[0].isEmpty) return '?';
+  if (parts.length == 1) return parts[0][0].toUpperCase();
+  return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+}
+
 // ── preserved: DisplayImages stream helper ────────────────────────────────────
 StreamBuilder xbuildStreamBuilder(context, String path) {
   return StreamBuilder(
@@ -613,16 +621,34 @@ class _SocialPostState extends State<SocialPost> {
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
             child: Row(
               children: [
-                // Org avatar (DisplayImages stream)
+                // Org avatar — initials fallback, stream image on top
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: AppColors.purpleCardGradient,
-                  ),
-                  child: ClipOval(
-                    child: xbuildStreamBuilder(context, "ProfileImage"),
+                  decoration: const BoxDecoration(shape: BoxShape.circle),
+                  clipBehavior: Clip.hardEdge,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // ── Initials base layer (always visible) ──────────
+                      Container(
+                        color: AppColors.purple,
+                        alignment: Alignment.center,
+                        child: Text(
+                          _orgInitials(churchName),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                      // ── Org image overlay (shown when available) ──────
+                      Positioned.fill(
+                        child: xbuildStreamBuilder(context, "ProfileImage"),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 10),
