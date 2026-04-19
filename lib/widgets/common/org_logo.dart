@@ -1,6 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:http/http.dart' as http;
 import 'package:master/theme/app_colors.dart';
 
 /// Displays an organisation logo with an initials fallback.
@@ -8,7 +11,14 @@ import 'package:master/theme/app_colors.dart';
 /// Usage:
 ///   OrgLogo(name: 'Sunrise Community', logoUrl: url, size: 40)
 ///   OrgLogo(name: 'Sunrise Community', size: 32, radius: 10) // rounded square
-class OrgLogo extends StatelessWidget {
+///
+/// On Flutter Web + CanvasKit, cross-origin images rendered through an HTML
+/// <img> element cause a WebGL SecurityError when CanvasKit tries to upload
+/// the tainted texture.  We work around this by fetching the image bytes
+/// directly with Dart's http client and painting them with Image.memory —
+/// Flutter's codec creates a clean, untainted ui.Image that CanvasKit can
+/// texture freely.
+class OrgLogo extends StatefulWidget {
   final String name;
   final String? logoUrl;
   final double size;
@@ -24,22 +34,64 @@ class OrgLogo extends StatelessWidget {
     this.radius,
   });
 
+  @override
+  State<OrgLogo> createState() => _OrgLogoState();
+}
+
+class _OrgLogoState extends State<OrgLogo> {
+  // Cached future so rebuilds don't re-fire the request.
+  Future<Uint8List?>? _bytesFuture;
+
   // ── Initials ─────────────────────────────────────────────────────────────
   String get _initials {
-    final parts = name.trim().split(RegExp(r'\s+'));
+    final parts = widget.name.trim().split(RegExp(r'\s+'));
     if (parts.isEmpty || parts[0].isEmpty) return '?';
     if (parts.length == 1) return parts[0][0].toUpperCase();
     return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
   }
 
   @override
+  void initState() {
+    super.initState();
+    _scheduleWebFetch();
+  }
+
+  @override
+  void didUpdateWidget(OrgLogo old) {
+    super.didUpdateWidget(old);
+    if (old.logoUrl != widget.logoUrl) {
+      _scheduleWebFetch();
+    }
+  }
+
+  void _scheduleWebFetch() {
+    final url = widget.logoUrl;
+    if (kIsWeb && url != null && url.isNotEmpty) {
+      _bytesFuture = _fetchBytes(url);
+    } else {
+      _bytesFuture = null;
+    }
+  }
+
+  /// Fetch image bytes through Dart's http client.
+  /// This bypasses the HTML <img> → CanvasKit texImage2D CORS restriction
+  /// because Flutter gets clean bytes and creates the WebGL texture itself.
+  static Future<Uint8List?> _fetchBytes(String url) async {
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) return response.bodyBytes;
+    } catch (_) {}
+    return null;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final r = radius ?? size / 2;
-    final hasImage = logoUrl != null && logoUrl!.isNotEmpty;
+    final r = widget.radius ?? widget.size / 2;
+    final hasImage = widget.logoUrl != null && widget.logoUrl!.isNotEmpty;
 
     return Container(
-      width: size,
-      height: size,
+      width: widget.size,
+      height: widget.size,
       decoration: BoxDecoration(
         color: AppColors.purple,
         borderRadius: BorderRadius.circular(r),
@@ -56,48 +108,49 @@ class OrgLogo extends StatelessWidget {
               _initials,
               style: TextStyle(
                 color: Colors.white,
-                fontSize: size * 0.33,
+                fontSize: widget.size * 0.33,
                 fontWeight: FontWeight.w700,
                 height: 1,
                 letterSpacing: 0,
               ),
             ),
           ),
-          // ── Logo image (overlays initials when loaded successfully) ─────
-          if (hasImage) _buildImage(logoUrl!),
+
+          // ── Logo image ──────────────────────────────────────────────────
+          if (hasImage)
+            kIsWeb
+                ? _WebImage(future: _bytesFuture!)
+                : CachedNetworkImage(
+                    imageUrl: widget.logoUrl!,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                  ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildImage(String url) {
-    // On Flutter Web + CanvasKit, cross-origin images uploaded via a plain
-    // <img> element cause a WebGL SecurityError at the texImage2D stage —
-    // even after the image visually loads — because CORS headers are required
-    // for GPU texture uploads.
-    //
-    // Workaround: set cacheWidth/cacheHeight so Flutter decodes the image
-    // through its codec pipeline (bytes → ui.Image) rather than routing it
-    // through an HTML ImageElement. This bypasses the CanvasKit CORS issue.
-    // The errorBuilder silently falls back to the initials layer on any
-    // load or decode failure.
-    if (kIsWeb) {
-      return Image.network(
-        url,
-        fit: BoxFit.cover,
-        // Force decode through Flutter's codec on web — avoids the
-        // HTML <img> → WebGL texImage2D cross-origin SecurityError.
-        cacheWidth: size.toInt() * 2,
-        cacheHeight: size.toInt() * 2,
-        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-      );
-    }
+/// Web-only image renderer that uses pre-fetched bytes to avoid the
+/// CanvasKit cross-origin SecurityError.
+class _WebImage extends StatelessWidget {
+  final Future<Uint8List?> future;
+  const _WebImage({required this.future});
 
-    // Native (Android / iOS): use CachedNetworkImage for disk caching.
-    return CachedNetworkImage(
-      imageUrl: url,
-      fit: BoxFit.cover,
-      errorWidget: (_, __, ___) => const SizedBox.shrink(),
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Uint8List?>(
+      future: future,
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return const SizedBox.shrink(); // initials show during load
+        }
+        final bytes = snap.data;
+        if (bytes == null || bytes.isEmpty) {
+          return const SizedBox.shrink(); // fall back to initials
+        }
+        return Image.memory(bytes, fit: BoxFit.cover);
+      },
     );
   }
 }
