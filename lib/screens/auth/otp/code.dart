@@ -221,28 +221,47 @@ class _CodeAppwriteState extends State<CodeAppwrite> {
                                     ? null
                                     : () async {
                                         setState(() => isLoading = true);
-                                        await Authenticate.requestVoiceOtp(
-                                            context);
+                                        final error =
+                                            await Authenticate.requestVoiceOtp(
+                                                context);
                                         if (mounted) {
                                           setState(() => isLoading = false);
-                                          _startTimer();
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: const Text(
-                                                  '📞 Calling you now with your code…'),
-                                              backgroundColor:
-                                                  AppColors.navy,
-                                              behavior:
-                                                  SnackBarBehavior.floating,
-                                              shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          12)),
-                                              margin:
-                                                  const EdgeInsets.all(16),
-                                            ),
-                                          );
+                                          if (error == null) {
+                                            _startTimer();
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                content: const Text(
+                                                    '📞 Calling you now with your code…'),
+                                                backgroundColor: AppColors.navy,
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            12)),
+                                                margin:
+                                                    const EdgeInsets.all(16),
+                                              ),
+                                            );
+                                          } else {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                content: Text(error),
+                                                backgroundColor:
+                                                    AppColors.error,
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            12)),
+                                                margin:
+                                                    const EdgeInsets.all(16),
+                                              ),
+                                            );
+                                          }
                                         }
                                       },
                                 child: Container(
