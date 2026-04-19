@@ -49,6 +49,19 @@ class AuthService {
     }
   }
 
+  static Future<bool> sendVoiceOtp(String phone) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${BaseUrl.baseUrl}/api/auth/sendVoiceOtp'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'phoneNumber': phone}),
+      );
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   static Future<bool> checkPassword(
       String password, String uniqueChurchId) async {
     final response = await http.post(
