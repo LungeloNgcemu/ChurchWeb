@@ -135,7 +135,12 @@ class ChurchInit {
     }
 
     churchName = churchData.churchName ?? "";
-    logo = churchData.logo ?? "";
+    // Append a fresh timestamp so OrgLogo always re-fetches after an org
+    // switch instead of getting a stale CDN-cached version of the old image.
+    final rawLogo = churchData.logo ?? "";
+    logo = rawLogo.isNotEmpty
+        ? '$rawLogo?t=${DateTime.now().millisecondsSinceEpoch}'
+        : "";
     address = churchData.address ?? "";
     read = churchData.read ?? "";
     gpsLat = churchData.gpsLat ?? "";

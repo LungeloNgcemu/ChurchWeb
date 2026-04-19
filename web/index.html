@@ -79,12 +79,15 @@
           });
         });
 
-        // Handle controller change (after skip waiting)
-        var refreshing = false;
+        // Handle controller change (after skip waiting).
+        // Uses sessionStorage so the reload only happens ONCE — Flutter's SW
+        // calls clients.claim() on activate which re-fires controllerchange on
+        // the reloaded page; a plain local `refreshing` flag resets to false on
+        // every load and causes an infinite reload loop.
         navigator.serviceWorker.addEventListener(
           'controllerchange', function() {
-          if (!refreshing) {
-            refreshing = true;
+          if (sessionStorage.getItem('connect-sw-updating')) {
+            sessionStorage.removeItem('connect-sw-updating');
             window.location.reload();
           }
         });
@@ -205,8 +208,11 @@
       overlay.appendChild(card);
       document.body.appendChild(overlay);
 
-      // Update now — skip waiting and reload
+      // Update now — set one-shot flag, then tell new worker to skip waiting.
+      // The flag is consumed by the controllerchange handler so the reload
+      // only fires once (not on every subsequent clients.claim()).
       updateBtn.addEventListener('click', function() {
+        sessionStorage.setItem('connect-sw-updating', '1');
         newWorker.postMessage({ type: 'SKIP_WAITING' });
       });
 
