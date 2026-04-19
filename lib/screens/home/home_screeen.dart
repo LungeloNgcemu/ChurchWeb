@@ -3,6 +3,7 @@ import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/church_init.dart';
 import 'package:master/classes/home_class.dart';
 import 'package:master/componants/global_booking.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:master/services/api/token_service.dart';
 import 'package:master/services/utils/invitation_service.dart';
 import 'package:master/util/alerts.dart';
@@ -70,25 +71,27 @@ class _HomeScreenState extends State<HomeScreen>
         return;
       }
 
-      // Total members for this organisation
-      // Column is 'UniqueChurchId' (PascalCase) — matches UserName, PhoneNumber, Role, etc.
-      final membersResult = await supabase
-          .from('Users')
-          .select('id')
+      // Total members for this organisation.
+      // Table: 'User' (singular, capital U — exact PostgreSQL/Supabase table name).
+      // Column: 'UniqueChurchId' (exact casing as confirmed by SELECT query).
+      // .count(CountOption.exact) returns int directly (postgrest 2.x API).
+      final memberCount = await supabase
+          .from('User')
+          .count(CountOption.exact)
           .eq('UniqueChurchId', uniqueChurchId);
 
       // Members who joined in the last 7 days
       final sevenDaysAgo =
           DateTime.now().subtract(const Duration(days: 7)).toIso8601String();
       final newResult = await supabase
-          .from('Users')
+          .from('User')
           .select('id')
           .eq('UniqueChurchId', uniqueChurchId)
           .gte('created_at', sevenDaysAgo);
 
       if (mounted) {
         setState(() {
-          _memberCount   = (membersResult as List).length;
+          _memberCount   = memberCount;
           _newCount      = (newResult as List).length;
           _statsLoading  = false;
         });
