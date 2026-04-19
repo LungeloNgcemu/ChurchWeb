@@ -519,11 +519,3 @@ function onlineFirst(event) {
     })
   );
 }
-
-// PWA auto-update: activate new service worker immediately when
-// the "Update now" button in the popup posts SKIP_WAITING.
-self.addEventListener('message', function(event) {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
