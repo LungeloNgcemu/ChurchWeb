@@ -406,76 +406,76 @@ class _ChatInputBar extends StatelessWidget {
     if (!isVisible) return const SizedBox.shrink();
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
       decoration: BoxDecoration(
         color: AppColors.card,
         border: Border(
-          top: BorderSide(
-            color: AppColors.surfaceAlt,
-            width: 1,
-          ),
+          top: BorderSide(color: AppColors.surfaceAlt, width: 1),
         ),
       ),
-      child: Row(
-        children: [
-          // ── Text field ─────────────────────────────────────────────────
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
-                border: Border.all(
-                  color: AppColors.surfaceAlt,
-                  width: 1.5,
-                ),
-              ),
-              child: TextField(
-                controller: controller,
-                onChanged: onChanged,
-                keyboardType: TextInputType.text,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => onSend(),
-                style: AppTypography.fieldValue,
-                cursorColor: AppColors.purple,
-                decoration: InputDecoration(
-                  hintText: 'Type a message…',
-                  hintStyle: AppTypography.fieldPlaceholder,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  border: InputBorder.none,
-                  isDense: true,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 10),
-
-          // ── Send button ────────────────────────────────────────────────
-          AnimatedOpacity(
-            opacity: hasText ? 1.0 : 0.5,
-            duration: const Duration(milliseconds: 200),
-            child: GestureDetector(
-              onTap: hasText ? onSend : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // ── Text field ───────────────────────────────────────────────
+            Expanded(
               child: Container(
-                width: 44,
-                height: 44,
                 decoration: BoxDecoration(
-                  gradient: AppColors.purpleCardGradient,
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
-                  boxShadow: hasText ? AppSpacing.purpleButtonShadow : [],
+                  color: AppColors.surface,
+                  borderRadius:
+                      BorderRadius.circular(AppSpacing.radiusInput),
+                  border: Border.all(
+                    color: AppColors.surfaceAlt,
+                    width: 1.5,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.send_rounded,
-                  color: AppColors.white,
-                  size: 18,
+                child: TextField(
+                  controller: controller,
+                  onChanged: onChanged,
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => onSend(),
+                  style: AppTypography.fieldValue,
+                  cursorColor: AppColors.purple,
+                  decoration: InputDecoration(
+                    hintText: 'Type a message…',
+                    hintStyle: AppTypography.fieldPlaceholder,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    border: InputBorder.none,
+                    isDense: true,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+
+            const SizedBox(width: 8),
+
+            // ── Send button ──────────────────────────────────────────────
+            AnimatedOpacity(
+              opacity: hasText ? 1.0 : 0.5,
+              duration: const Duration(milliseconds: 200),
+              child: GestureDetector(
+                onTap: hasText ? onSend : null,
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.purple,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.send,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
