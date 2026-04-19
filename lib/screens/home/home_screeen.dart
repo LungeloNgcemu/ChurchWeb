@@ -19,7 +19,10 @@ import 'create_minister.dart';
 import 'package:master/screens/home/widgets/map.dart' as location;
 import 'package:master/theme/theme_manager.dart';
 import 'package:master/widgets/common/connect_loader.dart';
+import 'package:master/widgets/common/org_logo.dart';
 import 'package:master/widgets/home/home_modals.dart';
+import 'package:master/util/image_picker_custom.dart';
+import 'dart:typed_data';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -42,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen>
   int _memberCount = 0;
   int _newCount    = 0;
   bool _statsLoading = true;
+  String _role = '';
 
   @override
   void initState() {
@@ -67,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen>
       final uniqueChurchId = user?.uniqueChurchId ?? '';
 
       if (uniqueChurchId.isEmpty) {
-        if (mounted) setState(() => _statsLoading = false);
+        if (mounted) setState(() { _statsLoading = false; _role = user?.role ?? ''; });
         return;
       }
 
@@ -94,10 +98,50 @@ class _HomeScreenState extends State<HomeScreen>
           _memberCount   = memberCount;
           _newCount      = (newResult as List).length;
           _statsLoading  = false;
+          _role          = user?.role ?? '';
         });
       }
     } catch (_) {
       if (mounted) setState(() => _statsLoading = false);
+    }
+  }
+
+  // ── Org logo upload (Admin only) ─────────────────────────────────────────
+  Future<void> _uploadOrgLogo() async {
+    setState(() => isLoading = true);
+    try {
+      final ImagePickerCustom picker = ImagePickerCustom();
+      final Uint8List? imageBytes = await picker.pickImageToByte();
+      if (imageBytes == null) { setState(() => isLoading = false); return; }
+
+      final provider = Provider.of<christProvider>(context, listen: false);
+      final bucket   = provider.myMap['Project']?['Bucket'] ?? '';
+      final orgName  = provider.myMap['Project']?['ChurchName'] ?? '';
+
+      await supabase.storage.from(bucket).uploadBinary(
+        'org_logo',
+        imageBytes,
+        fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+      );
+      final publicUrl = supabase.storage.from(bucket).getPublicUrl('org_logo');
+
+      await supabase
+          .from('Church')
+          .update({'LogoAddress': publicUrl})
+          .eq('ChurchName', orgName);
+
+      provider.myMap['Project']?['LogoAddress'] = publicUrl;
+      provider.updatemyMap(newValue: provider.myMap);
+
+      if (mounted) {
+        alertComplete(context, 'Logo updated');
+        setState(() => isLoading = false);
+      }
+    } catch (_) {
+      if (mounted) {
+        alertReturn(context, 'Failed to update logo');
+        setState(() => isLoading = false);
+      }
     }
   }
 
@@ -144,14 +188,10 @@ class _HomeScreenState extends State<HomeScreen>
       );
     }
 
-    final churchName =
-        Provider.of<christProvider>(context, listen: false).myMap['Project']
-                ?['ChurchName'] ??
-            'Sunrise Community';
-    final address =
-        Provider.of<christProvider>(context, listen: false).myMap['Project']
-                ?['Address'] ??
-            '';
+    final provider = Provider.of<christProvider>(context, listen: false);
+    final churchName = provider.myMap['Project']?['ChurchName'] ?? 'Sunrise Community';
+    final address    = provider.myMap['Project']?['Address'] ?? '';
+    final logoUrl    = provider.myMap['Project']?['LogoAddress'] ?? '';
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -160,6 +200,7 @@ class _HomeScreenState extends State<HomeScreen>
           // ── Navy topbar ───────────────────────────────────────────────
           _TopBar(
             orgName: churchName,
+            logoUrl: logoUrl,
             onShareTap: () async =>
                 await InvitationService.shareInvitation(context),
           ),
@@ -176,6 +217,9 @@ class _HomeScreenState extends State<HomeScreen>
                   memberCount: _memberCount,
                   newCount: _newCount,
                   statsLoading: _statsLoading,
+                  logoUrl: logoUrl,
+                  isAdmin: _role == 'Admin',
+                  onLogoTap: _uploadOrgLogo,
                 ),
                 const SizedBox(height: 12),
 
@@ -306,8 +350,9 @@ class _HomeScreenState extends State<HomeScreen>
 // ── Topbar ────────────────────────────────────────────────────────────────────
 class _TopBar extends StatelessWidget {
   final String orgName;
+  final String logoUrl;
   final VoidCallback onShareTap;
-  const _TopBar({required this.orgName, required this.onShareTap});
+  const _TopBar({required this.orgName, required this.logoUrl, required this.onShareTap});
 
   @override
   Widget build(BuildContext context) {
@@ -319,16 +364,12 @@ class _TopBar extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // Org logo
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              gradient: AppColors.purpleCardGradient,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.hub_outlined,
-                size: 16, color: AppColors.white),
+          // Org logo (32×32 rounded square — initials fallback)
+          OrgLogo(
+            name: orgName,
+            logoUrl: logoUrl.isEmpty ? null : logoUrl,
+            size: 32,
+            radius: 10,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -379,12 +420,18 @@ class _GreetingCard extends StatelessWidget {
   final int memberCount;
   final int newCount;
   final bool statsLoading;
+  final String logoUrl;
+  final bool isAdmin;
+  final VoidCallback? onLogoTap;
   const _GreetingCard({
     required this.churchName,
     required this.address,
     required this.memberCount,
     required this.newCount,
     required this.statsLoading,
+    this.logoUrl = '',
+    this.isAdmin = false,
+    this.onLogoTap,
   });
 
   @override
@@ -422,6 +469,44 @@ class _GreetingCard extends StatelessWidget {
               ),
             ),
           ),
+
+          // ── Org logo — top-right of card ──────────────────────────────
+          Positioned(
+            top: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: isAdmin ? onLogoTap : null,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  OrgLogo(
+                    name: churchName,
+                    logoUrl: logoUrl.isEmpty ? null : logoUrl,
+                    size: 48,
+                    radius: 12,
+                  ),
+                  // Admin: camera badge to signal tap-to-change
+                  if (isAdmin)
+                    Positioned(
+                      bottom: -3,
+                      right: -3,
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: AppColors.orange,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                        child: const Icon(Icons.camera_alt_rounded,
+                            size: 10, color: Colors.white),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

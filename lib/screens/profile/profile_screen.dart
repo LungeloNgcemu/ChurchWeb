@@ -18,12 +18,14 @@ import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/widgets/common/connect_avatar.dart';
+import 'package:master/widgets/common/org_logo.dart';
 import 'package:master/widgets/common/theme_switcher.dart';
 import 'package:master/widgets/common/font_switcher.dart';
 import 'package:master/widgets/common/loading_switcher.dart';
 import 'package:master/widgets/common/connect_loader.dart';
 import 'package:master/widgets/common/connect_button.dart';
 import 'package:master/widgets/common/connect_text_field.dart';
+import 'package:master/widgets/common/org_switcher.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -42,6 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   TextEditingController controllerName = TextEditingController();
   TextEditingController controllerPhone = TextEditingController();
   String image = '';
+  String _role = '';
   Map<String, dynamic> currentUser = {};
   String docId = '';
   String number = '';
@@ -61,7 +64,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       TokenUser? user = await TokenService.tokenUser();
       if (user == null) throw Exception('User not authenticated');
-      setState(() => number = user.phoneNumber ?? '');
+      setState(() {
+        number = user.phoneNumber ?? '';
+        _role  = user.role ?? '';
+      });
       if (number.isEmpty) throw Exception('User phone number not found');
       UserDetails? userDetails =
           await UserService.getUserData(user.phoneNumber!, user.uniqueChurchId!);
@@ -159,6 +165,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // ── Org logo upload (Admin only) ─────────────────────────────────────────
+  Future<void> _uploadOrgLogo() async {
+    setState(() => isLoading = true);
+    try {
+      final imageBytes = await _picker.pickImageToByte();
+      if (imageBytes == null) { setState(() => isLoading = false); return; }
+
+      final provider = Provider.of<christProvider>(context, listen: false);
+      final bucket  = provider.myMap['Project']?['Bucket'] ?? '';
+      final orgName = provider.myMap['Project']?['ChurchName'] ?? '';
+
+      await supabase.storage.from(bucket).uploadBinary(
+        'org_logo',
+        imageBytes,
+        fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+      );
+      final publicUrl = supabase.storage.from(bucket).getPublicUrl('org_logo');
+
+      await supabase
+          .from('Church')
+          .update({'LogoAddress': publicUrl})
+          .eq('ChurchName', orgName);
+
+      provider.myMap['Project']?['LogoAddress'] = publicUrl;
+      provider.updatemyMap(newValue: provider.myMap);
+
+      if (mounted) {
+        alertSuccess(context, 'Organisation logo updated');
+        setState(() => isLoading = false);
+      }
+    } catch (e) {
+      log('Org logo upload error: $e');
+      if (mounted) {
+        alertReturn(context, 'Failed to update organisation logo');
+        setState(() => isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -168,8 +213,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    final userName = currentUser['UserName'] ?? 'Thabo Mokoena';
-    final role = 'Member';
+    final userName   = currentUser['UserName'] ?? 'Thabo Mokoena';
+    final role       = _role.isNotEmpty ? _role : 'Member';
+    final orgProvider = Provider.of<christProvider>(context, listen: false);
+    final orgName    = orgProvider.myMap['Project']?['ChurchName'] ?? '';
+    final orgLogoUrl = orgProvider.myMap['Project']?['LogoAddress'] ?? '';
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -234,6 +282,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label: 'Profile Image',
                       value: 'Change \u2192',
                       onTap: _uploadImageToSuperbase,
+                    ),
+                  ]),
+                  const SizedBox(height: 14),
+                  Text('ORGANISATIONS', style: AppTypography.labelTiny),
+                  const SizedBox(height: 8),
+                  _SettingsGroup(rows: [
+                    // Admin-only: org logo upload
+                    if (_role == 'Admin')
+                      _OrgLogoRow(
+                        orgName: orgName,
+                        logoUrl: orgLogoUrl.isEmpty ? null : orgLogoUrl,
+                        onTap: _uploadOrgLogo,
+                      ),
+                    _SettingsRow(
+                      icon: Icons.swap_horiz_rounded,
+                      iconColor: AppColors.purple,
+                      iconBg: AppColors.purpleTint,
+                      label: 'My Organisations',
+                      value: 'Switch',
+                      onTap: () => showOrgSwitcher(context),
                     ),
                   ]),
                   const SizedBox(height: 14),
@@ -577,6 +645,38 @@ class _SettingsRow extends StatelessWidget {
               Text(value,
                   style: AppTypography.bodyMedium.copyWith(
                       color: AppColors.purple, fontWeight: FontWeight.w600)),
+            const SizedBox(width: 6),
+            Icon(Icons.chevron_right_rounded,
+                size: 16, color: AppColors.surfaceAlt),
+          ]),
+        ),
+      );
+}
+
+// ─── Org logo row (Admin-only) ────────────────────────────────────────────────
+class _OrgLogoRow extends StatelessWidget {
+  final String orgName;
+  final String? logoUrl;
+  final VoidCallback? onTap;
+  const _OrgLogoRow({required this.orgName, this.logoUrl, this.onTap});
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(children: [
+            OrgLogo(name: orgName, logoUrl: logoUrl, size: 36, radius: 10),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text('Organisation Logo',
+                  style: AppTypography.fieldValue
+                      .copyWith(fontWeight: FontWeight.w600)),
+            ),
+            Text('Change \u2192',
+                style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.purple, fontWeight: FontWeight.w600)),
             const SizedBox(width: 6),
             Icon(Icons.chevron_right_rounded,
                 size: 16, color: AppColors.surfaceAlt),
