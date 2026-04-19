@@ -582,17 +582,21 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 40, color: color.withOpacity(0.4)),
-          const SizedBox(height: 10),
-          Text(message,
-              style: AppTypography.bodyText.copyWith(
-                  color: AppColors.textMuted, fontSize: 13)),
-        ],
+    return SizedBox(
+      width: double.infinity,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(icon, size: 40, color: color.withOpacity(0.4)),
+            const SizedBox(height: 10),
+            Text(message,
+                style: AppTypography.bodyText.copyWith(
+                    color: AppColors.textMuted, fontSize: 13)),
+          ],
+        ),
       ),
     );
   }
