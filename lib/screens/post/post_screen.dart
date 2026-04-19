@@ -16,6 +16,8 @@ import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'create_post.dart';
 import 'package:master/theme/theme_manager.dart';
+import 'package:master/widgets/common/connect_loader.dart';
+import 'package:master/widgets/common/org_logo.dart';
 
 // ── preserved: DisplayImages stream helper ────────────────────────────────────
 StreamBuilder xbuildStreamBuilder(context, String path) {
@@ -73,6 +75,15 @@ class _PostScreenState extends State<PostScreen>
 
   // ── v2 UI state ─────────────────────────────────────────────────────────
   String _selectedFilter = 'All';
+  bool _searchActive = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void streamDelegate() {
     streamx = superbasePost();
@@ -192,13 +203,23 @@ class _PostScreenState extends State<PostScreen>
   @override
   bool get wantKeepAlive => true;
 
-  // ── local filter ──────────────────────────────────────────────────────────
+  // ── local filter + search ─────────────────────────────────────────────────
   List _applyFilter(List posts) {
-    if (_selectedFilter == 'All') return posts;
-    return posts
-        .where((p) =>
-            (p['Category'] ?? '').toString() == _selectedFilter)
-        .toList();
+    var result = posts;
+    if (_selectedFilter != 'All') {
+      result = result
+          .where((p) => (p['Category'] ?? '').toString() == _selectedFilter)
+          .toList();
+    }
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      result = result.where((p) {
+        final desc = (p['Description'] ?? '').toString().toLowerCase();
+        final title = (p['Title'] ?? '').toString().toLowerCase();
+        return desc.contains(q) || title.contains(q);
+      }).toList();
+    }
+    return result;
   }
 
   @override
@@ -211,7 +232,16 @@ class _PostScreenState extends State<PostScreen>
         children: [
           // ── Navy topbar ───────────────────────────────────────────────
           _PostTopBar(
-            onSearchTap: () {},
+            searchActive: _searchActive,
+            searchController: _searchController,
+            onSearchTap: () => setState(() {
+              _searchActive = !_searchActive;
+              if (!_searchActive) {
+                _searchController.clear();
+                _searchQuery = '';
+              }
+            }),
+            onSearchChanged: (v) => setState(() => _searchQuery = v),
           ),
 
           // ── Filter chips ──────────────────────────────────────────────
@@ -308,8 +338,7 @@ class _PostScreenState extends State<PostScreen>
                   );
                 }
                 return Center(
-                  child: CircularProgressIndicator(
-                      color: AppColors.purple),
+                  child: ConnectLoader(),
                 );
               },
             ),
@@ -346,37 +375,123 @@ class _PostScreenState extends State<PostScreen>
 }
 
 // ── Topbar ────────────────────────────────────────────────────────────────────
-class _PostTopBar extends StatelessWidget {
+class _PostTopBar extends StatefulWidget {
+  final bool searchActive;
+  final TextEditingController searchController;
   final VoidCallback onSearchTap;
-  const _PostTopBar({required this.onSearchTap});
+  final ValueChanged<String> onSearchChanged;
+
+  const _PostTopBar({
+    required this.searchActive,
+    required this.searchController,
+    required this.onSearchTap,
+    required this.onSearchChanged,
+  });
+
+  @override
+  State<_PostTopBar> createState() => _PostTopBarState();
+}
+
+class _PostTopBarState extends State<_PostTopBar> {
+  final FocusNode _focusNode = FocusNode();
+  bool _focused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() {
+      setState(() => _focused = _focusNode.hasFocus);
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final top = MediaQuery.of(context).padding.top;
     return Container(
-      height: AppSpacing.topBarHeight + MediaQuery.of(context).padding.top,
       color: AppColors.navy,
-      padding: EdgeInsets.fromLTRB(
-          18, MediaQuery.of(context).padding.top, 18, 13),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      padding: EdgeInsets.fromLTRB(18, top, 18, 13),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Text('Posts',
-                style: AppTypography.screenTitle.copyWith(fontSize: 20)),
-          ),
-          GestureDetector(
-            onTap: onSearchTap,
-            child: Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: AppColors.navyIconBg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.search_rounded,
-                  size: 18, color: AppColors.white),
+          SizedBox(
+            height: AppSpacing.topBarHeight - 13,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Text('Posts',
+                      style:
+                          AppTypography.screenTitle.copyWith(fontSize: 20)),
+                ),
+                GestureDetector(
+                  onTap: widget.onSearchTap,
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: widget.searchActive
+                          ? AppColors.purple
+                          : AppColors.navyIconBg,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      widget.searchActive ? Icons.close : Icons.search_rounded,
+                      size: 18,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
+          if (widget.searchActive) ...[
+            const SizedBox(height: 8),
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.card,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _focused ? AppColors.purple : Colors.transparent,
+                  width: 0.5,
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  Icon(Icons.search_rounded,
+                      size: 16, color: AppColors.purple),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: widget.searchController,
+                      focusNode: _focusNode,
+                      onChanged: widget.onSearchChanged,
+                      autofocus: true,
+                      style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textPrimary, fontSize: 13),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: 'Search posts...',
+                        hintStyle: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.textMuted,
+                            fontSize: 13),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -499,17 +614,12 @@ class _SocialPostState extends State<SocialPost> {
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
             child: Row(
               children: [
-                // Org avatar (DisplayImages stream)
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: AppColors.purpleCardGradient,
-                  ),
-                  child: ClipOval(
-                    child: xbuildStreamBuilder(context, "ProfileImage"),
-                  ),
+                // Org logo — LogoAddress from provider, initials fallback
+                OrgLogo(
+                  name: churchName,
+                  logoUrl: Provider.of<christProvider>(context, listen: false)
+                      .myMap['Project']?['LogoAddress'],
+                  size: 40,
                 ),
                 const SizedBox(width: 10),
                 Expanded(

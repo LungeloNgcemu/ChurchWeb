@@ -45,6 +45,10 @@ abstract class AppTheme {
       cardTheme: _cardTheme(),
       chipTheme: _chipTheme(),
       floatingActionButtonTheme: _fabTheme(),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.transparent,
+        modalBackgroundColor: Colors.transparent,
+      ),
       iconTheme: IconThemeData(color: AppColors.textMid),
       dividerTheme: DividerThemeData(
         color: AppColors.surfaceAlt,

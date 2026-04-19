@@ -16,6 +16,7 @@ import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/theme/app_typography.dart';
 import 'package:master/widgets/common/connect_avatar.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:web_socket_channel/status.dart' as status;
@@ -197,6 +198,30 @@ class _MessageScreenState extends State<MessageScreen> {
     );
   }
 
+  // ── Extracted send action — shared by input bar and FAB ──────────────────
+  Future<void> _doSend() async {
+    if (messagex.trim().isEmpty) return;
+    final toSend = messagex.trim();
+    controller.clear();
+    FocusScope.of(context).requestFocus(FocusNode());
+    setState(() => messagex = '');
+
+    await sendMessage(
+      uniqueId: currentUser?.uniqueChurchId ?? '',
+      message: toSend,
+      sender: currentUser?.userName ?? '',
+      senderId: currentUser?.phoneNumber ?? '',
+      time: DateTime.now().toIso8601String(),
+      church: currentUser?.church ?? '',
+    );
+
+    PushNotifications.sendMessageToTopic(
+      topic: currentUser?.uniqueChurchId ?? '',
+      title: currentUser?.userName ?? '',
+      body: toSend,
+    );
+  }
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (scrollController.hasClients) {
@@ -208,6 +233,11 @@ class _MessageScreenState extends State<MessageScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isExpired =
+        Provider.of<christProvider>(context, listen: false)
+                .myMap['Project']?['Expire'] ??
+            false;
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
@@ -217,11 +247,7 @@ class _MessageScreenState extends State<MessageScreen> {
             AnimatedOpacity(
               opacity: _isLoadingMore ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 300),
-              child: LinearProgressIndicator(
-                color: AppColors.purple,
-                backgroundColor: Colors.transparent,
-                minHeight: 2,
-              ),
+              child: const Center(child: ConnectLoader(size: 24)),
             ),
 
             // ── Message list ────────────────────────────────────────────────
@@ -230,46 +256,21 @@ class _MessageScreenState extends State<MessageScreen> {
             // ── Input bar ───────────────────────────────────────────────────
             _ChatInputBar(
               controller: controller,
+              hasText: messagex.trim().isNotEmpty,
               onChanged: (value) => setState(() => messagex = value),
-              onSend: () async {
-                if (messagex.trim().isEmpty) return;
-                final toSend = messagex.trim();
-                controller.clear();
-                FocusScope.of(context).requestFocus(FocusNode());
-                setState(() => messagex = '');
-
-                await sendMessage(
-                  uniqueId: currentUser?.uniqueChurchId ?? '',
-                  message: toSend,
-                  sender: currentUser?.userName ?? '',
-                  senderId: currentUser?.phoneNumber ?? '',
-                  time: DateTime.now().toIso8601String(),
-                  church: currentUser?.church ?? '',
-                );
-
-                PushNotifications.sendMessageToTopic(
-                  topic: currentUser?.uniqueChurchId ?? '',
-                  title: currentUser?.userName ?? '',
-                  body: toSend,
-                );
-              },
-              isVisible:
-                  Provider.of<christProvider>(context, listen: false)
-                          .myMap['Project']?['Expire'] ??
-                      false,
+              onSend: _doSend,
+              isVisible: isExpired,
             ),
           ],
         ),
       ),
+
     );
   }
 
   Widget _buildMessageList() {
     if (isLoading) {
-      return Center(
-        child: CircularProgressIndicator(
-            color: AppColors.purple, strokeWidth: 2.5),
-      );
+      return const Center(child: ConnectLoader());
     }
     if (_messages.isEmpty) {
       return Center(
@@ -360,12 +361,14 @@ class _ChatInputBar extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final VoidCallback onSend;
   final bool isVisible;
+  final bool hasText;
 
   const _ChatInputBar({
     required this.controller,
     required this.onChanged,
     required this.onSend,
     required this.isVisible,
+    this.hasText = false,
   });
 
   @override
@@ -373,72 +376,76 @@ class _ChatInputBar extends StatelessWidget {
     if (!isVisible) return const SizedBox.shrink();
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
       decoration: BoxDecoration(
         color: AppColors.card,
         border: Border(
-          top: BorderSide(
-            color: AppColors.surfaceAlt,
-            width: 1,
-          ),
+          top: BorderSide(color: AppColors.surfaceAlt, width: 1),
         ),
       ),
-      child: Row(
-        children: [
-          // ── Text field ─────────────────────────────────────────────────
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
-                border: Border.all(
-                  color: AppColors.surfaceAlt,
-                  width: 1.5,
-                ),
-              ),
-              child: TextField(
-                controller: controller,
-                onChanged: onChanged,
-                keyboardType: TextInputType.text,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => onSend(),
-                style: AppTypography.fieldValue,
-                cursorColor: AppColors.purple,
-                decoration: InputDecoration(
-                  hintText: 'Type a message…',
-                  hintStyle: AppTypography.fieldPlaceholder,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // ── Text field ───────────────────────────────────────────────
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius:
+                      BorderRadius.circular(AppSpacing.radiusInput),
+                  border: Border.all(
+                    color: AppColors.surfaceAlt,
+                    width: 1.5,
                   ),
-                  border: InputBorder.none,
-                  isDense: true,
+                ),
+                child: TextField(
+                  controller: controller,
+                  onChanged: onChanged,
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => onSend(),
+                  style: AppTypography.fieldValue,
+                  cursorColor: AppColors.purple,
+                  decoration: InputDecoration(
+                    hintText: 'Type a message…',
+                    hintStyle: AppTypography.fieldPlaceholder,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    border: InputBorder.none,
+                    isDense: true,
+                  ),
                 ),
               ),
             ),
-          ),
 
-          const SizedBox(width: 10),
+            const SizedBox(width: 8),
 
-          // ── Send button ────────────────────────────────────────────────
-          GestureDetector(
-            onTap: onSend,
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                gradient: AppColors.purpleCardGradient,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
-                boxShadow: AppSpacing.purpleButtonShadow,
-              ),
-              child: const Icon(
-                Icons.send_rounded,
-                color: AppColors.white,
-                size: 18,
+            // ── Send button ──────────────────────────────────────────────
+            AnimatedOpacity(
+              opacity: hasText ? 1.0 : 0.5,
+              duration: const Duration(milliseconds: 200),
+              child: GestureDetector(
+                onTap: hasText ? onSend : null,
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.purple,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.send,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -10,6 +10,7 @@ import 'package:master/theme/app_spacing.dart';
 import 'package:master/widgets/common/connect_button.dart';
 import 'package:master/widgets/common/connect_text_field.dart';
 import '../../profile/profile_screen.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 
 class CodeAppwrite extends StatefulWidget {
   const CodeAppwrite({super.key});
@@ -270,8 +271,7 @@ class _CodeAppwriteState extends State<CodeAppwrite> {
               child: Container(
                 color: Colors.black.withOpacity(0.45),
                 child: Center(
-                  child: CircularProgressIndicator(
-                      color: AppColors.purple, strokeWidth: 3),
+                  child: ConnectLoader(),
                 ),
               ),
             ),

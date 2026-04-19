@@ -18,6 +18,7 @@ import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/widgets/common/connect_button.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 
 class ShareScreen extends StatefulWidget {
   const ShareScreen({super.key});
@@ -193,8 +194,7 @@ class _ShareScreenState extends State<ShareScreen> {
       return Scaffold(
         backgroundColor: AppColors.navy,
         body: Center(
-          child: CircularProgressIndicator(
-              color: AppColors.purple, strokeWidth: 3),
+          child: ConnectLoader(),
         ),
       );
     }
@@ -567,8 +567,7 @@ class _ShareScreenState extends State<ShareScreen> {
               child: Container(
                 color: Colors.black.withOpacity(0.45),
                 child: Center(
-                  child: CircularProgressIndicator(
-                      color: AppColors.purple, strokeWidth: 3),
+                  child: ConnectLoader(),
                 ),
               ),
             ),

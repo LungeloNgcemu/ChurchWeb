@@ -12,7 +12,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../classes/church_init.dart';
-import '../../post/post_screen.dart';
+import 'package:master/widgets/common/connect_loader.dart';
+import 'package:master/widgets/common/connect_icon.dart';
 
 class Map extends StatefulWidget {
   const Map({super.key});
@@ -54,51 +55,46 @@ class _MapState extends State<Map> {
   }
 
   Widget renderMap() {
-    try {
-      return FlutterMap(
-        options: MapOptions(
-          //-29.86109279114517, 31.014298324827156
-          initialCenter: LatLng(
-              double.parse(Provider.of<christProvider>(context, listen: false)
-                  .myMap['Project']?['GpsLat']),
-              double.parse(Provider.of<christProvider>(context, listen: false)
-                  .myMap['Project']?['GpsLong'])),
-          initialZoom: 16.2,
+    final project =
+        Provider.of<christProvider>(context, listen: false).myMap['Project'];
+
+    // Parse stored coordinates — fall back to a world-centre default so the
+    // map always renders even when no location has been saved yet.
+    final double? lat = double.tryParse(project?['GpsLat']?.toString() ?? '');
+    final double? lng = double.tryParse(project?['GpsLong']?.toString() ?? '');
+    final bool hasLocation = lat != null && lng != null;
+
+    final LatLng centre =
+        hasLocation ? LatLng(lat!, lng!) : const LatLng(0, 0);
+
+    return FlutterMap(
+      options: MapOptions(
+        initialCenter: centre,
+        initialZoom: hasLocation ? 16.2 : 2.0,
+      ),
+      children: [
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.example.app',
         ),
-        children: [
-          TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.example.app',
-          ),
-          TileLayer(
-            urlTemplate: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-            userAgentPackageName: 'com.example.app',
-            // You can implement custom error handling logic here
-          ),
+        TileLayer(
+          urlTemplate:
+              'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+          userAgentPackageName: 'com.example.app',
+        ),
+        if (hasLocation)
           MarkerLayer(
             markers: [
               Marker(
-                point: LatLng(
-                    double.parse(
-                        Provider.of<christProvider>(context, listen: false)
-                                .myMap['Project']?['GpsLat'] ??
-                            "-29.841178318331405"),
-                    double.parse(
-                        Provider.of<christProvider>(context, listen: false)
-                                .myMap['Project']?['GpsLong'] ??
-                            " 30.964530725047396")),
-                width: 70,
-                height: 70,
-                child: Locator(),
-              )
+                point: LatLng(lat!, lng!),
+                width: 40,
+                height: 40,
+                child: const Locator(),
+              ),
             ],
           ),
-        ],
-      );
-    } catch (error) {
-      print("This is the Map error : $error");
-      return Container();
-    }
+      ],
+    );
   }
 
   ChurchInit churchStart = ChurchInit();
@@ -125,7 +121,7 @@ class _MapState extends State<Map> {
     return Padding(
       padding: const EdgeInsets.all(15.0),
       child: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: ConnectLoader())
           : Column(
               children: [
                 Visibility(
@@ -138,40 +134,42 @@ class _MapState extends State<Map> {
                         alignment: Alignment.topRight,
                         child: TextButton(
                           onPressed: () async {
-                            Future<void> locator() async {
+                            final provider = Provider.of<christProvider>(
+                                context,
+                                listen: false);
+                            final churchName =
+                                provider.myMap['Project']?['ChurchName'] ?? '';
+
+                            setState(() => isLoading = true);
+
+                            try {
                               final location = await getLocation();
                               final latitude = location.latitude;
                               final longitude = location.longitude;
 
-                              print(
-                                  "Latitude: $latitude, Longitude: $longitude");
-
                               await uploadLocation(
                                   lat: latitude,
                                   long: longitude,
-                                  church: Provider.of<christProvider>(context,
-                                              listen: false)
-                                          .myMap['Project']?['ChurchName'] ??
-                                      "");
+                                  church: churchName);
+
+                              // Patch provider so renderMap reads new coords
+                              provider.myMap['Project']['GpsLat'] =
+                                  latitude.toString();
+                              provider.myMap['Project']['GpsLong'] =
+                                  longitude.toString();
+                              provider.updatemyMap(newValue: provider.myMap);
+
+                              if (context.mounted) {
+                                alertComplete(context, 'Location Updated');
+                              }
+                            } catch (_) {
+                              if (context.mounted) {
+                                alertReturn(context,
+                                    'Could not get location. Check permissions.');
+                              }
                             }
 
-                            setState(() {
-                              isLoading = true;
-                            });
-
-                            await locator();
-
-                            const message = "Loaction Updated";
-
-                            alertComplete(context, message);
-
-
-
-                            Future.delayed(Duration(seconds: 1),(){
-                              setState(() {
-                                isLoading = false;
-                              });
-                            });
+                            setState(() => isLoading = false);
                           },
                           child: Text("Select Location"),
                         )),
@@ -193,35 +191,24 @@ class _MapState extends State<Map> {
 }
 
 class Locator extends StatelessWidget {
-  Locator({super.key});
-
-  ChurchInit churchStart = ChurchInit();
+  const Locator({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        height: 100,
-        width: 100,
-        decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Color(Provider.of<christProvider>(context, listen: false)
-                    .myMap['Project']?['Color'] ??
-                '0xFF000000')),
-        child: Center(
-          child: Container(
-            height: 60,
-            width: 60,
-            decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(Provider.of<christProvider>(context, listen: false)
-                        .myMap['Project']?['Color'] ??
-                    '0xFF000000')),
-            child:
-                ClipOval(child: xbuildStreamBuilder(context, "ProfileImage")),
+    return Container(
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.20),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
-        ),
+        ],
       ),
+      child: const ConnectIcon(size: 20),
     );
   }
 }

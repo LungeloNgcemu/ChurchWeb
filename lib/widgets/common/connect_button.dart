@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/theme/app_typography.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 
 /// Connect App — Button Components
 /// Source of truth: CLAUDE.md § 4.4 Button Styles
@@ -216,10 +217,7 @@ class _BaseButtonState extends State<_BaseButton> {
               ? const SizedBox(
                   width: 22,
                   height: 22,
-                  child: CircularProgressIndicator(
-                    color: AppColors.white,
-                    strokeWidth: 2.5,
-                  ),
+                  child: ConnectLoader(size: 22),
                 )
               : Row(
                   mainAxisSize:

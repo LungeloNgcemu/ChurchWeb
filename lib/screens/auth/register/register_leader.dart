@@ -16,6 +16,7 @@ import 'package:master/theme/app_spacing.dart';
 import 'package:master/widgets/common/connect_button.dart';
 import '../../../classes/authentication/authenticate.dart';
 import 'widgets/drop_search.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 
 class RegisterLeader extends StatefulWidget {
   const RegisterLeader({super.key});
@@ -461,8 +462,7 @@ class _RegisterLeaderState extends State<RegisterLeader> {
               child: Container(
                 color: Colors.black.withOpacity(0.45),
                 child: Center(
-                  child: CircularProgressIndicator(
-                      color: AppColors.purple, strokeWidth: 3),
+                  child: ConnectLoader(),
                 ),
               ),
             ),

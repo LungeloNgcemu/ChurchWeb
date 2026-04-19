@@ -12,6 +12,7 @@ import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'create_media.dart';
 import 'package:master/theme/theme_manager.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 
 // ── Category chips ─────────────────────────────────────────────────────────────
 const _kCategories = ['Special', 'Sermon', 'Study', 'Live'];
@@ -30,13 +31,35 @@ class _MediaScreenState extends State<MediaScreen>
   ChurchInit visibility = ChurchInit();
   Authenticate auth = Authenticate();
   YouTube youTube = YouTube();
+  Stream? _mediaStream;
+  bool _searchActive = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
-    // ── preserved: init SelectedOptionProvider ─────────────────────────────
-    Provider.of<SelectedOptionProvider>(context, listen: false)
-        .updateSelectedOption('Special', Colors.grey);
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<SelectedOptionProvider>(context, listen: false)
+          .updateSelectedOption('Special', Colors.grey);
+      final churchName =
+          Provider.of<christProvider>(context, listen: false)
+                  .myMap['Project']?['ChurchName'] ??
+              '';
+      setState(() {
+        _mediaStream = supabase
+            .from('Media')
+            .stream(primaryKey: ['id'])
+            .eq('Church', churchName)
+            .order('id', ascending: false);
+      });
+    });
   }
 
   // ── preserved: filter media list by category ──────────────────────────────
@@ -71,6 +94,16 @@ class _MediaScreenState extends State<MediaScreen>
         children: [
           // ── Topbar ───────────────────────────────────────────────────
           _MediaTopBar(
+            searchActive: _searchActive,
+            searchController: _searchController,
+            onSearchTap: () => setState(() {
+              _searchActive = !_searchActive;
+              if (!_searchActive) {
+                _searchController.clear();
+                _searchQuery = '';
+              }
+            }),
+            onSearchChanged: (v) => setState(() => _searchQuery = v),
             onAddTap: ChurchInit.visibilityToggle(context)
                 ? () => MediaPoster.show(context)
                 : null,
@@ -131,16 +164,7 @@ class _MediaScreenState extends State<MediaScreen>
           // ── Media list ────────────────────────────────────────────────
           Expanded(
             child: StreamBuilder(
-              // ── preserved: Supabase Media stream ─────────────────────
-              stream: supabase
-                  .from('Media')
-                  .stream(primaryKey: ['id'])
-                  .eq(
-                      "Church",
-                      Provider.of<christProvider>(context, listen: false)
-                              .myMap['Project']?['ChurchName'] ??
-                          "")
-                  .order('id', ascending: false),
+              stream: _mediaStream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.active) {
                   if (snapshot.hasError) {
@@ -155,9 +179,19 @@ class _MediaScreenState extends State<MediaScreen>
                     return _EmptyMedia();
                   }
 
-                  // ── preserved: filter by selected category ────────────
-                  final mediaList =
+                  // filter by category then search query
+                  var mediaList =
                       optionMedia(selectedOption, snapshot.data ?? []);
+                  if (_searchQuery.isNotEmpty) {
+                    final q = _searchQuery.toLowerCase();
+                    mediaList = mediaList.where((m) {
+                      final title =
+                          (m['Title'] ?? '').toString().toLowerCase();
+                      final desc =
+                          (m['Description'] ?? '').toString().toLowerCase();
+                      return title.contains(q) || desc.contains(q);
+                    }).toList();
+                  }
 
                   if (mediaList.isEmpty) return _EmptyMedia();
 
@@ -196,8 +230,7 @@ class _MediaScreenState extends State<MediaScreen>
                   );
                 }
                 return Center(
-                  child: CircularProgressIndicator(
-                      color: AppColors.purple),
+                  child: ConnectLoader(),
                 );
               },
             ),
@@ -234,47 +267,137 @@ class _MediaScreenState extends State<MediaScreen>
 }
 
 // ── Dark topbar ───────────────────────────────────────────────────────────────
-class _MediaTopBar extends StatelessWidget {
+class _MediaTopBar extends StatefulWidget {
+  final bool searchActive;
+  final TextEditingController searchController;
+  final VoidCallback onSearchTap;
+  final ValueChanged<String> onSearchChanged;
   final VoidCallback? onAddTap;
-  const _MediaTopBar({this.onAddTap});
+
+  const _MediaTopBar({
+    required this.searchActive,
+    required this.searchController,
+    required this.onSearchTap,
+    required this.onSearchChanged,
+    this.onAddTap,
+  });
+
+  @override
+  State<_MediaTopBar> createState() => _MediaTopBarState();
+}
+
+class _MediaTopBarState extends State<_MediaTopBar> {
+  final FocusNode _focusNode = FocusNode();
+  bool _focused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() {
+      setState(() => _focused = _focusNode.hasFocus);
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final top = MediaQuery.of(context).padding.top;
     return Container(
-      height: AppSpacing.topBarHeight + MediaQuery.of(context).padding.top,
       color: AppColors.navy,
-      padding: EdgeInsets.fromLTRB(
-          18, MediaQuery.of(context).padding.top, 18, 13),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      padding: EdgeInsets.fromLTRB(18, top, 18, 13),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Text('Media',
-                style: AppTypography.screenTitle.copyWith(fontSize: 20)),
-          ),
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: AppColors.navyIconBg,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.search_rounded,
-                size: 18, color: AppColors.white),
-          ),
-          if (onAddTap != null) ...[
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: onAddTap,
-              child: Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: AppColors.purple,
-                  borderRadius: BorderRadius.circular(10),
+          SizedBox(
+            height: AppSpacing.topBarHeight - 13,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Text('Media',
+                      style: AppTypography.screenTitle.copyWith(fontSize: 20)),
                 ),
-                child: const Icon(Icons.add_rounded,
-                    size: 18, color: AppColors.white),
+                GestureDetector(
+                  onTap: widget.onSearchTap,
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: widget.searchActive
+                          ? AppColors.purple
+                          : AppColors.navyIconBg,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      widget.searchActive ? Icons.close : Icons.search_rounded,
+                      size: 18,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ),
+                if (widget.onAddTap != null) ...[
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: widget.onAddTap,
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: AppColors.purple,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.add_rounded,
+                          size: 18, color: AppColors.white),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (widget.searchActive) ...[
+            const SizedBox(height: 8),
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.card,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _focused ? AppColors.purple : Colors.transparent,
+                  width: 0.5,
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  Icon(Icons.search_rounded,
+                      size: 16, color: AppColors.purple),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: widget.searchController,
+                      focusNode: _focusNode,
+                      onChanged: widget.onSearchChanged,
+                      autofocus: true,
+                      style: AppTypography.bodyMedium
+                          .copyWith(color: AppColors.textPrimary, fontSize: 13),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: 'Search videos...',
+                        hintStyle: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.textMuted,
+                            fontSize: 13),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

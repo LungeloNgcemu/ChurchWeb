@@ -22,6 +22,7 @@ import '../../componants/global_booking.dart';
 import 'package:path/path.dart' as path;
 import 'package:provider/provider.dart';
 import '../../../classes/message_class.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 
 // create_page and poster are linked
 class CreateEvent extends StatefulWidget {
@@ -379,13 +380,7 @@ class _CreateEventState extends State<CreateEvent> {
                   child: Container(
                     color: Colors.black.withOpacity(0.5),
                     // Semi-transparent overlay
-                    child: const Center(
-                      child: SizedBox(
-                        height: 100.0,
-                        width: 100.0,
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
+                    child: const Center(child: ConnectLoader()),
                   ),
                 ),
             ],

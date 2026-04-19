@@ -93,7 +93,15 @@ class ChurchInit {
   }
 
   static Future<void> updateProjects(BuildContext context, projects) async {
-    context.read<christProvider>().updatemyMap(newValue: projects);
+    // The context may come from a screen that has already navigated away
+    // (e.g. the splash screen). Guard against the "deactivated widget"
+    // error by catching the lookup failure — the next live screen will
+    // call init() again with a fresh context.
+    try {
+      context.read<christProvider>().updatemyMap(newValue: projects);
+    } catch (_) {
+      // Context deactivated — swallow silently.
+    }
   }
 
   static Future<void> init(BuildContext context) async {

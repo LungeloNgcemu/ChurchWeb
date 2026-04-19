@@ -17,6 +17,7 @@ import 'package:master/theme/app_spacing.dart';
 import 'package:master/widgets/common/connect_button.dart';
 import 'package:master/widgets/common/connect_app_icon.dart';
 import '../../../classes/authentication/authenticate.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 
 class RegisterMember extends StatefulWidget {
   const RegisterMember({super.key});
@@ -360,8 +361,7 @@ class _RegisterMemberState extends State<RegisterMember> {
               child: Container(
                 color: Colors.black.withOpacity(0.45),
                 child: Center(
-                  child: CircularProgressIndicator(
-                      color: AppColors.purple, strokeWidth: 3),
+                  child: ConnectLoader(),
                 ),
               ),
             ),
