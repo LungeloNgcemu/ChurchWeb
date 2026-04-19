@@ -26,8 +26,8 @@ class _CodeAppwriteState extends State<CodeAppwrite> {
   String code = '';
   TextEditingController controllerCode = TextEditingController();
 
-  // ── countdown timer (replaces 8s Future.delayed with full countdown) ──────
-  int _secondsLeft = 60;
+  // ── countdown timer ────────────────────────────────────────────────────────
+  int _secondsLeft = 20;
   Timer? _timer;
 
   @override
@@ -37,7 +37,7 @@ class _CodeAppwriteState extends State<CodeAppwrite> {
   }
 
   void _startTimer() {
-    _secondsLeft = 60;
+    _secondsLeft = 20;
     showResendButton = false;
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
@@ -162,14 +162,15 @@ class _CodeAppwriteState extends State<CodeAppwrite> {
                         ),
                         const SizedBox(height: 18),
 
-                        // Resend row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('Resend code in ',
-                                style: AppTypography.caption
-                                    .copyWith(fontSize: 12)),
-                            if (!showResendButton)
+                        // ── Resend / call row ────────────────────────────
+                        if (!showResendButton) ...[
+                          // Countdown still running
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('Resend code in ',
+                                  style: AppTypography.caption
+                                      .copyWith(fontSize: 12)),
                               Text(
                                 _countdownLabel,
                                 style: AppTypography.caption.copyWith(
@@ -178,31 +179,103 @@ class _CodeAppwriteState extends State<CodeAppwrite> {
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: showResendButton
-                                  ? () async {
+                            ],
+                          ),
+                        ] else ...[
+                          // Timer expired — show both options
+                          Column(
+                            children: [
+                              // Resend SMS
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text("Didn't get it? ",
+                                      style: AppTypography.caption
+                                          .copyWith(fontSize: 12)),
+                                  GestureDetector(
+                                    onTap: () async {
                                       setState(() => isLoading = true);
                                       await Authenticate.resendOtp(context);
                                       if (mounted) {
                                         setState(() => isLoading = false);
                                         _startTimer();
                                       }
-                                    }
-                                  : null,
-                              child: Text(
-                                'Resend',
-                                style: AppTypography.caption.copyWith(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: showResendButton
-                                      ? AppColors.textPrimary
-                                      : AppColors.textMuted,
+                                    },
+                                    child: Text(
+                                      'Resend SMS',
+                                      style: AppTypography.caption.copyWith(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.purple,
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: AppColors.purple,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              // Get a call button
+                              GestureDetector(
+                                onTap: isLoading
+                                    ? null
+                                    : () async {
+                                        setState(() => isLoading = true);
+                                        await Authenticate.requestVoiceOtp(
+                                            context);
+                                        if (mounted) {
+                                          setState(() => isLoading = false);
+                                          _startTimer();
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: const Text(
+                                                  '📞 Calling you now with your code…'),
+                                              backgroundColor:
+                                                  AppColors.navy,
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          12)),
+                                              margin:
+                                                  const EdgeInsets.all(16),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24, vertical: 13),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                        color: AppColors.purple, width: 1.5),
+                                    borderRadius: BorderRadius.circular(50),
+                                    color: AppColors.purpleTint,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.phone_outlined,
+                                          size: 18, color: AppColors.purple),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Get a call instead',
+                                        style:
+                                            AppTypography.bodyMedium.copyWith(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.purple,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
+                        ],
                         const SizedBox(height: 28),
 
                         // Verify button — preserved: Authenticate.submitCode

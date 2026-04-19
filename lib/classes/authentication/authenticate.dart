@@ -412,6 +412,16 @@ class Authenticate {
     }
   }
 
+  static Future<void> requestVoiceOtp(BuildContext context) async {
+    try {
+      final registrationData =
+          context.read<RegistrationProvider>().registrationModel;
+      await AuthService.sendVoiceOtp(registrationData.phoneNumber!);
+    } catch (error) {
+      alertReturn(context, "Problem requesting voice call: $error");
+    }
+  }
+
   static Future<bool> registerOrginisationAndUser(
     String name,
     String email,
