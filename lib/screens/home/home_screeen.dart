@@ -71,10 +71,11 @@ class _HomeScreenState extends State<HomeScreen>
       }
 
       // Total members for this organisation
+      // Column is 'UniqueChurchId' (PascalCase) — matches UserName, PhoneNumber, Role, etc.
       final membersResult = await supabase
           .from('Users')
           .select('id')
-          .eq('uniqueChurchId', uniqueChurchId);
+          .eq('UniqueChurchId', uniqueChurchId);
 
       // Members who joined in the last 7 days
       final sevenDaysAgo =
@@ -82,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen>
       final newResult = await supabase
           .from('Users')
           .select('id')
-          .eq('uniqueChurchId', uniqueChurchId)
+          .eq('UniqueChurchId', uniqueChurchId)
           .gte('created_at', sevenDaysAgo);
 
       if (mounted) {

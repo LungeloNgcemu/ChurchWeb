@@ -39,7 +39,16 @@ void showMembersModal(BuildContext context) {
 }
 
 void showRequestsModal(BuildContext context) {
-  _openSheet(context, const _RequestsSheet());
+  _openSheet(
+    context,
+    const _ComingSoonSheet(
+      icon: Icons.star_rounded,
+      badge: 'Requests',
+      title: 'Requests coming soon',
+      subtitle: 'Submit and track community requests right here.',
+      useAccent: true,
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -386,7 +395,7 @@ class _MembersSheet extends StatelessWidget {
                 stream: supabase
                     .from('Users')
                     .stream(primaryKey: ['id'])
-                    .eq('uniqueChurchId', uniqueChurchId),
+                    .eq('UniqueChurchId', uniqueChurchId),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState ==
                       ConnectionState.waiting) {
@@ -532,7 +541,6 @@ class _ComingSoonSheet extends StatelessWidget {
 
     // Line U: pick primary or accent from theme — no hardcoded orange/purple
     final color = useAccent ? colors.accent : colors.primary;
-    final tint  = useAccent ? colors.accentTint : colors.primaryTint;
 
     return _SheetShell(
       maxHeightFactor: 0.46,
@@ -546,16 +554,15 @@ class _ComingSoonSheet extends StatelessWidget {
           children: [
             const SizedBox(height: 12),
 
-            // Icon circle — tint from theme
+            // Icon circle — gradient bg
             Container(
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                // Line V: icon circle bg → theme tint (no hardcoded colour)
-                color: tint,
+                gradient: colors.primaryCardGradient,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color, size: 30),
+              child: Icon(icon, color: Colors.white, size: 30),
             ),
             const SizedBox(height: 16),
 
@@ -564,15 +571,13 @@ class _ComingSoonSheet extends StatelessWidget {
               padding: const EdgeInsets.symmetric(
                   horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                // Line W: badge bg → themeManager primary/accent with opacity
-                color: color.withOpacity(0.12),
+                gradient: colors.primaryCardGradient,
                 borderRadius: BorderRadius.circular(50),
               ),
               child: Text(
                 badge,
                 style: AppTypography.labelTiny.copyWith(
-                  // Line X: badge text → themeManager primary/accent color
-                  color: color,
+                  color: Colors.white,
                   fontWeight: FontWeight.w700,
                   fontSize: 11,
                 ),
@@ -612,9 +617,7 @@ class _ComingSoonSheet extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 17),
                 decoration: BoxDecoration(
                   // Line AA: button bg → themeManager gradient (accent or primary)
-                  gradient: useAccent
-                      ? colors.accentGradient
-                      : colors.primaryCardGradient,
+                  gradient:colors.primaryCardGradient ,
                   borderRadius: BorderRadius.circular(50),
                   boxShadow: [
                     BoxShadow(
@@ -628,119 +631,6 @@ class _ComingSoonSheet extends StatelessWidget {
                 child: Text(
                   'Notify me when ready',
                   // white text on coloured button — intentional, not hardcoded bg
-                  style: AppTypography.buttonPrimary,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 4. REQUESTS modal — dedicated widget, reads colors.accent directly
-//    (same pattern as _ComingSoonSheet useAccent:false reads colors.primary)
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _RequestsSheet extends StatelessWidget {
-  const _RequestsSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    // Same Provider.of pattern as Events modal
-    final themeManager = Provider.of<ThemeManager>(context, listen: false);
-    final colors = themeManager.colors;
-
-    // Read accent color directly — no conditional flag
-    final color = colors.accent;
-    final tint  = colors.accentTint;
-
-    return _SheetShell(
-      maxHeightFactor: 0.46,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          24, 8, 24,
-          MediaQuery.of(context).padding.bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-
-            // Icon circle — same structure as Events
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: tint,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.star_rounded, color: color, size: 30),
-            ),
-            const SizedBox(height: 16),
-
-            // Badge pill — same structure as Events
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: Text(
-                'Requests',
-                style: AppTypography.labelTiny.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 11,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Title — same structure as Events
-            Text(
-              'Requests coming soon',
-              style: AppTypography.headingSmall.copyWith(
-                color: colors.textPrimary,
-                fontSize: 18,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 6),
-
-            // Subtitle — same structure as Events
-            Text(
-              'Submit and track community requests right here.',
-              style: AppTypography.bodyText.copyWith(
-                color: colors.textMuted,
-                fontSize: 13,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-
-            // CTA button — same structure as Events, uses accentGradient
-            GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 17),
-                decoration: BoxDecoration(
-                  gradient: colors.accentGradient,
-                  borderRadius: BorderRadius.circular(50),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withOpacity(0.30),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'Notify me when ready',
                   style: AppTypography.buttonPrimary,
                 ),
               ),
