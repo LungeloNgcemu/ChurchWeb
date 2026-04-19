@@ -49,16 +49,18 @@ class AuthService {
     }
   }
 
-  static Future<bool> sendVoiceOtp(String phone) async {
+  static Future<String?> sendVoiceOtp(String phone) async {
     try {
       final response = await http.post(
         Uri.parse('${BaseUrl.baseUrl}/api/auth/sendVoiceOtp'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'phoneNumber': phone}),
       );
-      return response.statusCode == 200;
-    } catch (_) {
-      return false;
+      if (response.statusCode == 200) return null; // null = success
+      final body = json.decode(response.body);
+      return body['error'] as String? ?? 'Failed to initiate voice call';
+    } catch (e) {
+      return 'Network error — could not request voice call';
     }
   }
 
