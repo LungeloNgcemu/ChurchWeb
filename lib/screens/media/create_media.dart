@@ -60,9 +60,8 @@ class _MediaPosterState extends State<MediaPoster> {
   MediaClass medaiClass = MediaClass();
   Authenticate auth = Authenticate();
 
-  // Category selection — matches the v2 mockup chips
-  String _selectedCategory = 'Series';
-  final List<String> _categories = ['Talk', 'Series', 'Event Recap', 'Short', 'Devotion'];
+  String _selectedCategory = 'Special';
+  final List<String> _categories = ['Special', 'Sermon', 'Study', 'Live'];
 
   Future<void> _handlePost(String selectedOption) async {
     setState(() => medaiClass.isLoading = true);
@@ -237,8 +236,12 @@ class _MediaPosterState extends State<MediaPoster> {
                     children: _categories.map((cat) {
                       final isSelected = _selectedCategory == cat;
                       return GestureDetector(
-                        onTap: () =>
-                            setState(() => _selectedCategory = cat),
+                        onTap: () {
+                          setState(() => _selectedCategory = cat);
+                          Provider.of<SelectedOptionProvider>(context,
+                                  listen: false)
+                              .updateSelectedOption(cat, Colors.grey);
+                        },
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 150),
                           padding: const EdgeInsets.symmetric(
