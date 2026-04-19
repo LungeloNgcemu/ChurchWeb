@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/church_init.dart';
 import 'package:master/classes/home_class.dart';
+import 'package:master/componants/global_booking.dart';
+import 'package:master/services/api/token_service.dart';
 import 'package:master/services/utils/invitation_service.dart';
 import 'package:master/util/alerts.dart';
 import 'package:provider/provider.dart';
@@ -35,6 +37,11 @@ class _HomeScreenState extends State<HomeScreen>
   bool isLoading = false;
   String selectedOption = 'About Us';
 
+  // ── Stats state ───────────────────────────────────────────────────────────
+  int _memberCount = 0;
+  int _newCount    = 0;
+  bool _statsLoading = true;
+
   @override
   void initState() {
     _initChurch();
@@ -45,9 +52,49 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() => isLoading = true);
     await ChurchInit.init(context);
     homeClass.ministerInit(setState, context);
+    homeClass.galleryInit(setState, context);
+    _fetchStats(); // fire-and-forget — updates stats independently
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => isLoading = false);
     });
+  }
+
+  /// Queries Supabase for real member + new-member counts.
+  Future<void> _fetchStats() async {
+    try {
+      final user = await TokenService.tokenUser();
+      final uniqueChurchId = user?.uniqueChurchId ?? '';
+
+      if (uniqueChurchId.isEmpty) {
+        if (mounted) setState(() => _statsLoading = false);
+        return;
+      }
+
+      // Total members for this organisation
+      final membersResult = await supabase
+          .from('Users')
+          .select('id')
+          .eq('uniqueChurchId', uniqueChurchId);
+
+      // Members who joined in the last 7 days
+      final sevenDaysAgo =
+          DateTime.now().subtract(const Duration(days: 7)).toIso8601String();
+      final newResult = await supabase
+          .from('Users')
+          .select('id')
+          .eq('uniqueChurchId', uniqueChurchId)
+          .gte('created_at', sevenDaysAgo);
+
+      if (mounted) {
+        setState(() {
+          _memberCount   = (membersResult as List).length;
+          _newCount      = (newResult as List).length;
+          _statsLoading  = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _statsLoading = false);
+    }
   }
 
   @override
@@ -119,7 +166,13 @@ class _HomeScreenState extends State<HomeScreen>
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
               children: [
                 // Greeting card (purple gradient)
-                _GreetingCard(churchName: churchName, address: address),
+                _GreetingCard(
+                  churchName: churchName,
+                  address: address,
+                  memberCount: _memberCount,
+                  newCount: _newCount,
+                  statsLoading: _statsLoading,
+                ),
                 const SizedBox(height: 12),
 
                 // Quick actions
@@ -234,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen>
                             style: AppTypography.link),
                       ),
                     ),
-                  homeClass.buildGallery(context),
+                  homeClass.buildGallery(context, canDelete: ChurchInit.visibilityToggle(context), setState: setState),
                 ],
                 if (selectedOption == 'Map') location.Map(),
               ],
@@ -319,7 +372,16 @@ class _TopBar extends StatelessWidget {
 class _GreetingCard extends StatelessWidget {
   final String churchName;
   final String address;
-  const _GreetingCard({required this.churchName, required this.address});
+  final int memberCount;
+  final int newCount;
+  final bool statsLoading;
+  const _GreetingCard({
+    required this.churchName,
+    required this.address,
+    required this.memberCount,
+    required this.newCount,
+    required this.statsLoading,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -375,15 +437,27 @@ class _GreetingCard extends StatelessWidget {
                         .copyWith(color: AppColors.whiteDim)),
               ],
               const SizedBox(height: 14),
-              Row(
-                children: [
-                  _StatCol(value: '248', label: 'Members'),
-                  const SizedBox(width: 20),
-                  _StatCol(value: '12', label: 'Events'),
-                  const SizedBox(width: 20),
-                  _StatCol(value: '5', label: 'New'),
-                ],
-              ),
+              statsLoading
+                  ? const SizedBox(
+                      height: 40,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: ConnectLoader(size: 22),
+                      ),
+                    )
+                  : Row(
+                      children: [
+                        _StatCol(
+                          value: memberCount.toString(),
+                          label: 'Members',
+                        ),
+                        const SizedBox(width: 20),
+                        _StatCol(
+                          value: newCount.toString(),
+                          label: 'New this week',
+                        ),
+                      ],
+                    ),
             ],
           ),
         ],
