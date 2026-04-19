@@ -10,6 +10,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
 import '../../../classes/message_class.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 
 // create_prayer.dart — v2 design system modal bottom sheet
 class CreatePrayer extends StatefulWidget {
@@ -262,9 +263,7 @@ class _CreatePrayerState extends State<CreatePrayer> {
                 ),
               ),
               child: Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.purple,
-                ),
+                child: ConnectLoader(),
               ),
             ),
           ),

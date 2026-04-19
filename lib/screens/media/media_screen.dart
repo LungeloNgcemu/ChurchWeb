@@ -12,6 +12,7 @@ import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'create_media.dart';
 import 'package:master/theme/theme_manager.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 
 // ── Category chips ─────────────────────────────────────────────────────────────
 const _kCategories = ['Special', 'Sermon', 'Study', 'Live'];
@@ -196,8 +197,7 @@ class _MediaScreenState extends State<MediaScreen>
                   );
                 }
                 return Center(
-                  child: CircularProgressIndicator(
-                      color: AppColors.purple),
+                  child: ConnectLoader(),
                 );
               },
             ),

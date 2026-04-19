@@ -13,6 +13,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../classes/church_init.dart';
 import '../../post/post_screen.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 
 class Map extends StatefulWidget {
   const Map({super.key});
@@ -125,7 +126,7 @@ class _MapState extends State<Map> {
     return Padding(
       padding: const EdgeInsets.all(15.0),
       child: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: ConnectLoader())
           : Column(
               children: [
                 Visibility(

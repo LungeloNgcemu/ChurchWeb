@@ -16,6 +16,7 @@ import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/theme/app_typography.dart';
 import 'package:master/widgets/common/connect_avatar.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:web_socket_channel/status.dart' as status;
@@ -217,11 +218,7 @@ class _MessageScreenState extends State<MessageScreen> {
             AnimatedOpacity(
               opacity: _isLoadingMore ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 300),
-              child: LinearProgressIndicator(
-                color: AppColors.purple,
-                backgroundColor: Colors.transparent,
-                minHeight: 2,
-              ),
+              child: const Center(child: ConnectLoader(size: 24)),
             ),
 
             // ── Message list ────────────────────────────────────────────────
@@ -266,10 +263,7 @@ class _MessageScreenState extends State<MessageScreen> {
 
   Widget _buildMessageList() {
     if (isLoading) {
-      return Center(
-        child: CircularProgressIndicator(
-            color: AppColors.purple, strokeWidth: 2.5),
-      );
+      return const Center(child: ConnectLoader());
     }
     if (_messages.isEmpty) {
       return Center(

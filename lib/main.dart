@@ -32,6 +32,7 @@ import 'firebase_options.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'theme/theme_manager.dart';
 import 'theme/font_manager.dart';
+import 'theme/loading_manager.dart';
 import 'theme/app_theme.dart';
 
 
@@ -43,9 +44,10 @@ void main() async {
   
   await EnvService.envInit();
 
-  // Load saved theme before the first frame so colours are correct on launch.
+  // Load saved preferences before the first frame.
   await ThemeManager.instance.loadTheme();
   await FontManager.instance.loadFont();
+  await LoadingManager.instance.loadAnimation();
 
   await Supabase.initialize(url: Keys.supabaseUrl, anonKey: Keys.supabaseKey);
 
@@ -71,9 +73,10 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        // Theme manager — must be first so all other providers can use colours.
+        // Appearance managers — must be first so all descendants can read them.
         ChangeNotifierProvider<ThemeManager>.value(value: ThemeManager.instance),
         ChangeNotifierProvider<FontManager>.value(value: FontManager.instance),
+        ChangeNotifierProvider<LoadingManager>.value(value: LoadingManager.instance),
         ChangeNotifierProvider<ImageUrlProvider>(
           create: (BuildContext context) => ImageUrlProvider(),
         ),

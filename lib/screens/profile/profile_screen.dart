@@ -20,6 +20,8 @@ import 'package:master/theme/app_spacing.dart';
 import 'package:master/widgets/common/connect_avatar.dart';
 import 'package:master/widgets/common/theme_switcher.dart';
 import 'package:master/widgets/common/font_switcher.dart';
+import 'package:master/widgets/common/loading_switcher.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 import 'package:master/widgets/common/connect_button.dart';
 import 'package:master/widgets/common/connect_text_field.dart';
 
@@ -162,8 +164,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (isLoading) {
       return Scaffold(
         backgroundColor: AppColors.surface,
-        body: Center(
-            child: CircularProgressIndicator(color: AppColors.purple)),
+        body: const Center(child: ConnectLoader()),
       );
     }
 
@@ -241,6 +242,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _SettingsGroup(rows: [
                     const ThemeSwitcherTile(),
                     const FontSwitcherTile(),
+                    const LoadingSwitcherTile(),
                   ]),
                   const SizedBox(height: 14),
                   Text('NOTIFICATIONS', style: AppTypography.labelTiny),

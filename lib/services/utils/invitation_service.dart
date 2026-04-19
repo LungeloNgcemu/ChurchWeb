@@ -67,7 +67,7 @@ class InvitationService {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
+      builder: (_) => const Center(child: ConnectLoader()),
     );
 
     try {

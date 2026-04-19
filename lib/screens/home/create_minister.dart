@@ -4,6 +4,7 @@ import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/widgets/common/connect_button.dart';
 import '../../classes/minister_class.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 
 class CreateMinister extends StatefulWidget {
   const CreateMinister({super.key});
@@ -339,8 +340,7 @@ class _CreateMinisterState extends State<CreateMinister> {
               child: Container(
                 color: Colors.black.withOpacity(0.45),
                 child: Center(
-                  child: CircularProgressIndicator(
-                      color: AppColors.purple, strokeWidth: 3),
+                  child: ConnectLoader(),
                 ),
               ),
             ),

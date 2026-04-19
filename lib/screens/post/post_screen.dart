@@ -16,6 +16,7 @@ import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'create_post.dart';
 import 'package:master/theme/theme_manager.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 
 // ── preserved: DisplayImages stream helper ────────────────────────────────────
 StreamBuilder xbuildStreamBuilder(context, String path) {
@@ -308,8 +309,7 @@ class _PostScreenState extends State<PostScreen>
                   );
                 }
                 return Center(
-                  child: CircularProgressIndicator(
-                      color: AppColors.purple),
+                  child: ConnectLoader(),
                 );
               },
             ),

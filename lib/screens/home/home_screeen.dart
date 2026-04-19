@@ -15,6 +15,7 @@ import '../../providers/url_provider.dart';
 import 'create_minister.dart';
 import 'package:master/screens/home/widgets/map.dart' as location;
 import 'package:master/theme/theme_manager.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -67,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen>
       return Scaffold(
         backgroundColor: AppColors.surface,
         body: Center(
-            child: CircularProgressIndicator(color: AppColors.purple)),
+            child: ConnectLoader()),
       );
     }
 

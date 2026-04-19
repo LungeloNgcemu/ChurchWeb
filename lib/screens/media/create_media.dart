@@ -15,6 +15,7 @@ import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/widgets/common/connect_button.dart';
 import 'package:master/theme/theme_manager.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 
 // create_page and poster are linked
 class MediaPoster extends StatefulWidget {
@@ -107,10 +108,7 @@ class _MediaPosterState extends State<MediaPoster> {
                 child: SizedBox(
                   height: 36,
                   width: 36,
-                  child: CircularProgressIndicator(
-                    color: AppColors.orange,
-                    strokeWidth: 3,
-                  ),
+                  child: ConnectLoader(),
                 ),
               ),
             ),
