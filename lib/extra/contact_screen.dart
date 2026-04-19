@@ -31,27 +31,7 @@ class _ContactScreenState extends State<ContactScreen> {
         ],
       ),
 
-      // ── Compose FAB ────────────────────────────────────────────────────
-      floatingActionButton: GestureDetector(
-        onTap: () {},
-        child: Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            gradient: AppColors.purpleCardGradient,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colors.primary.withOpacity(0.33),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: const Icon(Icons.edit_outlined,
-              color: AppColors.white, size: 22),
-        ),
-      ),
+      // FAB lives inside MessageScreen's own Scaffold and calls _doSend
     );
   }
 }

@@ -198,6 +198,30 @@ class _MessageScreenState extends State<MessageScreen> {
     );
   }
 
+  // ── Extracted send action — shared by input bar and FAB ──────────────────
+  Future<void> _doSend() async {
+    if (messagex.trim().isEmpty) return;
+    final toSend = messagex.trim();
+    controller.clear();
+    FocusScope.of(context).requestFocus(FocusNode());
+    setState(() => messagex = '');
+
+    await sendMessage(
+      uniqueId: currentUser?.uniqueChurchId ?? '',
+      message: toSend,
+      sender: currentUser?.userName ?? '',
+      senderId: currentUser?.phoneNumber ?? '',
+      time: DateTime.now().toIso8601String(),
+      church: currentUser?.church ?? '',
+    );
+
+    PushNotifications.sendMessageToTopic(
+      topic: currentUser?.uniqueChurchId ?? '',
+      title: currentUser?.userName ?? '',
+      body: toSend,
+    );
+  }
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (scrollController.hasClients) {
@@ -209,6 +233,11 @@ class _MessageScreenState extends State<MessageScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isExpired =
+        Provider.of<christProvider>(context, listen: false)
+                .myMap['Project']?['Expire'] ??
+            false;
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
@@ -229,36 +258,43 @@ class _MessageScreenState extends State<MessageScreen> {
               controller: controller,
               hasText: messagex.trim().isNotEmpty,
               onChanged: (value) => setState(() => messagex = value),
-              onSend: () async {
-                if (messagex.trim().isEmpty) return;
-                final toSend = messagex.trim();
-                controller.clear();
-                FocusScope.of(context).requestFocus(FocusNode());
-                setState(() => messagex = '');
-
-                await sendMessage(
-                  uniqueId: currentUser?.uniqueChurchId ?? '',
-                  message: toSend,
-                  sender: currentUser?.userName ?? '',
-                  senderId: currentUser?.phoneNumber ?? '',
-                  time: DateTime.now().toIso8601String(),
-                  church: currentUser?.church ?? '',
-                );
-
-                PushNotifications.sendMessageToTopic(
-                  topic: currentUser?.uniqueChurchId ?? '',
-                  title: currentUser?.userName ?? '',
-                  body: toSend,
-                );
-              },
-              isVisible:
-                  Provider.of<christProvider>(context, listen: false)
-                          .myMap['Project']?['Expire'] ??
-                      false,
+              onSend: _doSend,
+              isVisible: isExpired,
             ),
           ],
         ),
       ),
+
+      // ── Send FAB ────────────────────────────────────────────────────────
+      floatingActionButton: isExpired
+          ? AnimatedOpacity(
+              opacity: messagex.trim().isNotEmpty ? 1.0 : 0.5,
+              duration: const Duration(milliseconds: 200),
+              child: GestureDetector(
+                onTap: messagex.trim().isNotEmpty ? _doSend : null,
+                child: Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: AppColors.purpleCardGradient,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.purple.withOpacity(0.33),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.send,
+                    color: AppColors.white,
+                    size: 22,
+                  ),
+                ),
+              ),
+            )
+          : null,
     );
   }
 
