@@ -8,6 +8,7 @@ import 'package:master/services/api/auth_service.dart';
 import 'package:master/services/api/token_service.dart';
 import 'package:master/util/alerts.dart';
 import 'package:provider/provider.dart';
+import 'package:master/widgets/common/connect_loader.dart';
 
 class InvitationService {
   /// Generates an invitation token for the specified role
