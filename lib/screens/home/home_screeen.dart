@@ -16,6 +16,7 @@ import 'create_minister.dart';
 import 'package:master/screens/home/widgets/map.dart' as location;
 import 'package:master/theme/theme_manager.dart';
 import 'package:master/widgets/common/connect_loader.dart';
+import 'package:master/widgets/home/home_modals.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -52,7 +53,27 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   bool get wantKeepAlive => true;
 
-  // ── quick-action helpers ──────────────────────────────────────────────────
+  // ── quick-action dispatcher ───────────────────────────────────────────────
+  void _handleQuickAction(BuildContext context, String route) {
+    switch (route) {
+      case '/createPost':
+        showPostsModal(context);
+        break;
+      case '/createEvent':
+        showEventsModal(context);
+        break;
+      case '/members':
+        showMembersModal(context);
+        break;
+      case '/createRequest':
+        showRequestsModal(context);
+        break;
+      default:
+        Navigator.pushNamed(context, route);
+    }
+  }
+
+  // ── quick-action data ─────────────────────────────────────────────────────
   static List<_QaData> get _quickActions => [
     _QaData('\u{1F4DD}', 'Post', AppColors.purpleTint, AppColors.purple, '/createPost'),
     _QaData('\u{1F4C5}', 'Events', AppColors.orangeTint, AppColors.orange, '/createEvent'),
@@ -106,8 +127,7 @@ class _HomeScreenState extends State<HomeScreen>
                   for (final qa in _quickActions) ...[
                     Expanded(
                       child: GestureDetector(
-                        onTap: () =>
-                            Navigator.pushNamed(context, qa.route),
+                        onTap: () => _handleQuickAction(context, qa.route),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                               vertical: 14, horizontal: 8),
