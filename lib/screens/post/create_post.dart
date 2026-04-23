@@ -133,7 +133,8 @@ class _PosterState extends State<Poster> {
 
       await PushNotifications.sendMessageToTopic(
           topic: Provider.of<christProvider>(context, listen: false)
-              .myMap['Project']?['ChurchName'],
+                  .myMap['Project']?['ProjectId']?.toString() ??
+              '',
           title: 'New Post',
           body: description);
 
