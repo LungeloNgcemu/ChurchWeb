@@ -110,6 +110,10 @@ class IOService {
     socket.emit('join', uniqueId);
   }
 
+  static void leaveRoom(String uniqueId) {
+    socket.emit('leave', uniqueId);
+  }
+
   static Future<void> sendMessage({
     required String uniqueId,
     required String message,

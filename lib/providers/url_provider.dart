@@ -86,9 +86,7 @@ class SelectedOptionProvider extends ChangeNotifier {
   Color updateSelectedOption(String newOption, Color newColor) {
     _selectedOption = newOption;
     _color = newColor;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      notifyListeners();
-    });
+    notifyListeners();
     return _color;
   }
 }

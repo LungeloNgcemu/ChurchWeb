@@ -1,11 +1,11 @@
 {
-    "name": "Church",
-    "short_name": "Church",
+    "name": "Connect",
+    "short_name": "Connect",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
     "theme_color": "#FFFFFF",
-    "description": "Church App.",
+    "description": "Connect — Where community happens",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

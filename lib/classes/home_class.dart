@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../componants/global_booking.dart';
 import '../screens/home/widgets/gallery.dart';
+import '../widgets/common/connect_loader.dart';
 import '../providers/url_provider.dart';
 import 'dart:io';
 import 'package:full_screen_image/full_screen_image.dart';
@@ -20,6 +21,7 @@ import 'package:full_screen_image/full_screen_image.dart';
 class HomeClass {
   Stream? gallery;
   Stream? minister;
+  List? _galleryCache;
   Uint8List? _image; // Change PickedFile to XFile
   String? imageUrl;
   bool isLoading = false;
@@ -47,6 +49,16 @@ class HomeClass {
     });
   }
 
+  void galleryInit(Function(void Function()) setState, BuildContext context) {
+    final churchName = Provider.of<christProvider>(context, listen: false)
+        .myMap['Project']?['ChurchName'];
+    setState(() {
+      gallery = supabase
+          .from('Gallery')
+          .stream(primaryKey: ['id']).eq('Church', churchName);
+    });
+  }
+
   specail(context) {
     return supabase.from('Minister').stream(primaryKey: ['id']).eq(
         "Church",
@@ -58,22 +70,31 @@ class HomeClass {
     return supabase.from('Gallery').stream(primaryKey: ['id']);
   }
 
-  StreamBuilder buildGallery(BuildContext context) {
+  StreamBuilder buildGallery(BuildContext context,
+      {bool canDelete = false,
+      Function(void Function())? setState}) {
     return StreamBuilder(
-      stream: supabase.from('Gallery').stream(primaryKey: ['id']).eq(
-          'Church',
-          Provider.of<christProvider>(context, listen: false).myMap['Project']
-              ?['ChurchName']),
+      stream: gallery,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.active) {
-          if (snapshot.hasError) {
-          } else if (!snapshot.hasData) {
-          } else if (snapshot.hasData) {
-            final items = snapshot.data;
-            return Padding(
+        if (snapshot.hasData) _galleryCache = snapshot.data as List;
+        final items = _galleryCache;
+        final isRefreshing =
+            snapshot.connectionState == ConnectionState.waiting;
+
+        if (items == null) {
+          return isRefreshing
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Center(child: ConnectLoader()),
+                )
+              : const SizedBox();
+        }
+
+        return Stack(
+          children: [
+            Padding(
               padding: const EdgeInsets.symmetric(vertical: 15.0),
               child: Gallery(
-                // images: images,
                 grid: SizedBox(
                   height: 500.0,
                   child: GridView.custom(
@@ -91,24 +112,64 @@ class HomeClass {
                     ),
                     childrenDelegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        return GestureDetector(
-                            onDoubleTap: () {
-                              alertDelete(context, "Delete Image?", () async {
-                                delete(context, 'Gallery', items[index]['id'],
-                                    items[index]['Picture']);
-                              });
-                            },
-                            child: Tile(image: items[index]['Picture']));
+                        return Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Tile(image: items[index]['Picture']),
+                            if (canDelete)
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: GestureDetector(
+                                  onTap: () => alertDelete(
+                                    context,
+                                    'Remove this image from the gallery?',
+                                    () async {
+                                      await delete(
+                                        context,
+                                        'Gallery',
+                                        items[index]['id'],
+                                        items[index]['Picture'],
+                                      );
+                                      if (context.mounted && setState != null) {
+                                        galleryInit(setState, context);
+                                      }
+                                    },
+                                  ),
+                                  child: Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black
+                                          .withOpacity(0.60),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
                       },
                       childCount: items.length,
                     ),
                   ),
                 ),
               ),
-            ); // Display Gallery widget wh
-          }
-        }
-        return SizedBox();
+            ),
+            if (isRefreshing)
+              Positioned.fill(
+                child: ColoredBox(
+                  color: Colors.white.withOpacity(0.55),
+                  child: const Center(child: ConnectLoader()),
+                ),
+              ),
+          ],
+        );
       },
     );
   }
@@ -204,42 +265,47 @@ class HomeClass {
 
   void galleryInsert(
       BuildContext context, Function(void Function()) setState) async {
-    setState(() {
-      isLoading = true;
-    });
+    // Cache provider values before any async gap
+    final provider = Provider.of<christProvider>(context, listen: false);
+    final churchName = provider.myMap['Project']?['ChurchName'] ?? '';
+    final bucket = provider.myMap['Project']?['Bucket'] ?? '';
+
+    setState(() => isLoading = true);
     try {
-      await _pickImage();
-
-      if (_image != null) {
-        final fileName = 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
-
-        final String pathv = await supabase.storage
-            .from(Provider.of<christProvider>(context, listen: false)
-                .myMap['Project']?['Bucket'])
-            .uploadBinary('$fileName', _image!,
-                fileOptions:
-                    const FileOptions(cacheControl: '3600', upsert: false));
-
-        final publicUrl = await supabase.storage
-            .from(Provider.of<christProvider>(context, listen: false)
-                .myMap['Project']?['Bucket'])
-            .getPublicUrl(fileName);
-
-        await supabase.from('Gallery').insert({
-          'Picture': publicUrl,
-          'Church': Provider.of<christProvider>(context, listen: false)
-              .myMap['Project']?['ChurchName']
-        });
-      } else {
-        setState(() {
-          isLoading = false;
-        });
+      final existing = await supabase
+          .from('Gallery')
+          .select('id')
+          .eq('Church', churchName);
+      if ((existing as List).length >= 10) {
+        setState(() => isLoading = false);
+        if (context.mounted) {
+          alertReturn(context, 'Gallery limit reached. Maximum 10 images allowed.');
+        }
+        return;
       }
-    } catch (e) {
-      print("Error uploading image to Supabase: $e");
-      setState(() {
-        isLoading = false;
+
+      await _pickImage();
+      if (_image == null) {
+        setState(() => isLoading = false);
+        return;
+      }
+
+      final fileName = 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await supabase.storage.from(bucket).uploadBinary(
+            fileName,
+            _image!,
+            fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+          );
+      final publicUrl = supabase.storage.from(bucket).getPublicUrl(fileName);
+      await supabase.from('Gallery').insert({
+        'Picture': publicUrl,
+        'Church': churchName,
       });
+
+      if (context.mounted) galleryInit(setState, context);
+      setState(() => isLoading = false);
+    } catch (e) {
+      setState(() => isLoading = false);
     }
   }
 }

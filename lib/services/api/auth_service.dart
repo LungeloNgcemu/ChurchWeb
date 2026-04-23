@@ -49,6 +49,21 @@ class AuthService {
     }
   }
 
+  static Future<String?> sendVoiceOtp(String phone) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${BaseUrl.baseUrl}/api/auth/sendVoiceOtp'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'phoneNumber': phone}),
+      );
+      if (response.statusCode == 200) return null; // null = success
+      final body = json.decode(response.body);
+      return body['error'] as String? ?? 'Failed to initiate voice call';
+    } catch (e) {
+      return 'Network error — could not request voice call';
+    }
+  }
+
   static Future<bool> checkPassword(
       String password, String uniqueChurchId) async {
     final response = await http.post(
@@ -86,6 +101,36 @@ class AuthService {
       }
     } catch (e) {
       return false;
+    }
+  }
+
+  /// Switches the active organisation for the authenticated user.
+  ///
+  /// [bearerToken] is the current JWT stored in SharedPreferences.
+  /// Returns the full response body (including a new `token`) on success,
+  /// or a map with `success: false` on failure.
+  static Future<Map<String, dynamic>?> switchOrg({
+    required String uniqueChurchId,
+    required String bearerToken,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${BaseUrl.baseUrl}/api/auth/switchOrg'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $bearerToken',
+        },
+        body: jsonEncode({'uniqueChurchId': uniqueChurchId}),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return {
+        'success': false,
+        'error': 'Server returned ${response.statusCode}',
+      };
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: $e'};
     }
   }
 

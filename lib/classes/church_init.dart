@@ -93,7 +93,15 @@ class ChurchInit {
   }
 
   static Future<void> updateProjects(BuildContext context, projects) async {
-    context.read<christProvider>().updatemyMap(newValue: projects);
+    // The context may come from a screen that has already navigated away
+    // (e.g. the splash screen). Guard against the "deactivated widget"
+    // error by catching the lookup failure — the next live screen will
+    // call init() again with a fresh context.
+    try {
+      context.read<christProvider>().updatemyMap(newValue: projects);
+    } catch (_) {
+      // Context deactivated — swallow silently.
+    }
   }
 
   static Future<void> init(BuildContext context) async {
@@ -127,7 +135,12 @@ class ChurchInit {
     }
 
     churchName = churchData.churchName ?? "";
-    logo = churchData.logo ?? "";
+    // Append a fresh timestamp so OrgLogo always re-fetches after an org
+    // switch instead of getting a stale CDN-cached version of the old image.
+    final rawLogo = churchData.logo ?? "";
+    logo = rawLogo.isNotEmpty
+        ? '$rawLogo?t=${DateTime.now().millisecondsSinceEpoch}'
+        : "";
     address = churchData.address ?? "";
     read = churchData.read ?? "";
     gpsLat = churchData.gpsLat ?? "";

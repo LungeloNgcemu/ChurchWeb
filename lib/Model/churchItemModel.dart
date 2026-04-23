@@ -46,7 +46,7 @@ class ChurchItemModel {
       userCount: json['UserCount'],
       limitReached: json['LimitReached'],
       expire: json['Expire'],
-      logo: json['LogoAddress'],
+      logo: json['Logo'],
       address: json['Address'],
       read: json['Read'],
       gpsLat: json['GpsLat'],

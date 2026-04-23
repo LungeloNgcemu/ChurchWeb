@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
+import 'package:master/theme/app_colors.dart';
+import 'package:master/theme/app_typography.dart';
 
 class FrontScreen extends StatelessWidget {
   const FrontScreen({super.key});
@@ -7,69 +8,106 @@ class FrontScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Stack(children: [
-      Image.asset(
-        'lib/images/new.jpg',
-        width: window.physicalSize.width,
-        height: window.physicalSize.height,
-        fit: BoxFit.cover,
-      ),
-      const Positioned(
-        top: 400.0,
-        left: 40.0,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Welcome Back',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 50.0,
-                fontWeight: FontWeight.bold,
+      backgroundColor: AppColors.navyDeep,
+      body: Stack(
+        children: [
+          // Decorative background blobs
+          Positioned(
+            top: -60,
+            right: -60,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.purple.withOpacity(0.15),
               ),
-            ),
-            Text(
-              'Boss',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 50.0,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: 10.0),
-              child: Text(
-                'The best Salon to make you look and \n feel beautiful in the palm of your hand',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 15.0,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      Positioned(
-        top: 600,
-        left: 50,
-        child: MaterialButton(
-          minWidth: 300,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.0),
-          ),
-          color: Colors.black,
-          onPressed: () {
-            Navigator.pushNamed(context, '/appWriteLogin');
-          },
-          child: const Text(
-            "Continue",
-            style: TextStyle(
-              fontSize: 20.0,
-              color: Colors.white,
             ),
           ),
-        ),
+          Positioned(
+            bottom: 100,
+            left: -80,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.purple.withOpacity(0.08),
+              ),
+            ),
+          ),
+          // Content
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 60),
+                  // Logo mark
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: AppColors.purpleCardGradient,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: const Icon(Icons.hub_outlined,
+                        size: 28, color: AppColors.white),
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    'Welcome to\nConnect',
+                    style: AppTypography.headingLarge.copyWith(
+                      color: AppColors.white,
+                      fontSize: 38,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Where community happens.',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.whiteDim,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () =>
+                        Navigator.pushNamed(context, '/appWriteLogin'),
+                    child: Container(
+                      width: double.infinity,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        gradient: AppColors.orangeGradient,
+                        borderRadius: BorderRadius.circular(50),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.orange.withOpacity(0.33),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Continue  →',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
-    ]));
+    );
   }
 }

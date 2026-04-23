@@ -412,6 +412,17 @@ class Authenticate {
     }
   }
 
+  /// Returns null on success, or an error message string on failure.
+  static Future<String?> requestVoiceOtp(BuildContext context) async {
+    try {
+      final registrationData =
+          context.read<RegistrationProvider>().registrationModel;
+      return await AuthService.sendVoiceOtp(registrationData.phoneNumber!);
+    } catch (error) {
+      return "Problem requesting voice call: $error";
+    }
+  }
+
   static Future<bool> registerOrginisationAndUser(
     String name,
     String email,

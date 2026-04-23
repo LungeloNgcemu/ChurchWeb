@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/widgets.dart';
+import 'package:master/theme/app_colors.dart';
 
 import '../componants/chips.dart';
 
@@ -46,7 +47,7 @@ class PrayerCard extends StatelessWidget {
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 0.0),
         decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.card,
             borderRadius: BorderRadius.circular(8.0),
             boxShadow: const [
               BoxShadow(

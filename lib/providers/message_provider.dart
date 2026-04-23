@@ -64,6 +64,29 @@ class MessageProvider extends ChangeNotifier {
     });
   }
 
+  /// Inserts [olderMessages] before the current list (for scroll-up pagination).
+  /// Duplicates (by id) are filtered out. The caller is responsible for
+  /// maintaining the correct scroll offset after this call.
+  void prependMessages(List<MessageModel> olderMessages) {
+    final existingIds = _messages.map((m) => m.id).toSet();
+    final newOnes = olderMessages
+        .where((m) => !existingIds.contains(m.id))
+        .toList()
+      ..sort((a, b) {
+        final timeA = DateTime.tryParse(a.time ?? '') ?? DateTime(0);
+        final timeB = DateTime.tryParse(b.time ?? '') ?? DateTime(0);
+        return timeA.compareTo(timeB);
+      });
+
+    if (newOnes.isEmpty) return;
+
+    // insertAll mutates the SAME list object — no new list created,
+    // so Flutter only rebuilds the new items rather than the whole tree.
+    _messages.insertAll(0, newOnes);
+    _messagesStreamController.add(_messages);
+    notifyListeners();
+  }
+
   void removeMessage(String? messageId) {
     _messages.removeWhere((message) => message.id == messageId);
     _messagesStreamController.add(_messages);

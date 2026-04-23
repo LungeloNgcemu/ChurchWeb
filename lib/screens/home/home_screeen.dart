@@ -1,20 +1,28 @@
-import 'package:animated_snack_bar/animated_snack_bar.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/church_init.dart';
 import 'package:master/classes/home_class.dart';
-import 'package:master/componants/share_dialog.dart';
+import 'package:master/componants/global_booking.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:master/services/api/token_service.dart';
 import 'package:master/services/utils/invitation_service.dart';
 import 'package:master/util/alerts.dart';
 import 'package:provider/provider.dart';
+import 'package:master/theme/app_colors.dart';
+import 'package:master/theme/app_typography.dart';
+import 'package:master/theme/app_spacing.dart';
+import 'package:master/widgets/common/connect_avatar.dart';
 import 'widgets/about_us.dart';
 import '../../classes/on_create_class.dart';
-import '../../componants/chips.dart' as MyChips;
-import '../../componants/minister.dart';
-import 'package:master/screens/home/widgets/map.dart' as location;
 import '../../providers/url_provider.dart';
 import 'create_minister.dart';
+import 'package:master/screens/home/widgets/map.dart' as location;
+import 'package:master/theme/theme_manager.dart';
+import 'package:master/widgets/common/connect_loader.dart';
+import 'package:master/widgets/common/org_logo.dart';
+import 'package:master/widgets/home/home_modals.dart';
+import 'package:master/util/image_picker_custom.dart';
+import 'dart:typed_data';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,294 +33,685 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with AutomaticKeepAliveClientMixin {
+  // ── preserved ─────────────────────────────────────────────────────────────
   HomeClass homeClass = HomeClass();
   CreateClass create = CreateClass();
   ChurchInit visbibity = ChurchInit();
   Authenticate auth = Authenticate();
-  ScrollController scrollController = ScrollController();
-  DraggableScrollableController controller = DraggableScrollableController();
   bool isLoading = false;
-
+  bool _logoUploading = false;
   String selectedOption = 'About Us';
+
+  // ── Stats state ───────────────────────────────────────────────────────────
+  int _memberCount = 0;
+  int _newCount    = 0;
+  bool _statsLoading = true;
+  String _role = '';
 
   @override
   void initState() {
     _initChurch();
-    // snackInit();
-
     super.initState();
   }
 
   Future<void> _initChurch() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    ChurchInit churchStart = ChurchInit();
-    Authenticate auth = Authenticate();
-
+    setState(() => isLoading = true);
     await ChurchInit.init(context);
-    const message = " Welcome to Church Connect";
     homeClass.ministerInit(setState, context);
-
+    homeClass.galleryInit(setState, context);
+    _fetchStats(); // fire-and-forget — updates stats independently
     Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => isLoading = false);
+    });
+  }
+
+  /// Queries Supabase for real member + new-member counts.
+  Future<void> _fetchStats() async {
+    try {
+      final user = await TokenService.tokenUser();
+      final uniqueChurchId = user?.uniqueChurchId ?? '';
+
+      if (uniqueChurchId.isEmpty) {
+        if (mounted) setState(() { _statsLoading = false; _role = user?.role ?? ''; });
+        return;
+      }
+
+      // Total members for this organisation.
+      // Table: 'User' (singular, capital U — exact PostgreSQL/Supabase table name).
+      // Column: 'UniqueChurchId' (exact casing as confirmed by SELECT query).
+      // .count(CountOption.exact) returns int directly (postgrest 2.x API).
+      final memberCount = await supabase
+          .from('User')
+          .count(CountOption.exact)
+          .eq('UniqueChurchId', uniqueChurchId);
+
+      // Members who joined in the last 7 days
+      final sevenDaysAgo =
+          DateTime.now().subtract(const Duration(days: 7)).toIso8601String();
+      final newResult = await supabase
+          .from('User')
+          .select('id')
+          .eq('UniqueChurchId', uniqueChurchId)
+          .gte('created_at', sevenDaysAgo);
+
       if (mounted) {
         setState(() {
-          isLoading = false;
+          _memberCount   = memberCount;
+          _newCount      = (newResult as List).length;
+          _statsLoading  = false;
+          _role          = user?.role ?? '';
         });
       }
-    });
+    } catch (_) {
+      if (mounted) setState(() => _statsLoading = false);
+    }
+  }
+
+  // ── Org logo upload (Admin only) ─────────────────────────────────────────
+  Future<void> _uploadOrgLogo() async {
+    setState(() => _logoUploading = true);
+    try {
+      final ImagePickerCustom picker = ImagePickerCustom();
+      final Uint8List? imageBytes = await picker.pickImageToByte();
+      if (imageBytes == null) { setState(() => _logoUploading = false); return; }
+
+      final provider = Provider.of<christProvider>(context, listen: false);
+      final bucket   = provider.myMap['Project']?['Bucket'] ?? '';
+      final orgName  = provider.myMap['Project']?['ChurchName'] ?? '';
+
+      await supabase.storage.from(bucket).uploadBinary(
+        'org_logo',
+        imageBytes,
+        fileOptions: const FileOptions(cacheControl: '0', upsert: true),
+      );
+      final publicUrl = supabase.storage.from(bucket).getPublicUrl('org_logo');
+
+      // Store the clean URL in the DB (no query params).
+      await supabase
+          .from('Church')
+          .update({'Logo': publicUrl})
+          .eq('ChurchName', orgName);
+
+      // Append a timestamp cache-buster to the in-memory provider URL.
+      // Supabase always returns the same public URL for the same filename,
+      // so without this OrgLogo sees no URL change, reuses its cached future,
+      // and keeps showing the old image.  The timestamp makes the URL unique
+      // → didUpdateWidget fires → bytes are re-fetched from the new image.
+      final bustUrl = '$publicUrl?t=${DateTime.now().millisecondsSinceEpoch}';
+      provider.myMap['Project']?['LogoAddress'] = bustUrl;
+      provider.updatemyMap(newValue: provider.myMap);
+
+      if (mounted) {
+        alertComplete(context, 'Logo updated');
+        setState(() => _logoUploading = false);
+      }
+    } catch (_) {
+      if (mounted) {
+        alertReturn(context, 'Failed to update logo');
+        setState(() => _logoUploading = false);
+      }
+    }
   }
 
   @override
   bool get wantKeepAlive => true;
 
+  // ── quick-action dispatcher ───────────────────────────────────────────────
+  void _handleQuickAction(BuildContext context, String route) {
+    switch (route) {
+      case '/createPost':
+        showPostsModal(context);
+        break;
+      case '/createEvent':
+        showEventsModal(context);
+        break;
+      case '/members':
+        showMembersModal(context);
+        break;
+      case '/createRequest':
+        showRequestsModal(context);
+        break;
+      default:
+        Navigator.pushNamed(context, route);
+    }
+  }
+
+  // ── quick-action data ─────────────────────────────────────────────────────
+  static List<_QaData> get _quickActions => [
+    _QaData('\u{1F4DD}', 'Post', AppColors.purpleTint, AppColors.purple, '/createPost'),
+    _QaData('\u{1F4C5}', 'Events', AppColors.orangeTint, AppColors.orange, '/createEvent'),
+    _QaData('\u{1F50D}', 'Members', AppColors.blueAccentTint, AppColors.blueAccent, '/members'),
+    _QaData('\u2B50', 'Requests', AppColors.surfaceAlt, AppColors.success, '/createRequest'),
+  ];
+
+  @override
   Widget build(BuildContext context) {
-    double w = MediaQuery.of(context).size.width;
-    double h = MediaQuery.of(context).size.height;
-    return isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : Column(
-            //mainAxisAlignment: MainAxisAlignment.spaceBe,
-            children: [
-              Stack(
-                children: <Widget>[
-                  // buildStreamBuilder(context, "FrontImage"),
-                  Container(
-                    color: Colors.grey[100],
-                    height: h * 0.2796,
-                    width: double.maxFinite,
-                    child: Image.asset("lib/images/clear.png"),
+    super.build(context);
+    context.watch<ThemeManager>(); // re-render when theme changes
+    if (isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.surface,
+        body: Center(
+            child: ConnectLoader()),
+      );
+    }
+
+    final provider = Provider.of<christProvider>(context, listen: false);
+    final churchName = provider.myMap['Project']?['ChurchName'] ?? 'Sunrise Community';
+    final address    = provider.myMap['Project']?['Address'] ?? '';
+    final logoUrl    = provider.myMap['Project']?['LogoAddress'] ?? '';
+
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      body: Column(
+        children: [
+          // ── Navy topbar ───────────────────────────────────────────────
+          _TopBar(
+            orgName: churchName,
+            logoUrl: logoUrl,
+            onShareTap: () async =>
+                await InvitationService.shareInvitation(context),
+          ),
+
+          // ── Scrollable content ────────────────────────────────────────
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+              children: [
+                // Greeting card (purple gradient)
+                _GreetingCard(
+                  churchName: churchName,
+                  address: address,
+                  memberCount: _memberCount,
+                  newCount: _newCount,
+                  statsLoading: _statsLoading,
+                  logoUrl: logoUrl,
+                  isAdmin: _role == 'Admin',
+                  logoUploading: _logoUploading,
+                  onLogoTap: _uploadOrgLogo,
+                ),
+                const SizedBox(height: 12),
+
+                // Quick actions
+                Row(children: [
+                  for (final qa in _quickActions) ...[
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _handleQuickAction(context, qa.route),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 14, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.card,
+                            borderRadius:
+                                BorderRadius.circular(AppSpacing.radiusCard),
+                            boxShadow: const [
+                              BoxShadow(
+                                  color: Color(0x0F000000),
+                                  blurRadius: 6,
+                                  offset: Offset(0, 1))
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: qa.bgColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(qa.emoji,
+                                    style: const TextStyle(fontSize: 18)),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(qa.label,
+                                  style: AppTypography.labelTiny
+                                      .copyWith(color: AppColors.textPrimary)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (qa != _quickActions.last) const SizedBox(width: 10),
+                  ],
+                ]),
+                const SizedBox(height: 14),
+
+                // ── Our Team (ministers) ──────────────────────────────────
+                _SectionHeader(
+                  title: 'Our Team',
+                  actionLabel: ChurchInit.visibilityToggle(context)
+                      ? 'Add'
+                      : null,
+                  onAction: ChurchInit.visibilityToggle(context)
+                      ? () => create.sheeting(context, CreateMinister())
+                      : null,
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 100,
+                  child: StreamBuilder(
+                    stream: homeClass.minister,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.active &&
+                          snapshot.hasData) {
+                        final specs = snapshot.data as List;
+                        return ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: specs.length,
+                          itemBuilder: (context, i) => GestureDetector(
+                            onDoubleTap: () => alertDelete(
+                                context, 'Delete Team Member?', () async {
+                              homeClass.delete(context, 'Minister',
+                                  specs[i]['id'], specs[i]['Image']);
+                              homeClass.ministerInit(setState, context);
+                            }),
+                            child: _MemberTile(
+                              name: specs[i]['Name'] ?? '',
+                              role: specs[i]['Work'] ?? '',
+                              imageUrl: specs[i]['Image'],
+                            ),
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
                   ),
+                ),
+                const SizedBox(height: 14),
+
+                // ── Gallery / About / Map tabs ────────────────────────────
+                _ChipRow(
+                  options: const ['About Us', 'Gallery', 'Map'],
+                  selected: selectedOption,
+                  onSelect: (v) => setState(() => selectedOption = v),
+                ),
+                const SizedBox(height: 12),
+
+                if (selectedOption == 'About Us') const AboutUs(),
+                if (selectedOption == 'Gallery') ...[
+                  if (ChurchInit.visibilityToggle(context))
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () =>
+                            homeClass.galleryInsert(context, setState),
+                        icon: Icon(Icons.upload_rounded,
+                            size: 16, color: AppColors.purple),
+                        label: Text('Upload Images',
+                            style: AppTypography.link),
+                      ),
+                    ),
+                  homeClass.buildGallery(context, canDelete: ChurchInit.visibilityToggle(context), setState: setState),
+                ],
+                if (selectedOption == 'Map') location.Map(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Topbar ────────────────────────────────────────────────────────────────────
+class _TopBar extends StatelessWidget {
+  final String orgName;
+  final String logoUrl;
+  final VoidCallback onShareTap;
+  const _TopBar({required this.orgName, required this.logoUrl, required this.onShareTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: AppSpacing.topBarHeight + MediaQuery.of(context).padding.top,
+      color: AppColors.navy,
+      padding: EdgeInsets.fromLTRB(
+          18, MediaQuery.of(context).padding.top, 18, 13),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Org logo (32×32 rounded square — initials fallback)
+          OrgLogo(
+            name: orgName,
+            logoUrl: logoUrl.isEmpty ? null : logoUrl,
+            size: 32,
+            radius: 10,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(orgName,
+                style: AppTypography.screenTitle.copyWith(fontSize: 16),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
+          ),
+          // Notification
+          GestureDetector(
+            onTap: () {},
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: AppColors.navyIconBg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.notifications_outlined,
+                  size: 18, color: AppColors.white),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Share / Invite
+          GestureDetector(
+            onTap: onShareTap,
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: AppColors.navyIconBg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.share_outlined,
+                  size: 16, color: AppColors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Greeting hero card ────────────────────────────────────────────────────────
+class _GreetingCard extends StatelessWidget {
+  final String churchName;
+  final String address;
+  final int memberCount;
+  final int newCount;
+  final bool statsLoading;
+  final String logoUrl;
+  final bool isAdmin;
+  final bool logoUploading;
+  final VoidCallback? onLogoTap;
+  const _GreetingCard({
+    required this.churchName,
+    required this.address,
+    required this.memberCount,
+    required this.newCount,
+    required this.statsLoading,
+    this.logoUrl = '',
+    this.isAdmin = false,
+    this.logoUploading = false,
+    this.onLogoTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: AppColors.purpleCardGradient,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusHeroCard),
+      ),
+      child: Stack(
+        children: [
+          // Decorative circles
+          Positioned(
+            top: -30,
+            right: -30,
+            child: Container(
+              width: 130,
+              height: 130,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.08),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -20,
+            right: 30,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.05),
+              ),
+            ),
+          ),
+
+          // ── Org logo — top-right of card ──────────────────────────────
+          Positioned(
+            top: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: (isAdmin && !logoUploading) ? onLogoTap : null,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  OrgLogo(
+                    name: churchName,
+                    logoUrl: logoUrl.isEmpty ? null : logoUrl,
+                    size: 48,
+                    radius: 12,
+                  ),
+                  // Upload spinner overlay
+                  if (logoUploading)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.45),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        alignment: Alignment.center,
+                        child: const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
+                          ),
+                        ),
+                      ),
+                    ),
+                  // Admin: camera badge (hidden while uploading)
+                  if (isAdmin && !logoUploading)
+                    Positioned(
+                      bottom: -3,
+                      right: -3,
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: AppColors.orange,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                        child: const Icon(Icons.camera_alt_rounded,
+                            size: 10, color: Colors.white),
+                      ),
+                    ),
                 ],
               ),
-              Padding(
-                padding: const EdgeInsets.only(
-                  left: 8.0,
-                  right: 8.0,
-                  top: 8.0,
-                ),
-                child: Container(
-                  // color: Colors.red,
-                  height: h * 0.625,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
+            ),
+          ),
+
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Good morning \u{1F44B}',
+                  style: AppTypography.bodyMedium
+                      .copyWith(color: AppColors.whiteDim, fontSize: 12)),
+              const SizedBox(height: 4),
+              Text(churchName,
+                  style: AppTypography.headingLarge
+                      .copyWith(color: AppColors.white, fontSize: 20),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
+              if (address.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(address,
+                    style: AppTypography.caption
+                        .copyWith(color: AppColors.whiteDim)),
+              ],
+              const SizedBox(height: 14),
+              statsLoading
+                  ? const SizedBox(
+                      height: 40,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: ConnectLoader(size: 22),
+                      ),
+                    )
+                  : Row(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Icon(Icons.church),
-                                    Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 10.0),
-                                      child: Text(
-                                        Provider.of<christProvider>(context,
-                                                        listen: false)
-                                                    .myMap['Project']
-                                                ?['ChurchName'] ??
-                                            "Loading...",
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          fontSize: 25,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Icon(Icons.location_pin),
-                                    Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 10.0),
-                                      child: Text(
-                                        Provider.of<christProvider>(context,
-                                                    listen: false)
-                                                .myMap['Project']?['Address'] ??
-                                            "Loading...",
-                                        softWrap: true,
-                                        style: TextStyle(fontSize: 15.0),
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              ],
-                            ),
-                            Column(
-                              children: [
-                                IconButton(
-                                    onPressed: () async {
-                                      await InvitationService.shareInvitation(
-                                          context);
-                                    },
-                                    icon: const Icon(Icons.share)),
-                                const Text('Share')
-                              ],
-                            ),
-                          ],
+                        _StatCol(
+                          value: memberCount.toString(),
+                          label: 'Members',
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 15.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Ministers',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Visibility(
-                                visible: Provider.of<christProvider>(context,
-                                            listen: false)
-                                        .myMap['Project']?['Expire'] ??
-                                    false,
-                                child: Visibility(
-                                  visible: ChurchInit.visibilityToggle(context),
-                                  child: TextButton(
-                                    onPressed: () {
-                                      create.sheeting(
-                                          context, CreateMinister());
-                                      // Navigator.pushNamed(context, '/edit');
-                                    },
-                                    child: const Text('Create Minister'),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        const SizedBox(width: 20),
+                        _StatCol(
+                          value: newCount.toString(),
+                          label: 'New this week',
                         ),
-                        Container(
-                          color: Colors.white,
-                          height: h * 0.182,
-                          child: StreamBuilder(
-                            stream: homeClass.minister,
-                            builder: (context, snapshot) {
-                              switch (snapshot.connectionState) {
-                                case ConnectionState.none:
-                                  return SizedBox();
-                                case ConnectionState.waiting:
-                                  return SizedBox();
-                                case ConnectionState.active:
-                                  if (snapshot.hasError) {
-                                  } else if (!snapshot.hasData) {
-                                  } else if (snapshot.hasData) {
-                                    final specs = snapshot.data;
-
-                                    return SizedBox(
-                                      height: 150.0,
-                                      width: w * 0.9611,
-                                      child: ListView.builder(
-                                        scrollDirection: Axis.horizontal,
-                                        itemCount: specs.length,
-                                        itemBuilder: (context, index) {
-                                          return Minister(
-                                            onDoubleTap: () {
-                                              alertDelete(
-                                                  context, "Delete Minister?",
-                                                  () async {
-                                                homeClass.delete(
-                                                    context,
-                                                    'Minister',
-                                                    specs[index]['id'],
-                                                    specs[index]['Image']);
-
-                                                homeClass.ministerInit(
-                                                    setState, context);
-                                              });
-                                            },
-                                            name: specs[index]['Name'],
-                                            work: specs[index]['Work'],
-                                            image: specs[index]['Image'],
-                                          );
-                                        },
-                                      ),
-                                    );
-                                  }
-                                case ConnectionState.done:
-                                  return SizedBox();
-                              }
-                              return SizedBox();
-                            },
-                          ),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Visibility(
-                              visible: Provider.of<christProvider>(context,
-                                          listen: false)
-                                      .myMap['Project']?['Expire'] ??
-                                  false,
-                              child: Visibility(
-                                visible: ChurchInit.visibilityToggle(context),
-                                child: TextButton(
-                                    onPressed: () {
-                                      homeClass.galleryInsert(
-                                          context, setState);
-                                    },
-                                    child: Text('Upload Images')),
-                              ),
-                            )
-                          ],
-                        ),
-                        SizedBox(
-                          height: 50.0,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              MyChips.Chips(
-                                inchip: 'About Us',
-                                isSelected: selectedOption == 'About Us',
-                                onSelected: () {
-                                  setState(() {
-                                    selectedOption = 'About Us';
-                                  });
-                                },
-                              ),
-                              MyChips.Chips(
-                                inchip: 'Gallery',
-                                isSelected: selectedOption == 'Gallery',
-                                onSelected: () {
-                                  setState(() {
-                                    selectedOption = 'Gallery';
-                                  });
-                                },
-                              ),
-                              MyChips.Chips(
-                                inchip: 'Map',
-                                isSelected: selectedOption == 'Map',
-                                onSelected: () {
-                                  setState(() {
-                                    selectedOption = 'Map';
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                        selectedOption == 'About Us' ? AboutUs() : Container(),
-                        selectedOption == 'Gallery'
-                            ? homeClass.buildGallery(context)
-                            : Container(),
-                        selectedOption == 'Map' ? location.Map() : Container(),
                       ],
                     ),
-                  ),
-                ),
-              ),
             ],
-          );
+          ),
+        ],
+      ),
+    );
   }
+}
+
+class _StatCol extends StatelessWidget {
+  final String value;
+  final String label;
+  const _StatCol({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(value,
+            style: AppTypography.statValue.copyWith(
+                color: AppColors.white, fontSize: 18)),
+        Text(label,
+            style: AppTypography.caption.copyWith(color: AppColors.whiteDim)),
+      ],
+    );
+  }
+}
+
+// ── Section header ────────────────────────────────────────────────────────────
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+  const _SectionHeader(
+      {required this.title, this.actionLabel, this.onAction});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(title, style: AppTypography.headingSmall),
+        const Spacer(),
+        if (actionLabel != null)
+          GestureDetector(
+            onTap: onAction,
+            child: Text(actionLabel!,
+                style: AppTypography.link.copyWith(fontSize: 12)),
+          ),
+      ],
+    );
+  }
+}
+
+// ── Team member tile ──────────────────────────────────────────────────────────
+class _MemberTile extends StatelessWidget {
+  final String name;
+  final String role;
+  final String? imageUrl;
+  const _MemberTile(
+      {required this.name, required this.role, this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 72,
+      margin: const EdgeInsets.only(right: 12),
+      child: Column(
+        children: [
+          ConnectAvatar(
+              name: name, imageUrl: imageUrl, size: AvatarSize.md),
+          const SizedBox(height: 6),
+          Text(name.split(' ').first,
+              style: AppTypography.caption
+                  .copyWith(fontWeight: FontWeight.w700, fontSize: 11),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis),
+          Text(role,
+              style: AppTypography.labelTiny
+                  .copyWith(color: AppColors.textMuted, fontSize: 10),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Chip row (About/Gallery/Map) ──────────────────────────────────────────────
+class _ChipRow extends StatelessWidget {
+  final List<String> options;
+  final String selected;
+  final ValueChanged<String> onSelect;
+  const _ChipRow(
+      {required this.options,
+      required this.selected,
+      required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: options.map((o) {
+        final sel = selected == o;
+        return Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: GestureDetector(
+            onTap: () => onSelect(o),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: sel ? AppColors.navy : AppColors.card,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                border: Border.all(
+                    color: sel ? AppColors.navy : AppColors.surfaceAlt,
+                    width: 2),
+              ),
+              child: Text(o,
+                  style: AppTypography.bodyMedium.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: sel ? AppColors.white : AppColors.textMid)),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+// ── Quick-action data record ──────────────────────────────────────────────────
+class _QaData {
+  final String emoji;
+  final String label;
+  final Color bgColor;
+  final Color color;
+  final String route;
+  const _QaData(this.emoji, this.label, this.bgColor, this.color, this.route);
 }
