@@ -51,6 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String number = '';
   bool notificationMessage = false;
   bool notificationPost = false;
+  String _uniqueChurchId = '';
 
   @override
   void initState() {
@@ -68,6 +69,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         number = user.phoneNumber ?? '';
         _role  = user.role ?? '';
+        _uniqueChurchId = user.uniqueChurchId ?? '';
       });
       if (number.isEmpty) throw Exception('User phone number not found');
       UserDetails? userDetails =
@@ -115,10 +117,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  String get _orgId =>
-      Provider.of<christProvider>(context, listen: false)
-              .myMap['Project']?['ProjectId']?.toString() ??
-          '';
+  /// Use the actual organisation UUID from the JWT — same value the message
+  /// screen uses when it calls buildTopic, so subscribe/send topics match.
+  String get _orgId => _uniqueChurchId;
 
   Future<bool> updateChatNotification(bool value) async {
     try {
