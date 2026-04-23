@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../classes/church_init.dart';
 import '../../classes/prayer_class.dart';
+import '../../classes/push_notification/notification.dart';
 import '../../componants/global_booking.dart';
 import '../../providers/url_provider.dart';
 import '../../theme/app_colors.dart';
@@ -196,11 +197,15 @@ class _CreatePrayerState extends State<CreatePrayer> {
                       // ── Submit button ───────────────────────────────────
                       GestureDetector(
                         onTap: () async {
-                          setState(() {
-                            isLoading = true;
-                          });
+                          final prayer = prayerController.text.trim();
+                          if (prayer.isEmpty) return;
 
-                          final prayer = prayerController.text;
+                          setState(() => isLoading = true);
+
+                          final churchName =
+                              Provider.of<christProvider>(context, listen: false)
+                                      .myMap['Project']?['ChurchName'] ??
+                                  '';
 
                           await superbaseProduct(
                             prayer,
@@ -213,13 +218,16 @@ class _CreatePrayerState extends State<CreatePrayer> {
                             ).currentUserImage,
                           );
 
-                          setState(() {
-                            isLoading = false;
-                          });
+                          // Notify all community members about the new request
+                          await PushNotifications.sendMessageToTopic(
+                            topic: churchName,
+                            title: 'New Request',
+                            body: '${currentUser['UserName'] ?? 'Someone'} submitted a request: $prayer',
+                          );
 
+                          setState(() => isLoading = false);
                           prayerController.clear();
-
-                          Navigator.of(context).pop();
+                          if (context.mounted) Navigator.of(context).pop();
                         },
                         child: Container(
                           width: double.infinity,

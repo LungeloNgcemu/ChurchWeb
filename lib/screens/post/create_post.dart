@@ -99,7 +99,7 @@ class _PosterState extends State<Poster> {
     }
   }
 
-  void superbasePost(String Des, String img) async {
+  Future<void> superbasePost(String Des, String img) async {
     await supabase.from('Posts').insert({
       'Description': Des,
       'ImageUrl': img,
@@ -129,12 +129,12 @@ class _PosterState extends State<Poster> {
         await _uploadImageToSuperbase(_image);
       }
 
-      superbasePost(description, imageUrl ?? '');
+      await superbasePost(description, imageUrl ?? '');
 
-      PushNotifications.sendMessageToTopic(
+      await PushNotifications.sendMessageToTopic(
           topic: Provider.of<christProvider>(context, listen: false)
               .myMap['Project']?['ChurchName'],
-          title: 'Post',
+          title: 'New Post',
           body: description);
 
       Future.delayed(const Duration(seconds: 1), () {
