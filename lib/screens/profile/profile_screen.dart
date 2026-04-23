@@ -107,25 +107,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── preserved: notification toggle ────────────────────────────────────────
   Future<void> getNotificationValue() async {
-    String? name = await PushNotifications.getCurrentTopic();
+    final chat = await PushNotifications.isSubscribedToFeature('chat');
+    final post = await PushNotifications.isSubscribedToFeature('post');
     setState(() {
-      notificationMessage = name != null;
-      notificationPost = name != null;
+      notificationMessage = chat;
+      notificationPost = post;
     });
   }
 
-  Future<bool> updateNotification(bool value) async {
+  String get _orgId =>
+      Provider.of<christProvider>(context, listen: false)
+              .myMap['Project']?['ProjectId']?.toString() ??
+          '';
+
+  Future<bool> updateChatNotification(bool value) async {
     try {
-      final orgId =
-          Provider.of<christProvider>(context, listen: false)
-                  .myMap['Project']?['ProjectId']?.toString() ??
-              '';
-      if (value) {
-        await PushNotifications.subscribeToChurchTopic(orgId);
-      } else {
-        await PushNotifications.unsubscribeFromChurchTopic(orgId);
-      }
-      return true;
+      return value
+          ? await PushNotifications.subscribeToFeatureTopic(_orgId, 'chat')
+          : await PushNotifications.unsubscribeFromFeatureTopic(_orgId, 'chat');
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> updatePostNotification(bool value) async {
+    try {
+      return value
+          ? await PushNotifications.subscribeToFeatureTopic(_orgId, 'post')
+          : await PushNotifications.unsubscribeFromFeatureTopic(_orgId, 'post');
     } catch (_) {
       return false;
     }
@@ -333,7 +342,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label: 'Chat Notifications',
                       value: notificationMessage,
                       onChanged: (v) async {
-                        final ok = await updateNotification(v);
+                        final ok = await updateChatNotification(v);
                         if (ok) setState(() => notificationMessage = v);
                       },
                     ),
@@ -344,7 +353,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label: 'Post Notifications',
                       value: notificationPost,
                       onChanged: (v) async {
-                        final ok = await updateNotification(v);
+                        final ok = await updatePostNotification(v);
                         if (ok) setState(() => notificationPost = v);
                       },
                     ),

@@ -216,7 +216,8 @@ class _MessageScreenState extends State<MessageScreen> {
     );
 
     PushNotifications.sendMessageToTopic(
-      topic: currentUser?.uniqueChurchId ?? '',
+      topic: PushNotifications.buildTopic(
+          currentUser?.uniqueChurchId ?? '', 'chat'),
       title: currentUser?.userName ?? '',
       body: toSend,
     );
