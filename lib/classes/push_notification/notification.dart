@@ -2,12 +2,15 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:master/main.dart' show navigatorKey;
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:master/services/api/notification_service.dart';
 import 'package:master/ui/notifications/widgets/notificationSnackBar.dart';
 import 'package:master/util/converter.dart';
+import 'package:master/util/screen_tracker.dart';
+import 'package:master/widgets/common/connect_notification_toast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
@@ -42,23 +45,37 @@ class PushNotifications {
       debugPrint('User granted permission: ${settings.authorizationStatus}');
 
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        debugPrint('Got a message whilst in the foreground!');
-        debugPrint('Message data: ${message.data}');
+        final title = message.notification?.title ??
+            message.data['title'] ??
+            'New Notification';
+        final body = message.notification?.body ??
+            message.data['body'] ??
+            '';
+        // Derive type from topic stored in data (e.g. 'chat_abc' → 'chat')
+        final rawTopic = message.data['topic'] as String? ?? '';
+        final type = rawTopic.contains('chat')
+            ? 'chat'
+            : rawTopic.contains('request')
+                ? 'request'
+                : 'post';
 
-        if (message.data != null) {
-          debugPrint('Title: ${message.data['title']}');
-          debugPrint('Body: ${message.data['body']}');
+        debugPrint('Foreground message [$type]: $title — $body');
 
-          try {
-            showAwesomeNotification(
-              context: context,
-              title: message.data['title'] ?? 'New Notification',
-              body: message.data['body'] ?? 'You have a new notification',
-              contentType: ContentType.success,
-            );
-          } catch (e) {
-            debugPrint('Error showing notification: $e');
-          }
+        // Suppress if the user is already on that screen
+        if (ScreenTracker.isSuppressed(type)) {
+          debugPrint('Toast suppressed — user is on $type screen');
+          return;
+        }
+
+        // Show branded in-app toast via the global navigator key
+        final ctx = navigatorKey.currentContext;
+        if (ctx != null) {
+          showConnectToast(
+            context: ctx,
+            title: title,
+            body: body,
+            type: type,
+          );
         }
       });
 
