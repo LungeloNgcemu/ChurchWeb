@@ -131,9 +131,11 @@ class _PosterState extends State<Poster> {
 
       await superbasePost(description, imageUrl ?? '');
 
+      final orgId = Provider.of<christProvider>(context, listen: false)
+              .myMap['Project']?['ProjectId']?.toString() ??
+          '';
       await PushNotifications.sendMessageToTopic(
-          topic: Provider.of<christProvider>(context, listen: false)
-              .myMap['Project']?['ChurchName'],
+          topic: PushNotifications.buildTopic(orgId, 'post'),
           title: 'New Post',
           body: description);
 

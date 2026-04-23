@@ -2,12 +2,15 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:master/main.dart' show navigatorKey;
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:master/services/api/notification_service.dart';
 import 'package:master/ui/notifications/widgets/notificationSnackBar.dart';
 import 'package:master/util/converter.dart';
+import 'package:master/util/screen_tracker.dart';
+import 'package:master/widgets/common/connect_notification_toast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
@@ -42,23 +45,37 @@ class PushNotifications {
       debugPrint('User granted permission: ${settings.authorizationStatus}');
 
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        debugPrint('Got a message whilst in the foreground!');
-        debugPrint('Message data: ${message.data}');
+        final title = message.notification?.title ??
+            message.data['title'] ??
+            'New Notification';
+        final body = message.notification?.body ??
+            message.data['body'] ??
+            '';
+        // Derive type from topic stored in data (e.g. 'chat_abc' → 'chat')
+        final rawTopic = message.data['topic'] as String? ?? '';
+        final type = rawTopic.contains('chat')
+            ? 'chat'
+            : rawTopic.contains('request')
+                ? 'request'
+                : 'post';
 
-        if (message.data != null) {
-          debugPrint('Title: ${message.data['title']}');
-          debugPrint('Body: ${message.data['body']}');
+        debugPrint('Foreground message [$type]: $title — $body');
 
-          try {
-            showAwesomeNotification(
-              context: context,
-              title: message.data['title'] ?? 'New Notification',
-              body: message.data['body'] ?? 'You have a new notification',
-              contentType: ContentType.success,
-            );
-          } catch (e) {
-            debugPrint('Error showing notification: $e');
-          }
+        // Suppress if the user is already on that screen
+        if (ScreenTracker.isSuppressed(type)) {
+          debugPrint('Toast suppressed — user is on $type screen');
+          return;
+        }
+
+        // Show branded in-app toast via the global navigator key
+        final ctx = navigatorKey.currentContext;
+        if (ctx != null) {
+          showConnectToast(
+            context: ctx,
+            title: title,
+            body: body,
+            type: type,
+          );
         }
       });
 
@@ -161,60 +178,76 @@ class PushNotifications {
     }
   }
 
-  static Future<bool> subscribeToChurchTopic(String church) async {
-    String churchName = convertName(church);
+  /// Builds a consistent FCM topic string: e.g. "post_abc123", "chat_abc123"
+  static String buildTopic(String orgId, String type) {
+    return '${type}_${convertName(orgId)}';
+  }
+
+  /// Subscribe a device to a specific feature topic (chat / post / request)
+  static Future<bool> subscribeToFeatureTopic(String orgId, String type) async {
+    final topic = buildTopic(orgId, type);
     try {
       String? token = await getFCMToken();
-      print('Token $token');
       if (token == null) return false;
-      bool result =
-          await notificationService.subscribeToTopic([token], churchName);
+      bool result = await notificationService.subscribeToTopic([token], topic);
       if (result) {
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('subscribed_topic', churchName);
-        debugPrint('Subscribed to church topic: $churchName');
+        await prefs.setString('subscribed_topic_$type', topic);
+        debugPrint('Subscribed to $type topic: $topic');
         return true;
       }
     } catch (e) {
-      debugPrint('Failed to subscribe to topic $churchName: $e');
-      return false;
+      debugPrint('Failed to subscribe to $type topic: $e');
     }
     return false;
   }
 
-  static Future<bool> unsubscribeFromChurchTopic(String church) async {
-    String churchName = convertName(church);
+  /// Unsubscribe a device from a specific feature topic
+  static Future<bool> unsubscribeFromFeatureTopic(String orgId, String type) async {
+    final topic = buildTopic(orgId, type);
     try {
       String? token = await getFCMToken();
       if (token == null) return false;
-      bool result =
-          await notificationService.unsubscribeFromTopic([token], churchName);
+      bool result = await notificationService.unsubscribeFromTopic([token], topic);
       if (result) {
         final prefs = await SharedPreferences.getInstance();
-        await prefs.remove('subscribed_topic');
-        debugPrint('Unsubscribed from church topic: $churchName');
+        await prefs.remove('subscribed_topic_$type');
+        debugPrint('Unsubscribed from $type topic: $topic');
         return true;
       }
     } catch (e) {
-      debugPrint('Failed to unsubscribe from topic $churchName: $e');
-      return false;
+      debugPrint('Failed to unsubscribe from $type topic: $e');
     }
     return false;
+  }
+
+  /// Check whether the device is subscribed to a specific feature topic
+  static Future<bool> isSubscribedToFeature(String type) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('subscribed_topic_$type') != null;
+  }
+
+  // ── Legacy single-topic helpers (kept for backward compat) ─────────────────
+  static Future<bool> subscribeToChurchTopic(String church) async {
+    return subscribeToFeatureTopic(church, 'general');
+  }
+
+  static Future<bool> unsubscribeFromChurchTopic(String church) async {
+    return unsubscribeFromFeatureTopic(church, 'general');
   }
 
   static Future<String?> getCurrentTopic() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('subscribed_topic');
+    return prefs.getString('subscribed_topic_general');
   }
 
+  /// Send a notification to a pre-built topic (e.g. "post_abc123")
   static Future<bool> sendMessageToTopic({
     required String topic,
     required String title,
     required String body,
   }) async {
-    // Must match the converted name used at subscription time
-    final convertedTopic = convertName(topic);
     return notificationService.sendNotificationToTopic(
-        topic: convertedTopic, title: title, body: body);
+        topic: topic, title: title, body: body);
   }
 }

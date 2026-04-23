@@ -4,6 +4,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:master/classes/push_notification/notification.dart';
+
+/// Global navigator key — lets PushNotifications show toasts from anywhere.
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 import 'package:master/providers/message_provider.dart';
 import 'package:master/providers/registration_provider.dart';
 import 'package:master/providers/user_data_provider.dart';
@@ -169,6 +172,7 @@ class MyApp extends StatelessWidget {
     // descendants) rebuilds whenever the user picks a new theme.
     return Consumer2<ThemeManager, FontManager>(
       builder: (context, themeManager, fontManager, _) => MaterialApp(
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       initialRoute: isJoinChurchLink ? '/joinChurch' : '/splash',
       theme: AppTheme.build(),
