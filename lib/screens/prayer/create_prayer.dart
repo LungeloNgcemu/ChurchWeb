@@ -202,9 +202,9 @@ class _CreatePrayerState extends State<CreatePrayer> {
 
                           setState(() => isLoading = true);
 
-                          final churchName =
+                          final orgId =
                               Provider.of<christProvider>(context, listen: false)
-                                      .myMap['Project']?['ChurchName'] ??
+                                      .myMap['Project']?['ProjectId']?.toString() ??
                                   '';
 
                           await superbaseProduct(
@@ -220,7 +220,7 @@ class _CreatePrayerState extends State<CreatePrayer> {
 
                           // Notify all community members about the new request
                           await PushNotifications.sendMessageToTopic(
-                            topic: churchName,
+                            topic: orgId,
                             title: 'New Request',
                             body: '${currentUser['UserName'] ?? 'Someone'} submitted a request: $prayer',
                           );

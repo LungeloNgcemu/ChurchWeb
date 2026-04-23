@@ -116,10 +116,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<bool> updateNotification(bool value) async {
     try {
+      final orgId =
+          Provider.of<christProvider>(context, listen: false)
+                  .myMap['Project']?['ProjectId']?.toString() ??
+              '';
       if (value) {
-        await PushNotifications.subscribeToChurchTopic('church');
+        await PushNotifications.subscribeToChurchTopic(orgId);
       } else {
-        await PushNotifications.unsubscribeFromChurchTopic('church');
+        await PushNotifications.unsubscribeFromChurchTopic(orgId);
       }
       return true;
     } catch (_) {
