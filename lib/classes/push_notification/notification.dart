@@ -212,7 +212,9 @@ class PushNotifications {
     required String title,
     required String body,
   }) async {
+    // Must match the converted name used at subscription time
+    final convertedTopic = convertName(topic);
     return notificationService.sendNotificationToTopic(
-        topic: topic, title: title, body: body);
+        topic: convertedTopic, title: title, body: body);
   }
 }
