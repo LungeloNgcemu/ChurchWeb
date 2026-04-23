@@ -220,7 +220,7 @@ class _CreatePrayerState extends State<CreatePrayer> {
 
                           // Notify all community members about the new request
                           await PushNotifications.sendMessageToTopic(
-                            topic: orgId,
+                            topic: PushNotifications.buildTopic(orgId, 'request'),
                             title: 'New Request',
                             body: '${currentUser['UserName'] ?? 'Someone'} submitted a request: $prayer',
                           );

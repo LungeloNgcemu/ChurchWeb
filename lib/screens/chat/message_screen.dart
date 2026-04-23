@@ -12,6 +12,7 @@ import 'package:master/services/api/chat_service.dart';
 import 'package:master/services/api/token_service.dart';
 import 'package:master/services/socket/io_service.dart';
 import 'package:master/util/alerts.dart';
+import 'package:master/util/screen_tracker.dart';
 import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/theme/app_typography.dart';
@@ -55,6 +56,7 @@ class _MessageScreenState extends State<MessageScreen> {
   @override
   void initState() {
     super.initState();
+    ScreenTracker.enter('message'); // suppress chat toasts while here
 
     scrollController = ScrollController();
     scrollController.addListener(_onScroll);
@@ -176,6 +178,7 @@ class _MessageScreenState extends State<MessageScreen> {
 
   @override
   void dispose() {
+    ScreenTracker.exit('message'); // re-enable chat toasts
     scrollController.removeListener(_onScroll);
     scrollController.dispose();
     controller.dispose();
@@ -216,7 +219,8 @@ class _MessageScreenState extends State<MessageScreen> {
     );
 
     PushNotifications.sendMessageToTopic(
-      topic: currentUser?.uniqueChurchId ?? '',
+      topic: PushNotifications.buildTopic(
+          currentUser?.uniqueChurchId ?? '', 'chat'),
       title: currentUser?.userName ?? '',
       body: toSend,
     );
