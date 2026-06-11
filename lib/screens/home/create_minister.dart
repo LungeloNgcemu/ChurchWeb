@@ -89,7 +89,7 @@ class _CreateMinisterState extends State<CreateMinister> {
                               // Title
                               const Expanded(
                                 child: Text(
-                                  'Your Profile',
+                                  'Profile',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontFamily: 'Inter',
@@ -152,9 +152,11 @@ class _CreateMinisterState extends State<CreateMinister> {
                       const SizedBox(height: 7),
                       GestureDetector(
                         onTap: _pickImage,
-                        child: Container(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
+                          child: Container(
                           width: double.infinity,
-                          height: 80,
+                          height: ministerClass.xImage != null ? 180 : 80,
                           decoration: BoxDecoration(
                             color: AppColors.white,
                             borderRadius:
@@ -169,15 +171,10 @@ class _CreateMinisterState extends State<CreateMinister> {
                             ],
                           ),
                           child: ministerClass.xImage != null
-                              ? ClipRRect(
-                                  borderRadius:
-                                      BorderRadius.circular(AppSpacing.radiusInput - 2),
-                                  child: Image.memory(
-                                    ministerClass.xImage!,
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    height: 80,
-                                  ),
+                              ? Image.memory(
+                                  ministerClass.xImage!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
                                 )
                               : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -210,6 +207,7 @@ class _CreateMinisterState extends State<CreateMinister> {
                                     ),
                                   ],
                                 ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 28),
@@ -365,7 +363,7 @@ class _ProfileField extends StatelessWidget {
               color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 1)),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
@@ -374,7 +372,7 @@ class _ProfileField extends StatelessWidget {
           hintText: hint,
           hintStyle: AppTypography.fieldPlaceholder,
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(vertical: 16),
         ),
         style: AppTypography.fieldValue,
       ),
