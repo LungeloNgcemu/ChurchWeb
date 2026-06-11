@@ -141,7 +141,7 @@ class _CrossRoadState extends State<CrossRoad> {
                     // ── Header ────────────────────────────────────────────
                     Text('WELCOME', style: AppTypography.fieldLabel),
                     const SizedBox(height: 6),
-                    Text('Join your community',
+                    Text('Sign in to account',
                         style: AppTypography.headingLarge),
                     const SizedBox(height: 6),
                     Text(
@@ -150,19 +150,19 @@ class _CrossRoadState extends State<CrossRoad> {
                     ),
                     const SizedBox(height: 22),
 
-                    // ── Join a Community ──────────────────────────────────
-                    _OptionCard(
-                      iconBg: AppColors.purpleTint,
-                      iconColor: AppColors.purple,
-                      icon: Icons.group_add_outlined,
-                      title: 'Join a Community',
-                      subtitle: 'Enter an invite code or scan a QR link',
-                      cardBg: AppColors.white,
-                      borderColor: AppColors.purpleBorder,
-                      onTap: () =>
-                          Navigator.pushNamed(context, '/RegisterMember'),
-                    ),
-                    const SizedBox(height: 12),
+                    // ── Join a Community (commented out — hidden for now) ──
+                    // _OptionCard(
+                    //   iconBg: AppColors.purpleTint,
+                    //   iconColor: AppColors.purple,
+                    //   icon: Icons.group_add_outlined,
+                    //   title: 'Join a Community',
+                    //   subtitle: 'Enter an invite code or scan a QR link',
+                    //   cardBg: AppColors.white,
+                    //   borderColor: AppColors.purpleBorder,
+                    //   onTap: () =>
+                    //       Navigator.pushNamed(context, '/RegisterMember'),
+                    // ),
+                    // const SizedBox(height: 12),
 
                     // ── Create an Organisation ────────────────────────────
                     _OptionCard(
@@ -176,27 +176,21 @@ class _CrossRoadState extends State<CrossRoad> {
                       onTap: () =>
                           Navigator.pushNamed(context, '/createAccount'),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 12),
 
-                    // ── Sign in link ──────────────────────────────────────
-                    Center(
-                      child: Text(
-                        'Already a member?',
-                        style: AppTypography.caption
-                            .copyWith(color: AppColors.textMuted),
-                      ),
+                    // ── Sign in ───────────────────────────────────────────
+                    _OptionCard(
+                      iconBg: AppColors.purpleTint,
+                      iconColor: AppColors.purple,
+                      icon: Icons.login_rounded,
+                      title: 'Sign in to account',
+                      subtitle: 'Already a member? Sign in here',
+                      cardBg: AppColors.white,
+                      borderColor: AppColors.purpleBorder,
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/RegisterMember'),
                     ),
-                    const SizedBox(height: 6),
-                    Center(
-                      child: GestureDetector(
-                        onTap: () =>
-                            Navigator.pushNamed(context, '/RegisterMember'),
-                        child: Text(
-                          'Sign in to your account →',
-                          style: AppTypography.link,
-                        ),
-                      ),
-                    ),
+                    const SizedBox(height: 28),
                   ],
                 ),
               ),

@@ -18,19 +18,12 @@ class _CreateMinisterState extends State<CreateMinister> {
   bool isLoading = false;
   TextEditingController workController = TextEditingController();   // Position / Title
   TextEditingController nameController = TextEditingController();   // Full Name
-  TextEditingController bioController = TextEditingController();    // Short Bio (new)
   MinisterClass ministerClass = MinisterClass();
-
-  // ── new v2 state ──────────────────────────────────────────────────────────
-  int _selectedPermission = 0; // 0=Leader,1=Coordinator,2=Moderator,3=Media
-
-  static const _permissions = ['Leader', 'Coordinator', 'Moderator', 'Media'];
 
   @override
   void dispose() {
     workController.dispose();
     nameController.dispose();
-    bioController.dispose();
     super.dispose();
   }
 
@@ -52,8 +45,7 @@ class _CreateMinisterState extends State<CreateMinister> {
     } finally {
       workController.clear();
       nameController.clear();
-      bioController.clear();
-      Navigator.of(context).pop(); // preserved: close modal/sheet
+      Navigator.of(context).pop();
     }
   }
 
@@ -97,7 +89,7 @@ class _CreateMinisterState extends State<CreateMinister> {
                               // Title
                               const Expanded(
                                 child: Text(
-                                  'Your Profile',
+                                  'Profile',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontFamily: 'Inter',
@@ -155,101 +147,16 @@ class _CreateMinisterState extends State<CreateMinister> {
                       ),
                       const SizedBox(height: 14),
 
-                      // ── Permissions chips ────────────────────────────────
-                      Text('PERMISSIONS', style: AppTypography.fieldLabel),
-                      const SizedBox(height: 7),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _permissions.asMap().entries.map((e) {
-                          final i = e.key;
-                          final label = e.value;
-                          final sel = _selectedPermission == i;
-                          return GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedPermission = i),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: sel
-                                    ? AppColors.navy
-                                    : AppColors.white,
-                                borderRadius:
-                                    BorderRadius.circular(AppSpacing.radiusPill),
-                                border: Border.all(
-                                  color: sel
-                                      ? AppColors.navy
-                                      : AppColors.surfaceAlt,
-                                  width: 2,
-                                ),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Color(0x09000000),
-                                    blurRadius: 4,
-                                    offset: Offset(0, 1),
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                label,
-                                style: AppTypography.chipLabel.copyWith(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: sel
-                                      ? AppColors.white
-                                      : AppColors.textMid,
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 14),
-
-                      // ── Short Bio ────────────────────────────────────────
-                      Text('SHORT BIO', style: AppTypography.fieldLabel),
-                      const SizedBox(height: 7),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius:
-                              BorderRadius.circular(AppSpacing.radiusInput),
-                          border: Border.all(
-                              color: AppColors.surfaceAlt, width: 2),
-                          boxShadow: const [
-                            BoxShadow(
-                                color: Color(0x0A000000),
-                                blurRadius: 4,
-                                offset: Offset(0, 1)),
-                          ],
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        child: TextField(
-                          controller: bioController,
-                          maxLines: 3,
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            hintText:
-                                'Share a little about yourself with the community — your role, passion, or what you bring to the team...',
-                            hintStyle: AppTypography.fieldPlaceholder
-                                .copyWith(height: 1.6),
-                          ),
-                          style: AppTypography.bodyMedium
-                              .copyWith(height: 1.6, color: AppColors.textPrimary),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-
                       // ── Profile picture upload (preserved) ───────────────
                       Text('PROFILE PHOTO', style: AppTypography.fieldLabel),
                       const SizedBox(height: 7),
                       GestureDetector(
                         onTap: _pickImage,
-                        child: Container(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
+                          child: Container(
                           width: double.infinity,
-                          height: 80,
+                          height: ministerClass.xImage != null ? 180 : 80,
                           decoration: BoxDecoration(
                             color: AppColors.white,
                             borderRadius:
@@ -264,15 +171,10 @@ class _CreateMinisterState extends State<CreateMinister> {
                             ],
                           ),
                           child: ministerClass.xImage != null
-                              ? ClipRRect(
-                                  borderRadius:
-                                      BorderRadius.circular(AppSpacing.radiusInput - 2),
-                                  child: Image.memory(
-                                    ministerClass.xImage!,
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    height: 80,
-                                  ),
+                              ? Image.memory(
+                                  ministerClass.xImage!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
                                 )
                               : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -305,6 +207,7 @@ class _CreateMinisterState extends State<CreateMinister> {
                                     ),
                                   ],
                                 ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 28),
@@ -460,7 +363,7 @@ class _ProfileField extends StatelessWidget {
               color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 1)),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
@@ -469,7 +372,7 @@ class _ProfileField extends StatelessWidget {
           hintText: hint,
           hintStyle: AppTypography.fieldPlaceholder,
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(vertical: 16),
         ),
         style: AppTypography.fieldValue,
       ),

@@ -33,4 +33,11 @@ class Role {
   static String user = 'User';
 }
 
+/// Dev-only test credentials — bypasses Twilio SMS charge.
+/// Remove or guard behind a flag before going to production.
+class TestAuth {
+  static const String phone = '+27678993879';
+  static const String otp   = '000000';
+}
+
 
