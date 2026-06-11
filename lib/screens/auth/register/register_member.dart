@@ -148,6 +148,23 @@ class _RegisterMemberState extends State<RegisterMember> {
                 child: Stack(
                   children: [
                     Positioned(
+                      top: 48,
+                      left: 16,
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.chevron_left_rounded,
+                                color: AppColors.whiteDim, size: 20),
+                            Text('Back',
+                                style: AppTypography.caption.copyWith(
+                                    color: AppColors.whiteDim)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Positioned(
                       bottom: 30,
                       left: 0,
                       right: 0,
@@ -312,43 +329,41 @@ class _RegisterMemberState extends State<RegisterMember> {
                                 },
                           isLoading: isLoading,
                         ),
-                        const SizedBox(height: 20),
-                        Row(children: [
-                          Expanded(
-                              child: Divider(color: AppColors.surfaceAlt)),
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 14),
-                            child: Text('or continue with',
-                                style: AppTypography.caption
-                                    .copyWith(color: AppColors.textMuted)),
-                          ),
-                          Expanded(
-                              child: Divider(color: AppColors.surfaceAlt)),
-                        ]),
-                        const SizedBox(height: 16),
-                        Row(children: [
-                          Expanded(
-                            child: _SocialButton(
-                              label: 'Google',
-                              icon: const Text('G',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 15,
-                                      color: Color(0xFF4285F4))),
-                              onTap: () {},
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _SocialButton(
-                              label: 'Facebook',
-                              icon: const Icon(Icons.facebook_rounded,
-                                  color: Color(0xFF1877F2), size: 20),
-                              onTap: () {},
-                            ),
-                          ),
-                        ]),
+                        // ── Social login (commented out — not in use) ──────
+                        // const SizedBox(height: 20),
+                        // Row(children: [
+                        //   Expanded(child: Divider(color: AppColors.surfaceAlt)),
+                        //   Padding(
+                        //     padding: const EdgeInsets.symmetric(horizontal: 14),
+                        //     child: Text('or continue with',
+                        //         style: AppTypography.caption
+                        //             .copyWith(color: AppColors.textMuted)),
+                        //   ),
+                        //   Expanded(child: Divider(color: AppColors.surfaceAlt)),
+                        // ]),
+                        // const SizedBox(height: 16),
+                        // Row(children: [
+                        //   Expanded(
+                        //     child: _SocialButton(
+                        //       label: 'Google',
+                        //       icon: const Text('G',
+                        //           style: TextStyle(
+                        //               fontWeight: FontWeight.w800,
+                        //               fontSize: 15,
+                        //               color: Color(0xFF4285F4))),
+                        //       onTap: () {},
+                        //     ),
+                        //   ),
+                        //   const SizedBox(width: 12),
+                        //   Expanded(
+                        //     child: _SocialButton(
+                        //       label: 'Facebook',
+                        //       icon: const Icon(Icons.facebook_rounded,
+                        //           color: Color(0xFF1877F2), size: 20),
+                        //       onTap: () {},
+                        //     ),
+                        //   ),
+                        // ]),
                       ],
                     ),
                   ),

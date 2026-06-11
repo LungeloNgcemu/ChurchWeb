@@ -81,12 +81,15 @@ class _ConnectToastState extends State<_ConnectToast>
     );
 
     _slideCtrl.forward();
-    _progressCtrl.forward().then((_) => _dismiss());
+    _progressCtrl.forward().then((_) {
+      if (mounted) _dismiss();
+    });
   }
 
   void _dismiss() async {
+    if (!mounted) return;
     await _slideCtrl.reverse();
-    widget.onDismiss();
+    if (mounted) widget.onDismiss();
   }
 
   @override

@@ -67,15 +67,24 @@ class PushNotifications {
           return;
         }
 
-        // Show branded in-app toast via the global navigator key
+        // Show branded in-app toast via the global navigator key.
+        // Use a post-frame callback so the overlay is guaranteed to be mounted.
         final ctx = navigatorKey.currentContext;
         if (ctx != null) {
-          showConnectToast(
-            context: ctx,
-            title: title,
-            body: body,
-            type: type,
-          );
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final liveCtx = navigatorKey.currentContext;
+            if (liveCtx == null) return;
+            try {
+              showConnectToast(
+                context: liveCtx,
+                title: title,
+                body: body,
+                type: type,
+              );
+            } catch (e) {
+              debugPrint('Toast show error: $e');
+            }
+          });
         }
       });
 

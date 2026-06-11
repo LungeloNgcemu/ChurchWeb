@@ -7,24 +7,15 @@ class CreateClass {
     Widget screen,
   ) async {
     try {
-      Widget buildBottomSheet(
-        BuildContext context,
-        ScrollController scrollController,
-        double bottomSheetOffset,
-      ) {
-        return SingleChildScrollView(
-          controller: scrollController,
-          child: screen,
-        );
-      }
-
       showFlexibleBottomSheet(
         minHeight: 0,
         initHeight: 0.8,
         maxHeight: 0.8,
         context: context,
-        builder: (context, scrollController, bottomSheetOffset) =>
-            buildBottomSheet(context, scrollController, bottomSheetOffset),
+        // Pass the screen directly — it's a Scaffold with its own scroll view.
+        // Wrapping in SingleChildScrollView would give unbounded constraints to
+        // a Scaffold, which cannot size itself and renders blank.
+        builder: (context, scrollController, bottomSheetOffset) => screen,
         isExpand: true,
         bottomSheetBorderRadius: const BorderRadius.only(
             topLeft: Radius.circular(15.0), topRight: Radius.circular(15.0)),
