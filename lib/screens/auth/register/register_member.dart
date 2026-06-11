@@ -148,6 +148,23 @@ class _RegisterMemberState extends State<RegisterMember> {
                 child: Stack(
                   children: [
                     Positioned(
+                      top: 48,
+                      left: 16,
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.chevron_left_rounded,
+                                color: AppColors.whiteDim, size: 20),
+                            Text('Back',
+                                style: AppTypography.caption.copyWith(
+                                    color: AppColors.whiteDim)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Positioned(
                       bottom: 30,
                       left: 0,
                       right: 0,

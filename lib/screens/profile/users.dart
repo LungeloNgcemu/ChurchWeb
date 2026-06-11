@@ -32,6 +32,32 @@ class _UsersBodyState extends State<UsersBody> {
       body: SafeArea(
         child: Column(
           children: [
+            // ── Back button + title bar ───────────────────────────────────
+            Container(
+              color: AppColors.navy,
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.chevron_left_rounded,
+                            color: AppColors.whiteDim, size: 20),
+                        Text('Back',
+                            style: AppTypography.caption
+                                .copyWith(color: AppColors.whiteDim)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text('Members',
+                      style: AppTypography.screenTitle.copyWith(fontSize: 18)),
+                ],
+              ),
+            ),
+
             // ── Search bar (dark, matches topbar) ─────────────────────────
             _SearchBar(
               controller: _searchController,

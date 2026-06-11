@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/push_notification/notification.dart';
+import 'package:master/services/api/token_service.dart';
 import 'package:master/util/alerts.dart';
 import 'package:master/util/image_picker_custom.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -131,9 +132,8 @@ class _PosterState extends State<Poster> {
 
       await superbasePost(description, imageUrl ?? '');
 
-      final orgId = Provider.of<christProvider>(context, listen: false)
-              .myMap['Project']?['ProjectId']?.toString() ??
-          '';
+      final tokenUser = await TokenService.tokenUser();
+      final orgId = tokenUser?.uniqueChurchId ?? '';
       await PushNotifications.sendMessageToTopic(
           topic: PushNotifications.buildTopic(orgId, 'post'),
           title: 'New Post',

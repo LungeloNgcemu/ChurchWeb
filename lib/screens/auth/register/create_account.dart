@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/util/alerts.dart';
@@ -42,15 +42,15 @@ class _CreateAccountState extends State<CreateAccount> {
   bool numberExist = false;
   bool isLoading = false;
 
-  // ── new state ──────────────────────────────────────────────────────────────
-  int _selectedType = 0; // org type chip index
+  // Organisation Type state — commented out (not connected to API)
+  // int _selectedType = 0;
 
-  static const _types = [
-    ('\u{1F3DB}', 'Community', 'Neighbourhood & social'),
-    ('\u{1F3E2}', 'Corporate', 'Workplace groups'),
-    ('\u{1F393}', 'Education', 'Schools & colleges'),
-    ('\u2764\uFE0F', 'Non-Profit', 'Charity & causes'),
-  ];
+  // static const _types = [
+  //   ('', 'Community', 'Neighbourhood & social'),
+  //   ('', 'Corporate', 'Workplace groups'),
+  //   ('', 'Education', 'Schools & colleges'),
+  //   ('', 'Non-Profit', 'Charity & causes'),
+  // ];
 
   void clearEditor() {
     for (final c in [
@@ -120,6 +120,7 @@ class _CreateAccountState extends State<CreateAccount> {
             children: [
               // ── Dark header with step indicator ─────────────────────────
               Container(
+                width: double.infinity,
                 color: AppColors.navy,
                 child: SafeArea(
                   bottom: false,
@@ -128,32 +129,20 @@ class _CreateAccountState extends State<CreateAccount> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Step row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('STEP 1 OF 3',
-                                style: AppTypography.caption.copyWith(
-                                    color: AppColors.whiteDim,
-                                    letterSpacing: 0.5)),
-                            Row(
-                              children: List.generate(3, (i) {
-                                return Container(
-                                  margin: const EdgeInsets.only(left: 5),
-                                  width: i == 0 ? 32 : 24,
-                                  height: 4,
-                                  decoration: BoxDecoration(
-                                    color: i == 0
-                                        ? AppColors.purple
-                                        : AppColors.purple.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                );
-                              }),
-                            ),
-                          ],
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.chevron_left_rounded,
+                                  color: AppColors.whiteDim, size: 20),
+                              Text('Back',
+                                  style: AppTypography.caption.copyWith(
+                                      color: AppColors.whiteDim)),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 8),
                         Text('Your Organisation',
                             style: AppTypography.screenTitle
                                 .copyWith(fontSize: 22)),
@@ -194,74 +183,8 @@ class _CreateAccountState extends State<CreateAccount> {
                       ),
                       const SizedBox(height: 14),
 
-                      // ── Organisation Type ─────────────────────────────────
-                      Text('ORGANISATION TYPE',
-                          style: AppTypography.fieldLabel),
-                      const SizedBox(height: 8),
-                      GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        childAspectRatio: 2.2,
-                        children: List.generate(_types.length, (i) {
-                          final (emoji, title, sub) = _types[i];
-                          final sel = _selectedType == i;
-                          return GestureDetector(
-                            onTap: () => setState(() => _selectedType = i),
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: sel
-                                    ? AppColors.purpleTint
-                                    : AppColors.surface,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: sel
-                                      ? AppColors.purple
-                                      : AppColors.surfaceAlt,
-                                  width: 2,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(emoji,
-                                      style: const TextStyle(fontSize: 20)),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          title,
-                                          style: AppTypography.cardTitle
-                                              .copyWith(
-                                            fontSize: 12,
-                                            color: sel
-                                                ? AppColors.purple
-                                                : AppColors.textPrimary,
-                                          ),
-                                        ),
-                                        Text(sub,
-                                            style:
-                                                AppTypography.caption.copyWith(
-                                              fontSize: 10,
-                                              color: AppColors.textMuted,
-                                            )),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                      const SizedBox(height: 14),
+                      // ── Organisation Type (commented out — not connected to API) ──
+
 
                       // ── About / Description ───────────────────────────────
                       Text('ABOUT YOUR ORGANISATION',
@@ -420,14 +343,6 @@ class _CreateAccountState extends State<CreateAccount> {
                                       context, 'Please fill in all fields.');
                                 }
                               },
-                      ),
-                      const SizedBox(height: 10),
-                      Center(
-                        child: Text(
-                          'Step 1 of 3 \u00B7 Organisation Details',
-                          style: AppTypography.caption
-                              .copyWith(color: AppColors.textMuted),
-                        ),
                       ),
                     ],
                   ),

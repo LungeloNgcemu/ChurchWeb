@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../classes/church_init.dart';
 import '../../classes/prayer_class.dart';
 import '../../classes/push_notification/notification.dart';
+import 'package:master/services/api/token_service.dart';
 import '../../componants/global_booking.dart';
 import '../../providers/url_provider.dart';
 import '../../theme/app_colors.dart';
@@ -202,10 +203,8 @@ class _CreatePrayerState extends State<CreatePrayer> {
 
                           setState(() => isLoading = true);
 
-                          final orgId =
-                              Provider.of<christProvider>(context, listen: false)
-                                      .myMap['Project']?['ProjectId']?.toString() ??
-                                  '';
+                          final tokenUser = await TokenService.tokenUser();
+                          final orgId = tokenUser?.uniqueChurchId ?? '';
 
                           await superbaseProduct(
                             prayer,
