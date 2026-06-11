@@ -272,6 +272,12 @@ class Authenticate {
       final registrationData =
           context.read<RegistrationProvider>().registrationModel;
 
+      // Dev test bypass — skip Twilio for the test number, go straight to OTP screen
+      if (registrationData.phoneNumber == TestAuth.phone) {
+        Navigator.pushNamed(context, RoutePaths.code);
+        return;
+      }
+
       final existingUser = await UserService.userExist(
           registrationData.phoneNumber!, registrationData.uniqueChurchId!);
 
