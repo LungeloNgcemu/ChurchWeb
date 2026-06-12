@@ -96,6 +96,16 @@ class FontManager extends ChangeNotifier {
         height: height,
         fontStyle: fontStyle,
         decoration: decoration,
+      ).copyWith(
+        // Ensure platform emoji fonts are always in the fallback chain.
+        // Without this, GoogleFonts overrides the system fallback and emojis
+        // render as monochrome tofu glyphs instead of full-color emoji.
+        fontFamilyFallback: const [
+          'Apple Color Emoji',   // iOS / macOS
+          'Noto Color Emoji',    // Android / Linux
+          'Segoe UI Emoji',      // Windows
+          'Twemoji Mozilla',     // Firefox
+        ],
       );
 
   /// Returns a full TextTheme using the active font applied to [base].

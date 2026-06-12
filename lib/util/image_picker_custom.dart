@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:image_picker_web/image_picker_web.dart';
 import 'package:master/componants/global_booking.dart';
+import 'package:master/util/image_compress.dart';
 import "package:supabase_flutter/supabase_flutter.dart";
 
 class ImagePickerCustom {
@@ -16,17 +17,18 @@ class ImagePickerCustom {
       Uint8List? _image = await picker.pickImageToByte();
 
       if (_image != null) {
+        final compressed = await compressImageBytes(_image!);
         final String path =
-            await supabase.storage.from('SalonStorage').uploadBinary(
-                  'public/${imagePath}.png',
-                  _image!,
+            await supabase.storage.from('churchStorage').uploadBinary(
+                  'public/${imagePath}.jpg',
+                  compressed,
                   fileOptions:
                       const FileOptions(cacheControl: '3600', upsert: false),
                 );
 
         return supabase.storage
-            .from('SalonStorage')
-            .getPublicUrl('${imagePath}.png');
+            .from('churchStorage')
+            .getPublicUrl('${imagePath}.jpg');
       } else {
         return "";
       }

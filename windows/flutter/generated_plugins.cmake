@@ -4,12 +4,14 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
+  audioplayers_windows
   desktop_webview_window
   file_selector_windows
   firebase_core
   flutter_inappwebview_windows
   geolocator_windows
   media_kit_video
+  record_windows
   share_plus
   url_launcher_windows
   volume_controller
