@@ -10,6 +10,8 @@ class ChatService {
     required String time,
     required String church,
     required String uniqueId,
+    String imageUrl = '',
+    String mediaType = 'text',
   }) async {
     final response = await http.post(
       Uri.parse('${BaseUrl.baseUrl}/api/chat/sendMessage'),
@@ -21,14 +23,13 @@ class ChatService {
         "time": time,
         "church": church,
         "uniqueId": uniqueId,
+        "imageUrl": imageUrl,
+        "mediaType": mediaType,
       }),
     );
 
-    if (response.statusCode == 200) {
-      print("Message sent successfully: ${response.body}");
-    } else {
-      print(
-          "Failed to send message: ${response.statusCode} - ${response.body}");
+    if (response.statusCode != 200) {
+      throw Exception('Send failed (${response.statusCode}): ${response.body}');
     }
   }
 

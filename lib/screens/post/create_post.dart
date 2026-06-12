@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/push_notification/notification.dart';
+import 'package:master/services/api/post_service.dart';
 import 'package:master/services/api/token_service.dart';
 import 'package:master/util/alerts.dart';
 import 'package:master/util/image_picker_custom.dart';
@@ -49,9 +50,54 @@ class _PosterState extends State<Poster> {
   String? postImageUrl;
   String? imageUrl;
 
+  // Current user
+  String _userName = '';
+  String _userInitials = '';
+  String _uniqueChurchId = '';
+  String _userId = '';
+
   // Post category selection
   String _selectedCategory = 'Announcement';
   final List<String> _categories = ['All', 'Announcement', 'Event', 'Update', 'Request'];
+
+  // Toolbar expand state
+  bool _showTagBar = false;
+  bool _showFormatBar = false;
+
+  // Formatting state
+  bool _isBold = false;
+  bool _isItalic = false;
+  bool _isUnderline = false;
+
+  void _insertAtCursor(String text) {
+    final ctrl = descriptionController;
+    final sel = ctrl.selection;
+    final val = ctrl.text;
+    final start = sel.start < 0 ? val.length : sel.start;
+    final newText = val.substring(0, start) + text + val.substring(start);
+    ctrl.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: start + text.length),
+    );
+  }
+
+  void _wrapSelection(String marker) {
+    final ctrl = descriptionController;
+    final sel = ctrl.selection;
+    final val = ctrl.text;
+    if (sel.start < 0 || sel.end < 0 || sel.start == sel.end) {
+      _insertAtCursor(marker);
+      return;
+    }
+    final selected = val.substring(sel.start, sel.end);
+    final newText = val.substring(0, sel.start) +
+        marker + selected + marker +
+        val.substring(sel.end);
+    ctrl.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: sel.end + marker.length * 2),
+    );
+  }
 
   Future<void> _pickImage() async {
     final pickedImage = await _picker.pickImageToByte();
@@ -72,6 +118,24 @@ class _PosterState extends State<Poster> {
   @override
   void initState() {
     super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final user = await TokenService.tokenUser();
+    if (user != null && mounted) {
+      final name = user.userName ?? '';
+      final parts = name.trim().split(' ');
+      final initials = parts.length >= 2
+          ? '${parts[0][0]}${parts[1][0]}'.toUpperCase()
+          : name.isNotEmpty ? name[0].toUpperCase() : '?';
+      setState(() {
+        _userName = name;
+        _userInitials = initials;
+        _uniqueChurchId = user.uniqueChurchId ?? '';
+        _userId = user.userId ?? '';
+      });
+    }
   }
 
   Future<void> _uploadImageToSuperbase(image) async {
@@ -113,44 +177,49 @@ class _PosterState extends State<Poster> {
   TextEditingController descriptionController = TextEditingController();
 
   Future<void> _handlePost() async {
+    final description = descriptionController.text.trim();
+    if (description.isEmpty) {
+      alertReturn(context, 'Please write something before posting.');
+      return;
+    }
+
     setState(() => isLoading = true);
 
-    final description = descriptionController.text;
-
     try {
-      if (description.isEmpty) {
-        alertSuccess(context, "Please fill in a description");
-        Future.delayed(const Duration(seconds: 1), () {
-          setState(() => isLoading = false);
-        });
+      if (_image != null) await _uploadImageToSuperbase(_image);
+
+      final churchName = Provider.of<christProvider>(context, listen: false)
+              .myMap['Project']?['ChurchName'] ?? '';
+
+      final ok = await PostService.createPost(
+        description: description,
+        church: churchName,
+        uniqueChurchId: _uniqueChurchId,
+        userName: _userName,
+        createdBy: _userId,
+        imageUrl: imageUrl ?? '',
+        type: _selectedCategory,
+      );
+
+      if (!ok) {
+        alertReturn(context, 'Failed to create post. Please try again.');
+        setState(() => isLoading = false);
         return;
       }
 
-      if (_image != null) {
-        await _uploadImageToSuperbase(_image);
-      }
-
-      await superbasePost(description, imageUrl ?? '');
-
-      final tokenUser = await TokenService.tokenUser();
-      final orgId = tokenUser?.uniqueChurchId ?? '';
       await PushNotifications.sendMessageToTopic(
-          topic: PushNotifications.buildTopic(orgId, 'post'),
-          title: 'New Post',
-          body: description);
-
-      Future.delayed(const Duration(seconds: 1), () {
-        setState(() => isLoading = false);
-      });
+        topic: PushNotifications.buildTopic(_uniqueChurchId, 'post'),
+        title: 'New Post',
+        body: description,
+      );
 
       titleController.clear();
       descriptionController.clear();
+      setState(() => isLoading = false);
       Navigator.of(context).pop();
     } catch (error) {
-      alertSuccess(context, "Something went wrong");
-      Future.delayed(const Duration(seconds: 1), () {
-        setState(() => isLoading = false);
-      });
+      alertReturn(context, 'Something went wrong.');
+      setState(() => isLoading = false);
     }
   }
 
@@ -293,7 +362,7 @@ class _PosterState extends State<Poster> {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            'TM',
+                            _userInitials.isNotEmpty ? _userInitials : '?',
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
@@ -306,14 +375,7 @@ class _PosterState extends State<Poster> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              Provider.of<ClientNameProvider>(context,
-                                          listen: false)
-                                      .clientName
-                                      .isNotEmpty
-                                  ? Provider.of<ClientNameProvider>(context,
-                                          listen: false)
-                                      .clientName
-                                  : 'Thabo Mokoena',
+                              _userName.isNotEmpty ? _userName : '...',
                               style: GoogleFonts.inter(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
@@ -449,7 +511,89 @@ class _PosterState extends State<Poster> {
                   ],
 
                   // ── Toolbar ───────────────────────────────────────────────
-                  Container(
+                  Column(
+                    children: [
+                      // Tag sub-bar
+                      if (_showTagBar)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.lgPlus, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.purpleTint,
+                            border: Border(
+                              bottom: BorderSide(
+                                  color: AppColors.purpleBorder, width: 1),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              _TagChip(
+                                label: '@ Mention',
+                                onTap: () => _insertAtCursor('@'),
+                              ),
+                              const SizedBox(width: 8),
+                              _TagChip(
+                                label: '# Hashtag',
+                                onTap: () => _insertAtCursor('#'),
+                              ),
+                              const SizedBox(width: 8),
+                              _TagChip(
+                                label: '📍 Location',
+                                onTap: () => _insertAtCursor('📍 '),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      // Format sub-bar
+                      if (_showFormatBar)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.lgPlus, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            border: Border(
+                              bottom: BorderSide(
+                                  color: AppColors.surfaceAlt, width: 1),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              _FormatBtn(
+                                label: 'B',
+                                bold: true,
+                                active: _isBold,
+                                onTap: () {
+                                  setState(() => _isBold = !_isBold);
+                                  _wrapSelection('**');
+                                },
+                              ),
+                              const SizedBox(width: 8),
+                              _FormatBtn(
+                                label: 'I',
+                                italic: true,
+                                active: _isItalic,
+                                onTap: () {
+                                  setState(() => _isItalic = !_isItalic);
+                                  _wrapSelection('_');
+                                },
+                              ),
+                              const SizedBox(width: 8),
+                              _FormatBtn(
+                                label: 'U',
+                                underline: true,
+                                active: _isUnderline,
+                                onTap: () {
+                                  setState(() => _isUnderline = !_isUnderline);
+                                  _wrapSelection('__');
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      // Main toolbar row
+                      Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.lgPlus, vertical: 10),
                     decoration: BoxDecoration(
@@ -483,25 +627,55 @@ class _PosterState extends State<Poster> {
                           ),
                         ),
                         const SizedBox(width: AppSpacing.md),
-                        Container(
-                          width: 32,
-                          height: 32,
-                          alignment: Alignment.center,
-                          child: Icon(
-                            Icons.tag,
-                            size: 18,
-                            color: AppColors.textMid,
+                        // Tag / mention icon
+                        GestureDetector(
+                          onTap: () => setState(() {
+                            _showTagBar = !_showTagBar;
+                            if (_showTagBar) _showFormatBar = false;
+                          }),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: _showTagBar
+                                  ? AppColors.purpleTint
+                                  : Colors.transparent,
+                              borderRadius:
+                                  BorderRadius.circular(AppSpacing.radiusIcon),
+                            ),
+                            child: Icon(
+                              Icons.tag,
+                              size: 18,
+                              color: _showTagBar
+                                  ? AppColors.purple
+                                  : AppColors.textMid,
+                            ),
                           ),
                         ),
                         const SizedBox(width: AppSpacing.md),
-                        Container(
-                          width: 32,
-                          height: 32,
-                          alignment: Alignment.center,
-                          child: Icon(
-                            Icons.short_text,
-                            size: 18,
-                            color: AppColors.textMid,
+                        // Formatting icon
+                        GestureDetector(
+                          onTap: () => setState(() {
+                            _showFormatBar = !_showFormatBar;
+                            if (_showFormatBar) _showTagBar = false;
+                          }),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: _showFormatBar
+                                  ? AppColors.purpleTint
+                                  : Colors.transparent,
+                              borderRadius:
+                                  BorderRadius.circular(AppSpacing.radiusIcon),
+                            ),
+                            child: Icon(
+                              Icons.text_format_rounded,
+                              size: 18,
+                              color: _showFormatBar
+                                  ? AppColors.purple
+                                  : AppColors.textMid,
+                            ),
                           ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
@@ -522,7 +696,9 @@ class _PosterState extends State<Poster> {
                         ),
                       ],
                     ),
-                  ),
+                  ), // end main toolbar row Container
+                    ], // end Column children
+                  ), // end Column
 
                   // ── Category chips ────────────────────────────────────────
                   Padding(
@@ -647,5 +823,85 @@ class _ImageFrameState extends State<ImageFrame> {
           width: double.infinity, height: 250.0);
     }
     return const SizedBox();
+  }
+}
+
+// ── Tag chip button ────────────────────────────────────────────────────────────
+class _TagChip extends StatelessWidget {
+  const _TagChip({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+          border: Border.all(color: AppColors.purpleBorder, width: 1.5),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppColors.purple,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Format button ──────────────────────────────────────────────────────────────
+class _FormatBtn extends StatelessWidget {
+  const _FormatBtn({
+    required this.label,
+    required this.active,
+    required this.onTap,
+    this.bold = false,
+    this.italic = false,
+    this.underline = false,
+  });
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+  final bool bold;
+  final bool italic;
+  final bool underline;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: active ? AppColors.purple : AppColors.white,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusIcon),
+          border: Border.all(
+            color: active ? AppColors.purple : AppColors.surfaceAlt,
+            width: 1.5,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: bold ? FontWeight.w900 : FontWeight.w600,
+            fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+            color: active ? Colors.white : AppColors.textMid,
+            decoration: underline ? TextDecoration.underline : TextDecoration.none,
+            decorationColor: active ? Colors.white : AppColors.textMid,
+          ),
+        ),
+      ),
+    );
   }
 }
