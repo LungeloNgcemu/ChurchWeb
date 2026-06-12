@@ -197,7 +197,10 @@ class _MessageScreenState extends State<MessageScreen> {
       final stream = await html.window.navigator.mediaDevices!
           .getUserMedia({'audio': true});
       _mediaStream = stream;
-      _mediaRecorder = html.MediaRecorder(stream);
+      _mediaRecorder = html.MediaRecorder(stream, {
+        'mimeType': 'audio/webm;codecs=opus',
+        'audioBitsPerSecond': 16000,
+      });
 
       _mediaRecorder!.addEventListener('dataavailable', (html.Event event) {
         try {
@@ -250,7 +253,7 @@ class _MessageScreenState extends State<MessageScreen> {
         completer.complete();
         return;
       }
-      final blob = html.Blob(_audioBlobs, 'audio/webm');
+      final blob = html.Blob(_audioBlobs, 'audio/webm;codecs=opus');
       final blobUrl = html.Url.createObjectUrl(blob);
       if (mounted) setState(() {
                 _pendingVoiceBlobUrl = blobUrl;
@@ -314,7 +317,7 @@ class _MessageScreenState extends State<MessageScreen> {
       await Supabase.instance.client.storage.from('churchStorage').uploadBinary(
         path, bytes,
         fileOptions: const FileOptions(
-          contentType: 'audio/webm',
+          contentType: 'audio/webm;codecs=opus',
           cacheControl: '3600',
           upsert: false,
         ),
