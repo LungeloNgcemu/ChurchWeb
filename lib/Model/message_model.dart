@@ -8,6 +8,8 @@ class MessageModel {
   final String? phoneNumber;
   final String? church;
   final String? uniqueChurchId;
+  final String? imageUrl;
+  final String? mediaType;
 
   MessageModel({
     this.id,
@@ -19,6 +21,8 @@ class MessageModel {
     this.phoneNumber,
     this.church,
     this.uniqueChurchId,
+    this.imageUrl,
+    this.mediaType,
   });
 
   factory MessageModel.fromJson(Map<dynamic?, dynamic> json) {
@@ -32,6 +36,8 @@ class MessageModel {
       phoneNumber: json['PhoneNumber'],
       church: json['Church'],
       uniqueChurchId: json['UniqueChurchId'],
+      imageUrl: json['ImageUrl'],
+      mediaType: json['MediaType'],
     );
   }
 
@@ -46,10 +52,11 @@ class MessageModel {
       'PhoneNumber': phoneNumber,
       'Church': church,
       'UniqueChurchId': uniqueChurchId,
+      'ImageUrl': imageUrl ?? '',
+      'MediaType': mediaType ?? 'text',
     };
   }
 
-  // Optional: Add copyWith method for immutability
   MessageModel copyWith({
     String? id,
     String? createdAt,
@@ -64,6 +71,8 @@ class MessageModel {
     String? phoneNumber,
     String? church,
     String? uniqueChurchId,
+    String? imageUrl,
+    String? mediaType,
   }) {
     return MessageModel(
       id: id ?? this.id,
@@ -75,6 +84,8 @@ class MessageModel {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       church: church ?? this.church,
       uniqueChurchId: uniqueChurchId ?? this.uniqueChurchId,
+      imageUrl: imageUrl ?? this.imageUrl,
+      mediaType: mediaType ?? this.mediaType,
     );
   }
 

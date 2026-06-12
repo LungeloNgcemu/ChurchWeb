@@ -51,7 +51,7 @@ StreamBuilder xbuildStreamBuilder(context, String path) {
 }
 
 // ── filter options ─────────────────────────────────────────────────────────────
-const _kFilters = ['All', 'Announcements', 'Events', 'Requests', 'Updates'];
+const _kFilters = ['All', 'Announcement', 'Event', 'Update', 'Request'];
 
 class PostScreen extends StatefulWidget {
   const PostScreen({super.key});
@@ -208,7 +208,7 @@ class _PostScreenState extends State<PostScreen>
     var result = posts;
     if (_selectedFilter != 'All') {
       result = result
-          .where((p) => (p['Category'] ?? '').toString() == _selectedFilter)
+          .where((p) => (p['Type'] ?? '').toString() == _selectedFilter)
           .toList();
     }
     if (_searchQuery.isNotEmpty) {
@@ -321,7 +321,7 @@ class _PostScreenState extends State<PostScreen>
                           description: post['Description'] ?? '',
                           imageUrl: post['ImageUrl'] ?? '',
                           postId: post['id'].toString(),
-                          category: post['Category'] ?? '',
+                          category: post['Type'] ?? '',
                           onPressedDelete: () {
                             alertDelete(context, "Delete Post?",
                                 () async {
