@@ -370,7 +370,7 @@ class _SearchResultsPanel extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Icon(Icons.keyboard_arrow_right_rounded,
+                          Icon(Icons.keyboard_arrow_right_rounded,
                               size: 18, color: AppColors.purple),
                         ],
                       ),
