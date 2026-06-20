@@ -332,11 +332,11 @@ class _CreateEventState extends State<CreateEvent> {
               child: Container(
                 height: 52,
                 decoration: BoxDecoration(
-                  gradient: AppColors.orangeGradient,
+                  gradient: AppColors.purpleCardGradient,
                   borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.orange.withValues(alpha: 0.35),
+                      color: AppColors.purple.withValues(alpha: 0.35),
                       blurRadius: 16,
                       offset: const Offset(0, 4),
                     ),
