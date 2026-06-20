@@ -25,6 +25,7 @@ class _ContactScreenState extends State<ContactScreen> {
   bool _searchLoading = false;
   Timer? _debounce;
   String _uniqueChurchId = '';
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -40,6 +41,7 @@ class _ContactScreenState extends State<ContactScreen> {
   }
 
   void _onSearchChanged(String q) {
+    setState(() => _searchQuery = q);
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 380), () => _doSearch(q.trim()));
   }
@@ -52,22 +54,27 @@ class _ContactScreenState extends State<ContactScreen> {
     setState(() => _searchLoading = true);
     try {
       final results = await ChatService.searchMessages(
-        uniqueId: _uniqueChurchId, query: q);
+          uniqueId: _uniqueChurchId, query: q);
       if (mounted) setState(() { _searchResults = results; _searchLoading = false; });
     } catch (_) {
       if (mounted) setState(() => _searchLoading = false);
     }
   }
 
-  void _closeSearch() {
-    _debounce?.cancel();
-    _searchController.clear();
-    setState(() { _isSearching = false; _searchResults = []; _searchLoading = false; });
+  void _toggleSearch() {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (!_isSearching) {
+        _searchController.clear();
+        _searchQuery = '';
+        _searchResults = [];
+        _searchLoading = false;
+      }
+    });
   }
 
   void _jumpToMessage(String msgId) {
-    _closeSearch();
-    // Give the search overlay a frame to close before scrolling
+    _toggleSearch();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       MessageScreen.scrollToMessageId?.call(msgId);
     });
@@ -82,38 +89,38 @@ class _ContactScreenState extends State<ContactScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final topBarH = AppSpacing.topBarHeight + MediaQuery.of(context).padding.top;
+    final topBarH = AppSpacing.topBarHeight +
+        MediaQuery.of(context).padding.top +
+        (_isSearching ? 56.0 : 0.0); // extra height for search row
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: Stack(
         children: [
           Column(
             children: [
-              // ── Topbar ───────────────────────────────────────────────────
-              _isSearching
-                  ? _SearchTopBar(
-                      controller: _searchController,
-                      onChanged: _onSearchChanged,
-                      onClose: _closeSearch,
-                    )
-                  : _ChatTopBar(
-                      onSearchTap: () => setState(() => _isSearching = true),
-                    ),
+              // ── Topbar (matches post screen) ──────────────────────────
+              _ChatTopBar(
+                searchActive: _isSearching,
+                searchController: _searchController,
+                onSearchTap: _toggleSearch,
+                onSearchChanged: _onSearchChanged,
+              ),
 
-              // ── Chat ─────────────────────────────────────────────────────
+              // ── Chat ──────────────────────────────────────────────────
               const Expanded(child: MessageScreen()),
             ],
           ),
 
-          // ── Search results overlay ────────────────────────────────────
-          if (_isSearching)
+          // ── Search results overlay ─────────────────────────────────────
+          if (_isSearching && (_searchQuery.isNotEmpty || _searchLoading))
             Positioned(
               top: topBarH,
               left: 0, right: 0, bottom: 0,
               child: _SearchResultsPanel(
                 results: _searchResults,
                 isLoading: _searchLoading,
-                query: _searchController.text,
+                query: _searchQuery,
                 onTap: _jumpToMessage,
               ),
             ),
@@ -123,119 +130,144 @@ class _ContactScreenState extends State<ContactScreen> {
   }
 }
 
-// ── Normal topbar ─────────────────────────────────────────────────────────────
+// ── Chat topbar — mirrors _PostTopBar exactly ─────────────────────────────────
 
-class _ChatTopBar extends StatelessWidget {
+class _ChatTopBar extends StatefulWidget {
+  final bool searchActive;
+  final TextEditingController searchController;
   final VoidCallback onSearchTap;
-  const _ChatTopBar({required this.onSearchTap});
+  final ValueChanged<String> onSearchChanged;
+
+  const _ChatTopBar({
+    required this.searchActive,
+    required this.searchController,
+    required this.onSearchTap,
+    required this.onSearchChanged,
+  });
+
+  @override
+  State<_ChatTopBar> createState() => _ChatTopBarState();
+}
+
+class _ChatTopBarState extends State<_ChatTopBar> {
+  final FocusNode _focusNode = FocusNode();
+  bool _focused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() => setState(() => _focused = _focusNode.hasFocus));
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = context.watch<ThemeManager>();
+    final top = MediaQuery.of(context).padding.top;
+
     return Container(
-      height: AppSpacing.topBarHeight + MediaQuery.of(context).padding.top,
       color: AppColors.navy,
-      padding: EdgeInsets.fromLTRB(18, MediaQuery.of(context).padding.top, 18, 13),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      padding: EdgeInsets.fromLTRB(18, top, 18, 13),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
+          // ── Title row ───────────────────────────────────────────────
+          SizedBox(
+            height: AppSpacing.topBarHeight - 13,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text('Chat', style: AppTypography.screenTitle.copyWith(fontSize: 20)),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: theme.colors.primary,
-                    borderRadius: BorderRadius.circular(10),
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text('Chat',
+                          style: AppTypography.screenTitle.copyWith(fontSize: 20)),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: theme.colors.primary,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text('•',
+                            style: AppTypography.labelTiny.copyWith(
+                                color: AppColors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 10)),
+                      ),
+                    ],
                   ),
-                  child: Text('•',
-                      style: AppTypography.labelTiny.copyWith(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 10)),
+                ),
+                // Search / close icon — same style as posts
+                GestureDetector(
+                  onTap: widget.onSearchTap,
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: widget.searchActive
+                          ? AppColors.purple
+                          : AppColors.navyIconBg,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      widget.searchActive ? Icons.close : Icons.search_rounded,
+                      size: 18,
+                      color: AppColors.white,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          GestureDetector(
-            onTap: onSearchTap,
-            child: Container(
-              width: 34, height: 34,
-              decoration: BoxDecoration(
-                color: AppColors.navyIconBg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.search_rounded, size: 18, color: AppColors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
-// ── Search topbar ─────────────────────────────────────────────────────────────
-
-class _SearchTopBar extends StatelessWidget {
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
-  final VoidCallback onClose;
-  const _SearchTopBar({
-    required this.controller,
-    required this.onChanged,
-    required this.onClose,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: AppSpacing.topBarHeight + MediaQuery.of(context).padding.top,
-      color: AppColors.navy,
-      padding: EdgeInsets.fromLTRB(12, MediaQuery.of(context).padding.top, 12, 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          GestureDetector(
-            onTap: onClose,
-            child: Container(
-              width: 34, height: 34,
+          // ── Search field — appears below title, same as posts ────────
+          if (widget.searchActive) ...[
+            const SizedBox(height: 8),
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.navyIconBg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.white),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Container(
-              height: 34,
-              decoration: BoxDecoration(
-                color: AppColors.navyIconBg,
-                borderRadius: BorderRadius.circular(10),
+                color: AppColors.card,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _focused ? AppColors.purple : Colors.transparent,
+                  width: 0.5,
+                ),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: TextField(
-                controller: controller,
-                autofocus: true,
-                style: AppTypography.bodyText.copyWith(
-                    color: AppColors.white, fontSize: 14),
-                cursorColor: AppColors.purple,
-                decoration: InputDecoration(
-                  hintText: 'Search messages...',
-                  hintStyle: AppTypography.bodyText.copyWith(
-                      color: AppColors.whiteDim, fontSize: 14),
-                  border: InputBorder.none,
-                  isCollapsed: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                ),
-                onChanged: onChanged,
+              child: Row(
+                children: [
+                  Icon(Icons.search_rounded, size: 16, color: AppColors.purple),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: widget.searchController,
+                      focusNode: _focusNode,
+                      onChanged: widget.onSearchChanged,
+                      autofocus: true,
+                      style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textPrimary, fontSize: 13),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: 'Search messages...',
+                        hintStyle: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.textMuted, fontSize: 13),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -278,7 +310,7 @@ class _SearchResultsPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header count / loading
+          // Result count / loading
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
             child: isLoading
@@ -294,11 +326,9 @@ class _SearchResultsPanel extends StatelessWidget {
                             color: colors.textMuted, fontSize: 12)),
                   ])
                 : Text(
-                    query.isEmpty
-                        ? 'Type to search'
-                        : results.isEmpty
-                            ? 'No messages found for "$query"'
-                            : '${results.length} result${results.length == 1 ? '' : 's'} for "$query"',
+                    results.isEmpty
+                        ? 'No messages found for "$query"'
+                        : '${results.length} result${results.length == 1 ? '' : 's'} for "$query"',
                     style: AppTypography.caption.copyWith(
                         color: colors.textMuted, fontSize: 12),
                   ),
@@ -329,41 +359,32 @@ class _SearchResultsPanel extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           ConnectAvatar(
-                            name: sender,
-                            imageUrl: image,
-                            size: AvatarSize.sm,
-                          ),
+                              name: sender, imageUrl: image, size: AvatarSize.sm),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        sender,
+                                Row(children: [
+                                  Expanded(
+                                    child: Text(sender,
                                         style: AppTypography.bodyMedium.copyWith(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 13,
-                                          color: colors.textPrimary,
-                                        ),
-                                      ),
-                                    ),
-                                    Text(
-                                      time,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 13,
+                                            color: colors.textPrimary)),
+                                  ),
+                                  Text(time,
                                       style: AppTypography.caption.copyWith(
                                           fontSize: 11,
-                                          color: colors.textMuted),
-                                    ),
-                                  ],
-                                ),
+                                          color: colors.textMuted)),
+                                ]),
                                 const SizedBox(height: 3),
                                 _HighlightedText(
                                   text: message,
                                   query: query,
                                   baseStyle: AppTypography.bodyText.copyWith(
-                                      fontSize: 12, color: colors.textSecondary),
+                                      fontSize: 12,
+                                      color: colors.textSecondary),
                                   highlightColor: AppColors.purple,
                                 ),
                               ],
@@ -379,7 +400,7 @@ class _SearchResultsPanel extends StatelessWidget {
                 },
               ),
             )
-          else if (!isLoading && query.isNotEmpty)
+          else if (!isLoading)
             Expanded(
               child: Center(
                 child: Column(
@@ -420,13 +441,15 @@ class _HighlightedText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (query.isEmpty) {
-      return Text(text, style: baseStyle, maxLines: 2, overflow: TextOverflow.ellipsis);
+      return Text(text, style: baseStyle, maxLines: 2,
+          overflow: TextOverflow.ellipsis);
     }
     final lower = text.toLowerCase();
     final lowerQ = query.toLowerCase();
     final start = lower.indexOf(lowerQ);
     if (start == -1) {
-      return Text(text, style: baseStyle, maxLines: 2, overflow: TextOverflow.ellipsis);
+      return Text(text, style: baseStyle, maxLines: 2,
+          overflow: TextOverflow.ellipsis);
     }
     final end = start + query.length;
     return Text.rich(
@@ -435,11 +458,10 @@ class _HighlightedText extends StatelessWidget {
         TextSpan(
           text: text.substring(start, end),
           style: baseStyle.copyWith(
-            color: highlightColor,
-            fontWeight: FontWeight.w700,
-          ),
+              color: highlightColor, fontWeight: FontWeight.w700),
         ),
-        if (end < text.length) TextSpan(text: text.substring(end), style: baseStyle),
+        if (end < text.length)
+          TextSpan(text: text.substring(end), style: baseStyle),
       ]),
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
