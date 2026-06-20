@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/push_notification/notification.dart';
+import 'package:master/services/socket/io_service.dart';
 import 'package:master/services/api/post_service.dart';
 import 'package:master/services/api/token_service.dart';
 import 'package:master/util/alerts.dart';
@@ -212,6 +213,16 @@ class _PosterState extends State<Poster> {
         title: 'New Post',
         body: description,
       );
+
+      // Write in-app notification row and broadcast via socket
+      await supabase.from('Notifications').insert({
+        'UniqueChurchId': _uniqueChurchId,
+        'Type': 'post',
+        'Title': 'New Post',
+        'Body': description.length > 100 ? '${description.substring(0, 100)}…' : description,
+      });
+      IOService.socket.emit('new_notification', _uniqueChurchId);
+      IOService.onNewNotification?.call();
 
       titleController.clear();
       descriptionController.clear();

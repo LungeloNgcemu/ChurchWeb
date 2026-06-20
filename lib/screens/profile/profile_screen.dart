@@ -51,6 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String number = '';
   bool notificationMessage = false;
   bool notificationPost = false;
+  bool notificationEvent = false;
   String _uniqueChurchId = '';
 
   @override
@@ -94,10 +95,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> update() async {
     setState(() => isLoading = true);
     try {
-      await supabase.from('Users').update({
+      await supabase.from('User').update({
         'UserName': controllerName.text,
         if (image.isNotEmpty) 'ProfileImage': image,
       }).eq('PhoneNumber', number);
+      setState(() => currentUser['UserName'] = controllerName.text);
       alertSuccess(context, 'Profile updated successfully');
     } catch (e) {
       log('Update error: $e');
@@ -109,11 +111,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── preserved: notification toggle ────────────────────────────────────────
   Future<void> getNotificationValue() async {
-    final chat = await PushNotifications.isSubscribedToFeature('chat');
-    final post = await PushNotifications.isSubscribedToFeature('post');
+    final chat  = await PushNotifications.isSubscribedToFeature('chat');
+    final post  = await PushNotifications.isSubscribedToFeature('post');
+    final event = await PushNotifications.isSubscribedToFeature('event');
     setState(() {
       notificationMessage = chat;
-      notificationPost = post;
+      notificationPost    = post;
+      notificationEvent   = event;
     });
   }
 
@@ -136,6 +140,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return value
           ? await PushNotifications.subscribeToFeatureTopic(_orgId, 'post')
           : await PushNotifications.unsubscribeFromFeatureTopic(_orgId, 'post');
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> updateEventNotification(bool value) async {
+    try {
+      return value
+          ? await PushNotifications.subscribeToFeatureTopic(_orgId, 'event')
+          : await PushNotifications.unsubscribeFromFeatureTopic(_orgId, 'event');
     } catch (_) {
       return false;
     }
@@ -251,18 +265,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onImageTap: _uploadImageToSuperbase,
           ),
 
-          // ── Stats strip ──────────────────────────────────────────────
-          Container(
-            color: AppColors.white,
-            child: Column(children: [
-              Row(children: [
-                _StatCell(value: '48', label: 'Posts'),
-                _StatCell(value: '248', label: 'Members'),
-                _StatCell(value: '12', label: 'Events'),
-              ]),
-              Divider(height: 1, color: AppColors.surfaceAlt),
-            ]),
-          ),
 
           // ── Settings list ─────────────────────────────────────────────
           Expanded(
@@ -356,6 +358,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onChanged: (v) async {
                         final ok = await updatePostNotification(v);
                         if (ok) setState(() => notificationPost = v);
+                      },
+                    ),
+                    _ToggleRow(
+                      icon: Icons.event_outlined,
+                      iconColor: AppColors.orange,
+                      iconBg: AppColors.orangeTint,
+                      label: 'Event Notifications',
+                      value: notificationEvent,
+                      onChanged: (v) async {
+                        final ok = await updateEventNotification(v);
+                        if (ok) setState(() => notificationEvent = v);
                       },
                     ),
                   ]),
@@ -579,29 +592,6 @@ class _ProfileHero extends StatelessWidget {
   }
 }
 
-class _StatCell extends StatelessWidget {
-  final String value, label;
-  const _StatCell({required this.value, required this.label});
-
-  @override
-  Widget build(BuildContext context) => Expanded(
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            border: Border(
-                right: BorderSide(color: AppColors.surfaceAlt, width: 1)),
-          ),
-          child: Column(children: [
-            Text(value,
-                style: AppTypography.statValue.copyWith(fontSize: 18)),
-            const SizedBox(height: 3),
-            Text(label,
-                style: AppTypography.caption
-                    .copyWith(fontWeight: FontWeight.w600)),
-          ]),
-        ),
-      );
-}
 
 class _SettingsGroup extends StatelessWidget {
   final List<Widget> rows;

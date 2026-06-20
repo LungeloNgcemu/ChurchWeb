@@ -24,6 +24,9 @@ import 'dart:async';
 class ChurchScreen extends StatefulWidget {
   const ChurchScreen({super.key});
 
+  /// Switched by _ChurchScreenState on init — call from anywhere to change tab.
+  static void Function(int)? switchTab;
+
   @override
   State<ChurchScreen> createState() => _ChurchScreenState();
 }
@@ -48,6 +51,14 @@ class _ChurchScreenState extends State<ChurchScreen> {
   @override
   void initState() {
     super.initState();
+    ChurchScreen.switchTab = (index) {
+      setState(() => visit = index);
+      controller.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    };
   }
 
   @override
