@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:master/classes/authentication/authenticate.dart';
 import 'package:master/classes/snack_bar.dart';
 import 'package:master/providers/url_provider.dart';
@@ -18,6 +19,8 @@ import 'create_post.dart';
 import 'package:master/theme/theme_manager.dart';
 import 'package:master/widgets/common/connect_loader.dart';
 import 'package:master/widgets/common/org_logo.dart';
+import 'package:master/screens/event/create_event.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 // ── preserved: DisplayImages stream helper ────────────────────────────────────
 StreamBuilder xbuildStreamBuilder(context, String path) {
@@ -226,6 +229,8 @@ class _PostScreenState extends State<PostScreen>
   Widget build(BuildContext context) {
     super.build(context);
     final theme = context.watch<ThemeManager>();
+    final churchName = Provider.of<christProvider>(context, listen: false)
+            .myMap['Project']?['ChurchName'] ?? '';
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: Column(
@@ -290,58 +295,58 @@ class _PostScreenState extends State<PostScreen>
             ),
           ),
 
-          // ── Posts feed ────────────────────────────────────────────────
+          // ── Posts feed / Event calendar ───────────────────────────
           Expanded(
-            child: StreamBuilder(
-              stream: streamx,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.active) {
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text('Connecting...',
-                          style: AppTypography.bodyMedium),
-                    );
-                  } else if (!snapshot.hasData ||
-                      snapshot.data.isEmpty == true) {
-                    return _EmptyFeed();
-                  }
+            child: _selectedFilter == 'Event'
+                ? _EventCalendarView(churchName: churchName)
+                : StreamBuilder(
+                    stream: streamx,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.active) {
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Text('Connecting...',
+                                style: AppTypography.bodyMedium),
+                          );
+                        } else if (!snapshot.hasData ||
+                            snapshot.data.isEmpty == true) {
+                          return _EmptyFeed();
+                        }
 
-                  final filtered = _applyFilter(snapshot.data as List);
-                  if (filtered.isEmpty) return _EmptyFeed();
+                        final filtered = _applyFilter(snapshot.data as List);
+                        if (filtered.isEmpty) return _EmptyFeed();
 
-                  return ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final post = filtered[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: SocialPost(
-                          description: post['Description'] ?? '',
-                          imageUrl: post['ImageUrl'] ?? '',
-                          postId: post['id'].toString(),
-                          category: post['Type'] ?? '',
-                          onPressedDelete: () {
-                            alertDelete(context, "Delete Post?",
-                                () async {
-                              superbaseDeletePost(
-                                post['id'].toString(),
-                                post['ImageUrl'] ?? '',
-                              );
-                              streamDelegate();
-                            });
+                        return ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
+                            final post = filtered[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: SocialPost(
+                                description: post['Description'] ?? '',
+                                imageUrl: post['ImageUrl'] ?? '',
+                                postId: post['id'].toString(),
+                                category: post['Type'] ?? '',
+                                onPressedDelete: () {
+                                  alertDelete(context, "Delete Post?",
+                                      () async {
+                                    superbaseDeletePost(
+                                      post['id'].toString(),
+                                      post['ImageUrl'] ?? '',
+                                    );
+                                    streamDelegate();
+                                  });
+                                },
+                              ),
+                            );
                           },
-                        ),
-                      );
+                        );
+                      }
+                      return Center(child: ConnectLoader());
                     },
-                  );
-                }
-                return Center(
-                  child: ConnectLoader(),
-                );
-              },
-            ),
+                  ),
           ),
         ],
       ),
@@ -350,7 +355,9 @@ class _PostScreenState extends State<PostScreen>
       floatingActionButton: Visibility(
         visible: ChurchInit.visibilityToggle(context),
         child: GestureDetector(
-          onTap: () => create.sheeting(context, Poster()),
+          onTap: () => _selectedFilter == 'Event'
+              ? create.sheeting(context, const CreateEvent())
+              : create.sheeting(context, Poster()),
           child: Container(
             width: 52,
             height: 52,
@@ -840,6 +847,376 @@ class _SocialPostState extends State<SocialPost> {
           ],
 
           const SizedBox(height: 4),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Event Calendar View ───────────────────────────────────────────────────────
+class _EventCalendarView extends StatefulWidget {
+  final String churchName;
+  const _EventCalendarView({required this.churchName});
+
+  @override
+  State<_EventCalendarView> createState() => _EventCalendarViewState();
+}
+
+class _EventCalendarViewState extends State<_EventCalendarView> {
+  DateTime _focusedDay = DateTime.now();
+  DateTime _selectedDay = DateTime.now();
+
+  static DateTime _normalise(DateTime d) => DateTime.utc(d.year, d.month, d.day);
+
+  Map<DateTime, List<Map<String, dynamic>>> _buildEventsMap(List raw) {
+    final map = <DateTime, List<Map<String, dynamic>>>{};
+    for (final e in raw) {
+      final date = _parseDate(e);
+      if (date != null) {
+        map.putIfAbsent(_normalise(date), () => []).add(e as Map<String, dynamic>);
+      }
+    }
+    return map;
+  }
+
+  DateTime? _parseDate(dynamic e) {
+    final eventDateStr = e['EventDate'] as String?;
+    if (eventDateStr != null && eventDateStr.isNotEmpty) {
+      return DateTime.tryParse(eventDateStr);
+    }
+    final dayStr = e['Day'] as String?;
+    if (dayStr != null && dayStr.isNotEmpty) {
+      try {
+        final parts = dayStr.split(' ');
+        if (parts.length < 3) return null;
+        const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        final year  = int.tryParse(parts[0]);
+        final month = months.indexOf(parts[1]) + 1;
+        final day   = int.tryParse(parts[2]);
+        if (year == null || month <= 0 || day == null) return null;
+        return DateTime.utc(year, month, day);
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+      stream: supabase
+          .from('Events')
+          .stream(primaryKey: ['id'])
+          .eq('ChurchName', widget.churchName),
+      builder: (context, snapshot) {
+        final raw = (snapshot.hasData ? snapshot.data as List : []);
+        final eventsMap = _buildEventsMap(raw);
+
+        List<Map<String, dynamic>> eventsForDay(DateTime day) =>
+            eventsMap[_normalise(day)] ?? [];
+
+        final selectedEvents = eventsForDay(_selectedDay);
+
+        return Column(
+          children: [
+            // ── TableCalendar ─────────────────────────────────────────
+            Container(
+              margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(color: Color(0x0F000000), blurRadius: 6, offset: Offset(0, 1)),
+                ],
+              ),
+              child: TableCalendar(
+                firstDay: DateTime.utc(2020, 1, 1),
+                lastDay: DateTime.utc(2035, 12, 31),
+                focusedDay: _focusedDay,
+                selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                onDaySelected: (sel, foc) =>
+                    setState(() { _selectedDay = sel; _focusedDay = foc; }),
+                eventLoader: eventsForDay,
+                availableCalendarFormats: const {CalendarFormat.month: 'Month'},
+                calendarFormat: CalendarFormat.month,
+                calendarStyle: CalendarStyle(
+                  selectedDecoration: BoxDecoration(
+                    color: AppColors.purple,
+                    shape: BoxShape.circle,
+                  ),
+                  todayDecoration: BoxDecoration(
+                    color: AppColors.purpleTint,
+                    shape: BoxShape.circle,
+                  ),
+                  todayTextStyle: TextStyle(
+                    color: AppColors.purple,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                  selectedTextStyle: const TextStyle(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                  defaultTextStyle: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 13,
+                  ),
+                  weekendTextStyle: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 13,
+                  ),
+                  outsideDaysVisible: false,
+                  markerDecoration: BoxDecoration(
+                    color: AppColors.orange,
+                    shape: BoxShape.circle,
+                  ),
+                  markerSize: 5,
+                  markersMaxCount: 3,
+                  markerMargin: const EdgeInsets.only(top: 1),
+                ),
+                headerStyle: HeaderStyle(
+                  formatButtonVisible: false,
+                  titleCentered: true,
+                  titleTextStyle: AppTypography.headingSmall.copyWith(
+                    color: AppColors.textPrimary,
+                    fontSize: 15,
+                  ),
+                  leftChevronIcon: Icon(
+                    Icons.chevron_left_rounded,
+                    color: AppColors.purple,
+                    size: 22,
+                  ),
+                  rightChevronIcon: Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.purple,
+                    size: 22,
+                  ),
+                  headerPadding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+                ),
+                daysOfWeekStyle: DaysOfWeekStyle(
+                  weekdayStyle: AppTypography.labelTiny.copyWith(
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                  ),
+                  weekendStyle: AppTypography.labelTiny.copyWith(
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ),
+
+            // ── Selected day heading ──────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+              child: Row(
+                children: [
+                  Text(
+                    DateFormat('EEEE, MMMM d').format(_selectedDay),
+                    style: AppTypography.headingSmall.copyWith(
+                      fontSize: 14,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (selectedEvents.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.orange,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${selectedEvents.length}',
+                        style: AppTypography.labelTiny.copyWith(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // ── Event cards for selected day ──────────────────────────
+            Expanded(
+              child: selectedEvents.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: AppColors.purpleTint,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Icon(Icons.event_outlined,
+                                color: AppColors.purple, size: 26),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'No events on this day',
+                            style: AppTypography.headingSmall.copyWith(
+                              fontSize: 14,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text('Tap another date or create one',
+                              style: AppTypography.caption),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                      itemCount: selectedEvents.length,
+                      itemBuilder: (context, i) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _EventCard(event: selectedEvents[i]),
+                      ),
+                    ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// ── Event Card ────────────────────────────────────────────────────────────────
+class _EventCard extends StatelessWidget {
+  final Map<String, dynamic> event;
+  const _EventCard({required this.event});
+
+  static const _months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  @override
+  Widget build(BuildContext context) {
+    final title       = event['Title']       as String? ?? '';
+    final description = event['Description'] as String? ?? '';
+    final imageUrl    = event['Image']       as String? ?? '';
+    final location    = event['Location']    as String? ?? '';
+    final startTime   = event['StartTime']   as String? ?? '';
+
+    DateTime? date;
+    final edStr = event['EventDate'] as String?;
+    if (edStr != null && edStr.isNotEmpty) date = DateTime.tryParse(edStr);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: Color(0x0F000000), blurRadius: 6, offset: Offset(0, 1)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Cover image
+          if (imageUrl.isNotEmpty)
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: Image.network(
+                imageUrl,
+                height: 130,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Orange date block
+                if (date != null) ...[
+                  Container(
+                    width: 46,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      gradient: AppColors.orangeGradient,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${date.day}',
+                          style: AppTypography.headingSmall.copyWith(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.white,
+                          ),
+                        ),
+                        Text(
+                          _months[date.month - 1],
+                          style: AppTypography.labelTiny.copyWith(
+                            color: AppColors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+
+                // Text content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: AppTypography.cardTitle.copyWith(fontSize: 14)),
+                      if (description.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          description,
+                          style: AppTypography.bodyMedium.copyWith(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      if (location.isNotEmpty || startTime.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            if (location.isNotEmpty) ...[
+                              Icon(Icons.location_on_outlined,
+                                  size: 12, color: AppColors.textMuted),
+                              const SizedBox(width: 3),
+                              Text(location,
+                                  style: AppTypography.caption.copyWith(fontSize: 11)),
+                            ],
+                            if (location.isNotEmpty && startTime.isNotEmpty)
+                              const SizedBox(width: 10),
+                            if (startTime.isNotEmpty) ...[
+                              Icon(Icons.access_time_rounded,
+                                  size: 12, color: AppColors.textMuted),
+                              const SizedBox(width: 3),
+                              Text(startTime,
+                                  style: AppTypography.caption.copyWith(fontSize: 11)),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
