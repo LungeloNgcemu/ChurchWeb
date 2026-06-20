@@ -83,15 +83,44 @@ class _MessageScreenState extends State<MessageScreen> {
     MessageScreen.scrollToMessageId = _scrollToMessageId;
   }
 
-  void _scrollToMessageId(String msgId) {
+  Future<void> _scrollToMessageId(String msgId) async {
+    // 1. If not loaded yet, pull more pages until we find it (max 15 pages)
+    var idx = _messages.indexWhere((m) => m.id == msgId);
+    int attempts = 0;
+    while (idx == -1 && _hasMore && attempts < 15) {
+      await _loadMoreMessages();
+      idx = _messages.indexWhere((m) => m.id == msgId);
+      attempts++;
+    }
+    if (idx == -1 || !mounted) return;
+
+    // 2. Rough jump so the item enters the build window.
+    //    In a reverse:true list, index 0 = newest (pixels=0).
+    //    Older items live at higher pixel offsets.
+    final reversedIdx = _messages.length - 1 - idx;
+    if (scrollController.hasClients) {
+      final approx = (reversedIdx * 80.0)
+          .clamp(0.0, scrollController.position.maxScrollExtent);
+      scrollController.jumpTo(approx);
+    }
+
+    // 3. Wait one frame so the builder assigns the key.
+    await Future.delayed(const Duration(milliseconds: 80));
+    if (!mounted) return;
+
+    // 4. Precise scroll once the key has a context.
     final key = _messageKeys[msgId];
     if (key?.currentContext != null) {
-      Scrollable.ensureVisible(
+      await Scrollable.ensureVisible(
         key!.currentContext!,
-        duration: const Duration(milliseconds: 450),
+        duration: const Duration(milliseconds: 350),
         curve: Curves.easeInOut,
         alignment: 0.5,
       );
+    }
+
+    // 5. Highlight flash.
+    if (mounted) {
       setState(() => _highlightedMessageId = msgId);
       Future.delayed(const Duration(milliseconds: 1800), () {
         if (mounted) setState(() => _highlightedMessageId = null);
