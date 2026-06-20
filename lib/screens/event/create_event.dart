@@ -462,11 +462,7 @@ class _InputField extends StatelessWidget {
         prefixIconConstraints: const BoxConstraints(minWidth: 44),
         fillColor: AppColors.surface,
         filled: true,
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: maxLines > 1 ? 14 : 0,
-        ),
-        isDense: maxLines == 1,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: AppColors.surfaceAlt, width: 2),
