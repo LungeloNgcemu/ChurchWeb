@@ -408,7 +408,7 @@ class _SearchResultsPanel extends StatelessWidget {
                   children: [
                     Icon(Icons.search_off_rounded,
                         size: 40,
-                        color: colors.primary.withValues(alpha: 0.3)),
+                        color: colors.primary.withOpacity(0.3)),
                     const SizedBox(height: 10),
                     Text('No messages found',
                         style: AppTypography.bodyText.copyWith(

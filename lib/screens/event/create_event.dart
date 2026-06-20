@@ -369,7 +369,7 @@ class _CreateEventState extends State<CreateEvent> {
                   borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.purple.withValues(alpha: 0.35),
+                      color: AppColors.purple.withOpacity(0.35),
                       blurRadius: 16,
                       offset: const Offset(0, 4),
                     ),

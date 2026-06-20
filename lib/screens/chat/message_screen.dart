@@ -540,7 +540,7 @@ class _MessageScreenState extends State<MessageScreen> {
             if (_isJumpingToMessage)
               Positioned.fill(
                 child: Container(
-                  color: Colors.black.withValues(alpha: 0.35),
+                  color: Colors.black.withOpacity(0.35),
                   child: Center(
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -651,7 +651,7 @@ class _MessageScreenState extends State<MessageScreen> {
           key: msgKey,
           duration: const Duration(milliseconds: 300),
           color: isHighlighted
-              ? AppColors.purple.withValues(alpha: 0.15)
+              ? AppColors.purple.withOpacity(0.15)
               : Colors.transparent,
           child: bubble,
         );
