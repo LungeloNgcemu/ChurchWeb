@@ -1,583 +1,514 @@
-import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_event_calendar/flutter_event_calendar.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:master/classes/authentication/authenticate.dart';
-import 'package:master/classes/snack_bar.dart';
-import 'package:master/componants/tittle_head.dart';
+import 'package:master/classes/push_notification/notification.dart';
+import 'package:master/services/socket/io_service.dart';
+import 'package:master/componants/global_booking.dart';
+import 'package:master/providers/url_provider.dart';
+import 'package:master/services/api/token_service.dart';
+import 'package:master/theme/app_colors.dart';
+import 'package:master/theme/app_spacing.dart';
+import 'package:master/theme/app_typography.dart';
 import 'package:master/util/alerts.dart';
 import 'package:master/util/image_picker_custom.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../classes/calender_class.dart';
-import '../../classes/church_init.dart';
-import '../../componants/buttonChip.dart';
-import 'package:image_picker/image_picker.dart' as p;
-import 'dart:io';
-
-import '../../providers/url_provider.dart';
-import '../../componants/global_booking.dart';
-import 'package:path/path.dart' as path;
-import 'package:provider/provider.dart';
-import '../../../classes/message_class.dart';
 import 'package:master/widgets/common/connect_loader.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-// create_page and poster are linked
 class CreateEvent extends StatefulWidget {
-  CreateEvent({
-    super.key,
-  });
+  const CreateEvent({super.key});
 
   @override
   State<CreateEvent> createState() => _CreateEventState();
 }
 
 class _CreateEventState extends State<CreateEvent> {
-  bool isLoading = false;
+  final _titleController       = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _locationController    = TextEditingController();
+  final _picker = ImagePickerCustom();
 
-  Map<String, dynamic> currentUser = {};
-
-  MessageClass userClass = MessageClass();
-  Calender calenderClass = Calender();
-  final ImagePickerCustom _picker = ImagePickerCustom();
-  SnackBarNotice snack = SnackBarNotice();
-  Authenticate auth = Authenticate();
-
-  Uint8List? _image;
-  String? npostKey;
-  String? imageUrl;
-  bool isGood = false;
-  // Change PickedFile to XFile
-  String? postImageUrl;
-
-  Future<void> _pickImage() async {
-    final pickedImage = await _picker.pickImageToByte();
-    if (pickedImage != null) {
-      setState(() {
-        _image = pickedImage;
-      });
-    }
-  }
-
-  Future<void> _uploadImageToSuperbase(image) async {
-    try {
-      print('Image picked');
-      if (image != null) {
-        final fileName = 'IMG_${DateTime.now().millisecondsSinceEpoch}.jpg';
-
-        final String pathv = await supabase.storage
-            .from(Provider.of<christProvider>(context, listen: false)
-                .myMap['Project']?['Bucket'])
-            .uploadBinary(fileName, image,
-                fileOptions:
-                    const FileOptions(cacheControl: '3600', upsert: false));
-
-        final publicUrl = await supabase.storage
-            .from(Provider.of<christProvider>(context, listen: false)
-                .myMap['Project']?['Bucket'])
-            .getPublicUrl(fileName);
-
-        await Future.delayed(const Duration(seconds: 2), () {
-          setState(() {
-            imageUrl = publicUrl;
-            isGood = true;
-          });
-        });
-      } else {
-        const message = "No image selected";
-        snack.snack(context, message);
-      }
-    } catch (e) {
-      const message = "Please Remane Your Picture";
-      setState(() {
-        isLoading = false;
-      });
-      alertSuccess(context, message);
-
-      print("Error uploading image to Supabase: $e");
-    }
-  }
+  DateTime?   _selectedDate;
+  TimeOfDay?  _selectedTime;
+  Uint8List?  _image;
+  bool        _isLoading = false;
+  String      _uniqueChurchId = '';
 
   @override
   void initState() {
-    setState(() {
-      isLoading = true;
-    });
-    currentUser = userClass.currentUser;
-
-    Future.delayed(Duration(seconds: 3), () {
-      setState(() {
-        isLoading = false;
-      });
-    });
-
     super.initState();
+    _loadUser();
   }
 
-  CalendarDateTime? selectedDate;
-
-  void _onDateChanged(CalendarDateTime date) {
-    setState(() {
-      selectedDate = date;
-    });
-    print("Selected date: ${date.year}-${date.month}-${date.day}");
-  }
-
-  TextEditingController tittleController = TextEditingController();
-  TextEditingController descriptionController = TextEditingController();
-
-  String SelectedDay = "";
-
-  Future<void> superbaseEvent(tittle, description, date, image) async {
-    print('Inserting Event');
-
-    print('$tittle, $description, $date');
-
-    try {
-      await supabase.from('Events').insert({
-        'Title': tittle,
-        'Description': description,
-        'Day': date,
-        'ChurchName': Provider.of<christProvider>(context, listen: false)
-            .myMap['Project']?['ChurchName'],
-        'Image': image,
-      });
-    } catch (error) {
-      Future.delayed(Duration(seconds: 1), () {
-        setState(() {
-          isLoading = false;
-        });
-      });
+  Future<void> _loadUser() async {
+    final user = await TokenService.tokenUser();
+    if (user != null && mounted) {
+      setState(() => _uniqueChurchId = user.uniqueChurchId ?? '');
     }
   }
 
-  String convertMonth(String string) {
-    List<String> months = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December"
-    ];
-
-    var month = int.parse(string);
-
-    final formattedMonth = "${months[month - 1]}";
-
-    return formattedMonth;
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _locationController.dispose();
+    super.dispose();
   }
 
+  // ── Pickers ─────────────────────────────────────────────────────────────────
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: AppColors.purple,
+            onPrimary: AppColors.white,
+            onSurface: AppColors.textPrimary,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) setState(() => _selectedDate = picked);
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime ?? TimeOfDay.now(),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: AppColors.purple,
+            onPrimary: AppColors.white,
+            onSurface: AppColors.textPrimary,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) setState(() => _selectedTime = picked);
+  }
+
+  Future<void> _pickImage() async {
+    final bytes = await _picker.pickImageToByte();
+    if (bytes != null) setState(() => _image = bytes);
+  }
+
+  // ── Submit ──────────────────────────────────────────────────────────────────
+  Future<void> _submit() async {
+    final title       = _titleController.text.trim();
+    final description = _descriptionController.text.trim();
+
+    if (title.isEmpty) {
+      alertSuccess(context, 'Please enter a title');
+      return;
+    }
+    if (_selectedDate == null) {
+      alertSuccess(context, 'Please select a date');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final provider   = Provider.of<christProvider>(context, listen: false);
+      final churchName = provider.myMap['Project']?['ChurchName'] ?? '';
+      final bucket     = provider.myMap['Project']?['Bucket'] ?? 'churchStorage';
+
+      String? imageUrl;
+      if (_image != null) {
+        final fileName = 'EVENT_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        await supabase.storage.from(bucket).uploadBinary(
+          fileName, _image!,
+          fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+        );
+        imageUrl = supabase.storage.from(bucket).getPublicUrl(fileName);
+      }
+
+      // ISO date for EventDate column
+      final isoDate = DateFormat('yyyy-MM-dd').format(_selectedDate!);
+
+      // Legacy Day string for backward compat with old rows
+      const monthNames = ['January','February','March','April','May','June',
+        'July','August','September','October','November','December'];
+      final legacyDay = '${_selectedDate!.year} '
+          '${monthNames[_selectedDate!.month - 1]} ${_selectedDate!.day}';
+
+      // Format time before any await to avoid BuildContext-across-async-gap lint
+      final startTime = _selectedTime != null
+          ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}'
+          : '';
+
+      await supabase.from('Events').insert({
+        'Title':       title,
+        'Description': description,
+        'EventDate':   isoDate,
+        'Day':         legacyDay,
+        'ChurchName':  churchName,
+        'Location':    _locationController.text.trim(),
+        'StartTime':   startTime,
+        'Category':    'Event',
+        if (imageUrl != null) 'Image': imageUrl,
+      });
+
+      await PushNotifications.sendMessageToTopic(
+        topic: PushNotifications.buildTopic(_uniqueChurchId, 'event'),
+        title: 'New Event',
+        body: title,
+      );
+
+      // Write in-app notification row and broadcast via socket
+      await supabase.from('Notifications').insert({
+        'UniqueChurchId': _uniqueChurchId,
+        'Type': 'event',
+        'Title': title,
+        'Body': description.isNotEmpty ? description : 'A new event has been scheduled.',
+      });
+      IOService.socket.emit('new_notification', _uniqueChurchId);
+      IOService.onNewNotification?.call();
+
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        alertSuccess(context, 'Failed to create event. Please try again.');
+      }
+    }
+  }
+
+  // ── Build ───────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    String selectedOption =
-        Provider.of<SelectedOptionProvider>(context).selectedOption;
-    double h = MediaQuery.of(context).size.height;
-    double w = MediaQuery.of(context).size.width;
-    return SafeArea(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: Container(
-          height: h * 0.79,
-          // color: Colors.yellow,
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(
-                    bottom: 40.0, left: 10.0, right: 10.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.chevron_left_rounded, size: 20),
-                              Text('Back',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                        ),
+    final top = MediaQuery.of(context).padding.top;
+    return Stack(
+      children: [
+        Column(
+          children: [
+            // Topbar
+            Container(
+              color: AppColors.navy,
+              padding: EdgeInsets.fromLTRB(18, top > 0 ? top : 14, 18, 14),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      width: 34, height: 34,
+                      decoration: BoxDecoration(
+                        color: AppColors.navyIconBg,
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      child: const Icon(Icons.close_rounded,
+                          size: 18, color: AppColors.white),
                     ),
-                    const Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: Align(
-                          alignment: Alignment.center,
-                          child: Text(
-                            "Create Event",
-                            style: TextStyle(fontSize: 30.0),
-                          )),
+                  ),
+                  const SizedBox(width: 12),
+                  Text('Create Event',
+                      style: AppTypography.screenTitle.copyWith(fontSize: 18)),
+                ],
+              ),
+            ),
+
+            // Form body
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Date ────────────────────────────────────────────
+                    _FieldLabel('DATE'),
+                    const SizedBox(height: 6),
+                    _TapField(
+                      onTap: _pickDate,
+                      icon: Icons.calendar_month_rounded,
+                      hasValue: _selectedDate != null,
+                      label: _selectedDate != null
+                          ? DateFormat('EEEE, MMMM d, yyyy').format(_selectedDate!)
+                          : 'Select event date',
                     ),
-                    calenderClass.calenderReturn(
-                        _onDateChanged, context, setState),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(10.0)),
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 40.0),
-                              child: Column(
-                                children: [
-                                  EnterText(
-                                    height: 50.0,
-                                    text: "Title",
-                                    inText: "Create Title",
-                                    controller: tittleController,
-                                  ),
-                                  EnterText(
-                                    height: 50.0,
-                                    text: "Description",
-                                    inText: "Create Description",
-                                    controller: descriptionController,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                    const SizedBox(height: 16),
+
+                    // ── Title ───────────────────────────────────────────
+                    _FieldLabel('TITLE'),
+                    const SizedBox(height: 6),
+                    _InputField(
+                      controller: _titleController,
+                      hint: 'Event title',
+                      icon: Icons.title_rounded,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Description ─────────────────────────────────────
+                    _FieldLabel('DESCRIPTION'),
+                    const SizedBox(height: 6),
+                    _InputField(
+                      controller: _descriptionController,
+                      hint: 'Describe the event...',
+                      icon: Icons.notes_rounded,
+                      maxLines: 4,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Location ─────────────────────────────────────────
+                    _FieldLabel('LOCATION  (OPTIONAL)'),
+                    const SizedBox(height: 6),
+                    _InputField(
+                      controller: _locationController,
+                      hint: 'Venue or address',
+                      icon: Icons.location_on_outlined,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Start time ──────────────────────────────────────
+                    _FieldLabel('START TIME  (OPTIONAL)'),
+                    const SizedBox(height: 6),
+                    _TapField(
+                      onTap: _pickTime,
+                      icon: Icons.access_time_rounded,
+                      hasValue: _selectedTime != null,
+                      label: _selectedTime != null
+                          ? _selectedTime!.format(context)
+                          : 'Select start time',
+                      trailing: _selectedTime != null
+                          ? GestureDetector(
+                              onTap: () => setState(() => _selectedTime = null),
+                              child: Icon(Icons.close_rounded,
+                                  size: 16, color: AppColors.textMuted),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Cover image ─────────────────────────────────────
+                    _FieldLabel('COVER IMAGE  (OPTIONAL)'),
+                    const SizedBox(height: 6),
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.surfaceAlt, width: 2),
                         ),
-                        Expanded(
-                          child: Container(
-                            // color: Colors.red,
-                            height: h * 0.3,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    width: w * 0.4,
-                                    margin:
-                                        EdgeInsets.symmetric(vertical: 20.0),
-                                    child: ImageFrame(
-                                      image: _image,
+                        child: _image != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Stack(
+                                  children: [
+                                    Image.memory(
+                                      _image!,
+                                      width: double.infinity,
+                                      height: 150,
+                                      fit: BoxFit.cover,
                                     ),
+                                    Positioned(
+                                      top: 8, right: 8,
+                                      child: GestureDetector(
+                                        onTap: () => setState(() => _image = null),
+                                        child: Container(
+                                          width: 28, height: 28,
+                                          decoration: const BoxDecoration(
+                                            color: Colors.black54,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(Icons.close_rounded,
+                                              size: 14, color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : SizedBox(
+                                height: 86,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.add_photo_alternate_outlined,
+                                          size: 24, color: AppColors.textMuted),
+                                      const SizedBox(height: 4),
+                                      Text('Add cover image',
+                                          style: AppTypography.caption),
+                                    ],
                                   ),
                                 ),
-                                NewButton(
-                                  inSideChip: "Choose Image ",
-                                  where: () {
-                                    setState(() {
-                                      _pickImage();
-                                    });
-
-                                    /// Update state variables here
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: NewButton(
-                            inSideChip: "Create Event",
-                            where: () async {
-                              FocusScope.of(context).unfocus();
-
-                              Future.delayed(Duration(seconds: 1), () {
-                                setState(() {
-                                  isLoading = true;
-                                });
-                              });
-
-                              final year = Provider.of<SelectedDateProvider>(
-                                      context,
-                                      listen: false)
-                                  .selectedDate["Year"];
-                              final month = Provider.of<SelectedDateProvider>(
-                                      context,
-                                      listen: false)
-                                  .selectedDate["Month"];
-                              final day = Provider.of<SelectedDateProvider>(
-                                      context,
-                                      listen: false)
-                                  .selectedDate["Day"];
-
-                              print("Month $month");
-
-                              final tittle = tittleController.text;
-                              final description = descriptionController.text;
-
-                              print(
-                                  " title : $tittle,  description : $description");
-
-                              try {
-                                if (_image == null) {
-                                  const message = "Please select an Image";
-                                  alertSuccess(context, message);
-                                  Future.delayed(Duration(seconds: 1), () {
-                                    setState(() {
-                                      isLoading = false;
-                                    });
-                                  });
-                                } else if (tittle == "" || description == "") {
-                                  const message = "Please fill in everything";
-                                  alertSuccess(context, message);
-                                  Future.delayed(Duration(seconds: 1), () {
-                                    setState(() {
-                                      isLoading = false;
-                                    });
-                                  });
-                                } else if (month == null) {
-                                  const message = "Please select a day";
-                                  alertSuccess(context, message);
-                                  Future.delayed(Duration(seconds: 1), () {
-                                    setState(() {
-                                      isLoading = false;
-                                    });
-                                  });
-                                } else {
-                                  await _uploadImageToSuperbase(_image);
-
-                                  print("isGood status : $isGood");
-
-                                  if (isGood == true) {
-                                    final nameMonth = convertMonth(month);
-
-                                    final date = "$year $nameMonth $day";
-                                    print("$year $nameMonth $day");
-
-                                    await superbaseEvent(
-                                        tittle ?? "no title",
-                                        description ?? "no description",
-                                        date,
-                                        imageUrl);
-
-                                    setState(() {
-                                      isLoading = false;
-                                      isGood = false;
-                                    });
-
-                                    tittleController.clear();
-                                    descriptionController.clear();
-
-                                    Navigator.of(context).pop();
-                                  }
-                                }
-                              } catch (error) {
-                                print("refresh erroe $error");
-                                const message =
-                                    "Please refresh page and try again";
-                                alertSuccess(context, message);
-                                Future.delayed(Duration(seconds: 1), () {
-                                  setState(() {
-                                    isLoading = false;
-                                  });
-                                });
-                              } // Close the AlertDialog
-                            },
-                          ),
-                        ),
-                      ],
+                              ),
+                      ),
                     ),
                   ],
                 ),
               ),
-              if (isLoading)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black.withOpacity(0.5),
-                    // Semi-transparent overlay
-                    child: const Center(child: ConnectLoader()),
-                  ),
-                ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ),
-    );
-  }
-}
 
-class ImageFrame extends StatefulWidget {
-  ImageFrame({this.image, Key? key}) : super(key: key);
-
-  final dynamic image;
-
-  @override
-  _ImageFrameState createState() => _ImageFrameState();
-}
-
-class _ImageFrameState extends State<ImageFrame> {
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20.0),
-      child: Container(
-        height: 50.0,
-        width: 50.0,
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(20.0),
-        ),
-        child: _buildImage(widget.image),
-      ),
-    );
-  }
-
-  Widget _buildImage(dynamic image) {
-    if (image == null) {
-      return Container(); // You can use a placeholder here
-    }
-
-    if (image is p.XFile) {
-      return Image.file(
-        File(image.path),
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: 250.0,
-      );
-    } else if (image is File) {
-      return Image.file(
-        image,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: 250.0,
-      );
-    } else {
-      return SizedBox(); // Handle other cases if needed
-    }
-  }
-}
-
-class EnterText extends StatelessWidget {
-  const EnterText({
-    this.height,
-    this.text,
-    this.inText,
-    this.controller, // Add this line
-    Key? key,
-  }) : super(key: key);
-
-  final double? height;
-  final String? text;
-  final String? inText;
-  final TextEditingController? controller; // Add this line
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  text!,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20.0,
-                  ),
-                ),
+        // Fixed bottom CTA
+        Positioned(
+          bottom: 0, left: 0, right: 0,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              border: Border(
+                top: BorderSide(color: AppColors.surfaceAlt, width: 1),
               ),
-            ],
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: height!,
-                  child: TextField(
-                    controller: controller,
-                    // Add this line
-                    maxLines: null,
-                    expands: true,
-                    keyboardType: TextInputType.multiline,
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.only(
-                          left: 8.0, bottom: 8.0, top: 8.0),
-                      border: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(10.0),
-                        ),
-                      ),
-                      // filled: true,
-                      hintText: inText ?? "",
+            ),
+            child: GestureDetector(
+              onTap: _isLoading ? null : _submit,
+              child: Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  gradient: AppColors.purpleCardGradient,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.purple.withValues(alpha: 0.35),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    'Create Event',
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.white,
                     ),
                   ),
                 ),
               ),
-            ],
+            ),
           ),
-        ],
+        ),
+
+        // Loading overlay
+        if (_isLoading)
+          const Positioned.fill(
+            child: ColoredBox(
+              color: Color(0x80000000),
+              child: Center(child: ConnectLoader()),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ── Shared form widgets ───────────────────────────────────────────────────────
+
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) =>
+      Text(text, style: AppTypography.fieldLabel);
+}
+
+class _TapField extends StatelessWidget {
+  final VoidCallback onTap;
+  final IconData icon;
+  final bool hasValue;
+  final String label;
+  final Widget? trailing;
+
+  const _TapField({
+    required this.onTap,
+    required this.icon,
+    required this.hasValue,
+    required this.label,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: hasValue ? AppColors.purple : AppColors.surfaceAlt,
+            width: 2,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon,
+                size: 18,
+                color: hasValue ? AppColors.purple : AppColors.textMuted),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: hasValue ? AppColors.textPrimary : AppColors.textMuted,
+                  fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ),
+            if (trailing != null) trailing!,
+          ],
+        ),
       ),
     );
   }
 }
 
+class _InputField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final IconData icon;
+  final int maxLines;
 
+  const _InputField({
+    required this.controller,
+    required this.hint,
+    required this.icon,
+    this.maxLines = 1,
+  });
 
-// class ImageFrame extends StatefulWidget {
-//   ImageFrame({this.image, Key? key}) : super(key: key);
-//
-//   final dynamic image;
-//
-//   @override
-//   _ImageFrameState createState() => _ImageFrameState();
-// }
-//
-// class _ImageFrameState extends State<ImageFrame> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return ClipRRect(
-//       borderRadius: BorderRadius.circular(20.0),
-//       child: Container(
-//         height: 145.0,
-//         width: 145.0,
-//         decoration: BoxDecoration(
-//           color: Colors.grey[200],
-//           borderRadius: BorderRadius.circular(20.0),
-//         ),
-//         child: _buildImage(widget.image),
-//       ),
-//     );
-//   }
-//
-//   Widget _buildImage(dynamic image) {
-//     if (image == null) {
-//       return Container(); // You can use a placeholder here
-//     }
-//
-//     if (image is XFile) {
-//       return Image.file(
-//         File(image.path),
-//         fit: BoxFit.cover,
-//         width: double.infinity,
-//         height: 250.0,
-//       );
-//     } else if (image is File) {
-//       return Image.file(
-//         image,
-//         fit: BoxFit.cover,
-//         width: double.infinity,
-//         height: 250.0,
-//       );
-//     } else {
-//       return Image.network(
-//           "https://picsum.photos/seed/picsum/200/300"); // Handle other cases if needed
-//     }
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      style: AppTypography.fieldValue,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: AppTypography.fieldPlaceholder,
+        prefixIcon: Padding(
+          padding: const EdgeInsets.only(left: 14, right: 10),
+          child: Icon(icon, size: 18, color: AppColors.textMuted),
+        ),
+        prefixIconConstraints: const BoxConstraints(minWidth: 44),
+        fillColor: AppColors.surface,
+        filled: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: AppColors.surfaceAlt, width: 2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: AppColors.surfaceAlt, width: 2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: AppColors.purple, width: 2),
+        ),
+      ),
+    );
+  }
+}

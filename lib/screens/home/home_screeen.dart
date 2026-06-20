@@ -21,7 +21,10 @@ import 'package:master/theme/theme_manager.dart';
 import 'package:master/widgets/common/connect_loader.dart';
 import 'package:master/widgets/common/org_logo.dart';
 import 'package:master/widgets/home/home_modals.dart';
+import 'package:master/widgets/home/notification_centre.dart';
 import 'package:master/util/image_picker_custom.dart';
+import 'package:master/services/socket/io_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:typed_data';
 
 class HomeScreen extends StatefulWidget {
@@ -47,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen>
   int _newCount    = 0;
   bool _statsLoading = true;
   String _role = '';
+  String _uniqueChurchId = '';
 
   @override
   void initState() {
@@ -96,10 +100,11 @@ class _HomeScreenState extends State<HomeScreen>
 
       if (mounted) {
         setState(() {
-          _memberCount   = memberCount;
-          _newCount      = (newResult as List).length;
-          _statsLoading  = false;
-          _role          = user?.role ?? '';
+          _memberCount      = memberCount;
+          _newCount         = (newResult as List).length;
+          _statsLoading     = false;
+          _role             = user?.role ?? '';
+          _uniqueChurchId   = uniqueChurchId;
         });
       }
     } catch (_) {
@@ -209,6 +214,7 @@ class _HomeScreenState extends State<HomeScreen>
           _TopBar(
             orgName: churchName,
             logoUrl: logoUrl,
+            uniqueChurchId: _uniqueChurchId,
             onShareTap: () async =>
                 await InvitationService.shareInvitation(context),
           ),
@@ -357,11 +363,103 @@ class _HomeScreenState extends State<HomeScreen>
 }
 
 // ── Topbar ────────────────────────────────────────────────────────────────────
-class _TopBar extends StatelessWidget {
+class _TopBar extends StatefulWidget {
   final String orgName;
   final String logoUrl;
+  final String uniqueChurchId;
   final VoidCallback onShareTap;
-  const _TopBar({required this.orgName, required this.logoUrl, required this.onShareTap});
+  const _TopBar({
+    required this.orgName,
+    required this.logoUrl,
+    required this.uniqueChurchId,
+    required this.onShareTap,
+  });
+
+  @override
+  State<_TopBar> createState() => _TopBarState();
+}
+
+class _TopBarState extends State<_TopBar> {
+  int _badgeCount = 0;
+  // Stored as ms-since-epoch so there are no string-parsing or timezone issues.
+  int _lastSeenMs = 0;
+
+  String get _prefKey => 'notif_last_seen_ms_${widget.uniqueChurchId}';
+
+  @override
+  void initState() {
+    super.initState();
+    IOService.onNewNotification = _fetchCount;
+    _init();
+  }
+
+  @override
+  void didUpdateWidget(_TopBar old) {
+    super.didUpdateWidget(old);
+    if (old.uniqueChurchId != widget.uniqueChurchId &&
+        widget.uniqueChurchId.isNotEmpty) {
+      _init();
+    }
+  }
+
+  Future<void> _init() async {
+    if (widget.uniqueChurchId.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    // Default 0 = "never seen" → all notifications count as new.
+    final saved = prefs.getInt(_prefKey) ?? 0;
+    if (mounted) {
+      _lastSeenMs = saved;
+      _fetchCount();
+    }
+  }
+
+  Future<void> _fetchCount() async {
+    if (!mounted || widget.uniqueChurchId.isEmpty) return;
+    // Capture before the async gap so a concurrent bell-tap can't race with us.
+    final seenMs = _lastSeenMs;
+    try {
+      final rows = await supabase
+          .from('Notifications')
+          .select('created_at')
+          .eq('UniqueChurchId', widget.uniqueChurchId)
+          .order('created_at', ascending: false)
+          .limit(100);
+      if (!mounted) return;
+      final count = (rows as List).where((r) {
+        final dt = DateTime.tryParse(r['created_at']?.toString() ?? '')?.toUtc();
+        return dt != null && dt.millisecondsSinceEpoch > seenMs;
+      }).length;
+      setState(() => _badgeCount = count);
+    } catch (_) {}
+  }
+
+  Future<void> _onBellTap() async {
+    // Reset badge immediately — don't wait for the prefs write.
+    final nowMs = DateTime.now().toUtc().millisecondsSinceEpoch;
+    _lastSeenMs = nowMs;
+    if (mounted) setState(() => _badgeCount = 0);
+
+    // Persist in the background.
+    SharedPreferences.getInstance()
+        .then((p) => p.setInt(_prefKey, nowMs));
+
+    if (!mounted) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) =>
+          NotificationCentre(uniqueChurchId: widget.uniqueChurchId),
+    );
+  }
+
+  @override
+  void dispose() {
+    if (IOService.onNewNotification == _fetchCount) {
+      IOService.onNewNotification = null;
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -375,36 +473,68 @@ class _TopBar extends StatelessWidget {
         children: [
           // Org logo (32×32 rounded square — initials fallback)
           OrgLogo(
-            name: orgName,
-            logoUrl: logoUrl.isEmpty ? null : logoUrl,
+            name: widget.orgName,
+            logoUrl: widget.logoUrl.isEmpty ? null : widget.logoUrl,
             size: 32,
             radius: 10,
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(orgName,
+            child: Text(widget.orgName,
                 style: AppTypography.screenTitle.copyWith(fontSize: 16),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis),
           ),
-          // Notification
+          // Notification bell with unread badge
           GestureDetector(
-            onTap: () {},
-            child: Container(
+            onTap: _onBellTap,
+            child: SizedBox(
               width: 34,
               height: 34,
-              decoration: BoxDecoration(
-                color: AppColors.navyIconBg,
-                borderRadius: BorderRadius.circular(10),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: AppColors.navyIconBg,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(Icons.notifications_outlined,
+                        size: 18, color: AppColors.white),
+                  ),
+                  if (_badgeCount > 0)
+                    Positioned(
+                      top: -4,
+                      right: -4,
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: AppColors.orange,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.navy, width: 2),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          _badgeCount > 9 ? '9+' : '$_badgeCount',
+                          style: const TextStyle(
+                            color: AppColors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
-              child: const Icon(Icons.notifications_outlined,
-                  size: 18, color: AppColors.white),
             ),
           ),
           const SizedBox(width: 8),
           // Share / Invite
           GestureDetector(
-            onTap: onShareTap,
+            onTap: widget.onShareTap,
             child: Container(
               width: 34,
               height: 34,

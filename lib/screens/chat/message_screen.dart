@@ -1,6 +1,7 @@
 import 'dart:async';
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
+import 'package:master/services/socket/io_service.dart';
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:js_util' as js_util;
 import 'dart:typed_data';
@@ -29,6 +30,9 @@ import '../../classes/message_class.dart';
 class MessageScreen extends StatefulWidget {
   const MessageScreen({super.key});
 
+  /// Called by the search panel to scroll to and highlight a message by id.
+  static void Function(String msgId)? scrollToMessageId;
+
   @override
   State<MessageScreen> createState() => _MessageScreenState();
 }
@@ -56,6 +60,11 @@ class _MessageScreenState extends State<MessageScreen> {
   String? _pendingImageUrl;
   bool _isUploading = false;
 
+  // ── Per-message GlobalKeys for scroll-to ��────────────────���───────────────
+  final Map<String, GlobalKey> _messageKeys = {};
+  String? _highlightedMessageId;
+  bool _isJumpingToMessage = false;
+
   // ── Voice recording state ─────────────────────────────────────────────────
   html.MediaRecorder? _mediaRecorder;
   html.MediaStream? _mediaStream;
@@ -73,6 +82,76 @@ class _MessageScreenState extends State<MessageScreen> {
     scrollController = ScrollController();
     scrollController.addListener(_onScroll);
     if (mounted) initChat();
+    MessageScreen.scrollToMessageId = _scrollToMessageId;
+    IOService.onMessageDeleted = (id) {
+      if (mounted) setState(() => _messages.removeWhere((m) => m.id == id));
+    };
+  }
+
+  Future<void> _scrollToMessageId(String msgId) async {
+    setState(() => _isJumpingToMessage = true);
+    try {
+      await _doScrollToMessage(msgId);
+    } finally {
+      if (mounted) setState(() => _isJumpingToMessage = false);
+    }
+  }
+
+  /// Waits for the next rendered frame — more reliable than a fixed delay.
+  Future<void> _waitForFrame() {
+    final c = Completer<void>();
+    WidgetsBinding.instance.addPostFrameCallback((_) => c.complete());
+    return c.future;
+  }
+
+  Future<void> _doScrollToMessage(String msgId) async {
+    // 1. Load pages until the message is in the list (max 15 pages).
+    var idx = _messages.indexWhere((m) => m.id == msgId);
+    int attempts = 0;
+    while (idx == -1 && _hasMore && attempts < 15) {
+      await _loadMoreMessages();
+      await _waitForFrame(); // let ListView rebuild with new items
+      idx = _messages.indexWhere((m) => m.id == msgId);
+      attempts++;
+    }
+    if (idx == -1 || !mounted) return;
+
+    // 2. Wait one more frame so maxScrollExtent is up to date.
+    await _waitForFrame();
+    if (!mounted) return;
+
+    // 3. Rough jump: reverse:true list → pixels=0 is newest (bottom).
+    //    Older messages sit at higher offsets.
+    final reversedIdx = _messages.length - 1 - idx;
+    if (scrollController.hasClients) {
+      final approx = (reversedIdx * 80.0)
+          .clamp(0.0, scrollController.position.maxScrollExtent);
+      scrollController.jumpTo(approx);
+    }
+
+    // 4. Wait two frames for the item to be built at the new position.
+    await _waitForFrame();
+    await _waitForFrame();
+    if (!mounted) return;
+
+    // 5. Precise scroll once the GlobalKey has a live context.
+    final key = _messageKeys[msgId];
+    if (key?.currentContext != null) {
+      await Scrollable.ensureVisible(
+        key!.currentContext!,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+        alignment: 0.5,
+      );
+    }
+
+    // 6. Highlight flash.
+    if (mounted) {
+      setState(() => _highlightedMessageId = msgId);
+      Future.delayed(const Duration(milliseconds: 1800), () {
+        if (mounted) setState(() => _highlightedMessageId = null);
+      });
+    }
   }
 
   void _onScroll() {
@@ -119,9 +198,9 @@ class _MessageScreenState extends State<MessageScreen> {
 
   void _onMessageUpdate() {
     final providerMsgs = Provider.of<MessageProvider>(context, listen: false).messages;
-    if (providerMsgs.isEmpty) return;
 
     if (!_initialLoadDone) {
+      if (providerMsgs.isEmpty) return;
       _initialLoadDone = true;
       setState(() {
         _messages = List.from(providerMsgs);
@@ -131,6 +210,8 @@ class _MessageScreenState extends State<MessageScreen> {
       return;
     }
 
+    // Only add new incoming messages — never remove here, because _messages
+    // includes paginated old pages that the provider doesn't know about.
     final existingIds = _messages.map((m) => m.id).toSet();
     final newOnes = providerMsgs.where((m) => !existingIds.contains(m.id)).toList();
     if (newOnes.isEmpty) return;
@@ -157,6 +238,7 @@ class _MessageScreenState extends State<MessageScreen> {
     scrollController.removeListener(_onScroll);
     scrollController.dispose();
     controller.dispose();
+    if (IOService.onMessageDeleted != null) IOService.onMessageDeleted = null;
     super.dispose();
   }
 
@@ -356,6 +438,17 @@ class _MessageScreenState extends State<MessageScreen> {
   }
 
   Future<void> deleteMessage({id, uniqueId}) async {
+    // Save scroll offset before removing so we can restore it after.
+    final savedOffset = scrollController.hasClients ? scrollController.offset : 0.0;
+    if (mounted) setState(() => _messages.removeWhere((m) => m.id == id));
+    // Restore scroll position after the list rebuilds.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (scrollController.hasClients) {
+        scrollController.jumpTo(
+          savedOffset.clamp(0.0, scrollController.position.maxScrollExtent),
+        );
+      }
+    });
     await ChatService.deleteMessage(id: id, uniqueId: uniqueId);
   }
 
@@ -405,15 +498,17 @@ class _MessageScreenState extends State<MessageScreen> {
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            AnimatedOpacity(
-              opacity: _isLoadingMore ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 300),
-              child: const Center(child: ConnectLoader(size: 24)),
-            ),
-            Expanded(child: _buildMessageList()),
-            _ChatInputBar(
+            Column(
+              children: [
+                AnimatedOpacity(
+                  opacity: _isLoadingMore ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: const Center(child: ConnectLoader(size: 24)),
+                ),
+                Expanded(child: _buildMessageList()),
+                _ChatInputBar(
               controller: controller,
               hasText: messagex.trim().isNotEmpty || _pendingImageBytes != null,
               onChanged: (v) => setState(() => messagex = v),
@@ -438,6 +533,40 @@ class _MessageScreenState extends State<MessageScreen> {
               onCancelRecord: _cancelRecording,
               onSendVoice: _sendVoiceNote,
             ),
+          ],
+        ),
+
+            // ── Jump-to-message loading overlay ───────────────────────
+            if (_isJumpingToMessage)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 18),
+                      decoration: BoxDecoration(
+                        color: AppColors.navy,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ConnectLoader(size: 32),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Loading message…',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.white,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -476,6 +605,14 @@ class _MessageScreenState extends State<MessageScreen> {
 
         final msg = _messages[_messages.length - 1 - index];
         final isSender = (msg.phoneNumber ?? '') == (currentUser?.phoneNumber ?? '');
+        final msgId = msg.id ?? '';
+        // Only create/reuse a GlobalKey when the id is non-empty; null ids would
+        // all share the same key and trigger a "Multiple widgets used the same
+        // GlobalKey" error.
+        final msgKey = msgId.isNotEmpty
+            ? _messageKeys.putIfAbsent(msgId, () => GlobalKey())
+            : null;
+        final isHighlighted = _highlightedMessageId == msgId;
 
         DateTime? dateTime;
         try { dateTime = DateTime.parse(msg.time ?? ''); } catch (_) {}
@@ -483,7 +620,7 @@ class _MessageScreenState extends State<MessageScreen> {
             ? '${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}'
             : '';
 
-        return isSender
+        final bubble = isSender
             ? MessageBubbleRight(
                 key: ValueKey(msg.id),
                 text: msg.message ?? '',
@@ -509,6 +646,15 @@ class _MessageScreenState extends State<MessageScreen> {
                   () async => deleteMessage(id: msg.id ?? '', uniqueId: msg.uniqueChurchId ?? ''),
                 ),
               );
+
+        return AnimatedContainer(
+          key: msgKey,
+          duration: const Duration(milliseconds: 300),
+          color: isHighlighted
+              ? AppColors.purple.withValues(alpha: 0.15)
+              : Colors.transparent,
+          child: bubble,
+        );
       },
     );
   }
