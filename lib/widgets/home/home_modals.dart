@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:master/componants/global_booking.dart';
 import 'package:master/screens/home/church_screen.dart';
+import 'package:master/screens/post/post_screen.dart';
 import 'package:master/providers/url_provider.dart';
 import 'package:master/services/api/token_service.dart';
 import 'package:master/theme/app_colors.dart';
@@ -541,6 +542,7 @@ class _EventsSheet extends StatelessWidget {
             onAction: () {
               Navigator.of(context).pop();
               ChurchScreen.switchTab?.call(1);
+              PostScreen.switchToFilter?.call('Event');
             },
           ),
           Divider(height: 1, color: colors.backgroundAlt),

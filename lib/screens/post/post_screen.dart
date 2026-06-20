@@ -59,6 +59,9 @@ const _kFilters = ['All', 'Announcement', 'Event', 'Update', 'Request'];
 class PostScreen extends StatefulWidget {
   const PostScreen({super.key});
 
+  /// Call this to programmatically switch the filter (e.g. 'Event', 'All').
+  static void Function(String filter)? switchToFilter;
+
   @override
   State<PostScreen> createState() => _PostScreenState();
 }
@@ -84,6 +87,7 @@ class _PostScreenState extends State<PostScreen>
 
   @override
   void dispose() {
+    if (PostScreen.switchToFilter != null) PostScreen.switchToFilter = null;
     _searchController.dispose();
     super.dispose();
   }
@@ -109,6 +113,9 @@ class _PostScreenState extends State<PostScreen>
   void initState() {
     super.initState();
     streamDelegate();
+    PostScreen.switchToFilter = (filter) {
+      if (mounted) setState(() => _selectedFilter = filter);
+    };
     Provider.of<BackImageUrlProvider>(context, listen: false)
         .loadImageUrlLocally();
     Provider.of<ProfileImageUrlProvider>(context, listen: false)
@@ -865,6 +872,7 @@ class _EventCalendarView extends StatefulWidget {
 class _EventCalendarViewState extends State<_EventCalendarView> {
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
+  CalendarFormat _calendarFormat = CalendarFormat.week;
 
   static DateTime _normalise(DateTime d) => DateTime.utc(d.year, d.month, d.day);
 
@@ -935,9 +943,14 @@ class _EventCalendarViewState extends State<_EventCalendarView> {
                 selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
                 onDaySelected: (sel, foc) =>
                     setState(() { _selectedDay = sel; _focusedDay = foc; }),
+                onFormatChanged: (format) =>
+                    setState(() => _calendarFormat = format),
                 eventLoader: eventsForDay,
-                availableCalendarFormats: const {CalendarFormat.month: 'Month'},
-                calendarFormat: CalendarFormat.month,
+                availableCalendarFormats: const {
+                  CalendarFormat.month: 'Month',
+                  CalendarFormat.week: 'Week',
+                },
+                calendarFormat: _calendarFormat,
                 calendarStyle: CalendarStyle(
                   selectedDecoration: BoxDecoration(
                     color: AppColors.purple,
@@ -975,7 +988,18 @@ class _EventCalendarViewState extends State<_EventCalendarView> {
                   markerMargin: const EdgeInsets.only(top: 1),
                 ),
                 headerStyle: HeaderStyle(
-                  formatButtonVisible: false,
+                  formatButtonVisible: true,
+                  formatButtonShowsNext: false,
+                  formatButtonDecoration: BoxDecoration(
+                    color: AppColors.purpleTint,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.purpleBorder, width: 1),
+                  ),
+                  formatButtonTextStyle: TextStyle(
+                    color: AppColors.purple,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
                   titleCentered: true,
                   titleTextStyle: AppTypography.headingSmall.copyWith(
                     color: AppColors.textPrimary,
