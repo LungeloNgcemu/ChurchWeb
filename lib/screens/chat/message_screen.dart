@@ -59,9 +59,10 @@ class _MessageScreenState extends State<MessageScreen> {
   String? _pendingImageUrl;
   bool _isUploading = false;
 
-  // ── Per-message GlobalKeys for scroll-to ─────────────────────────────────
+  // ── Per-message GlobalKeys for scroll-to ��────────────────���───────────────
   final Map<String, GlobalKey> _messageKeys = {};
   String? _highlightedMessageId;
+  bool _isJumpingToMessage = false;
 
   // ── Voice recording state ─────────────────────────────────────────────────
   html.MediaRecorder? _mediaRecorder;
@@ -84,6 +85,15 @@ class _MessageScreenState extends State<MessageScreen> {
   }
 
   Future<void> _scrollToMessageId(String msgId) async {
+    setState(() => _isJumpingToMessage = true);
+    try {
+      await _doScrollToMessage(msgId);
+    } finally {
+      if (mounted) setState(() => _isJumpingToMessage = false);
+    }
+  }
+
+  Future<void> _doScrollToMessage(String msgId) async {
     // 1. If not loaded yet, pull more pages until we find it (max 15 pages)
     var idx = _messages.indexWhere((m) => m.id == msgId);
     int attempts = 0;
@@ -458,15 +468,17 @@ class _MessageScreenState extends State<MessageScreen> {
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            AnimatedOpacity(
-              opacity: _isLoadingMore ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 300),
-              child: const Center(child: ConnectLoader(size: 24)),
-            ),
-            Expanded(child: _buildMessageList()),
-            _ChatInputBar(
+            Column(
+              children: [
+                AnimatedOpacity(
+                  opacity: _isLoadingMore ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: const Center(child: ConnectLoader(size: 24)),
+                ),
+                Expanded(child: _buildMessageList()),
+                _ChatInputBar(
               controller: controller,
               hasText: messagex.trim().isNotEmpty || _pendingImageBytes != null,
               onChanged: (v) => setState(() => messagex = v),
@@ -491,6 +503,40 @@ class _MessageScreenState extends State<MessageScreen> {
               onCancelRecord: _cancelRecording,
               onSendVoice: _sendVoiceNote,
             ),
+          ],
+        ),
+
+            // ── Jump-to-message loading overlay ───────────────────────
+            if (_isJumpingToMessage)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 18),
+                      decoration: BoxDecoration(
+                        color: AppColors.navy,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ConnectLoader(size: 32),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Loading message…',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.white,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
