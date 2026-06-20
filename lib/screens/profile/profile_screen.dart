@@ -95,10 +95,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> update() async {
     setState(() => isLoading = true);
     try {
-      await supabase.from('Users').update({
+      await supabase.from('User').update({
         'UserName': controllerName.text,
         if (image.isNotEmpty) 'ProfileImage': image,
       }).eq('PhoneNumber', number);
+      setState(() => currentUser['UserName'] = controllerName.text);
       alertSuccess(context, 'Profile updated successfully');
     } catch (e) {
       log('Update error: $e');
@@ -264,18 +265,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onImageTap: _uploadImageToSuperbase,
           ),
 
-          // ── Stats strip ──────────────────────────────────────────────
-          Container(
-            color: AppColors.white,
-            child: Column(children: [
-              Row(children: [
-                _StatCell(value: '48', label: 'Posts'),
-                _StatCell(value: '248', label: 'Members'),
-                _StatCell(value: '12', label: 'Events'),
-              ]),
-              Divider(height: 1, color: AppColors.surfaceAlt),
-            ]),
-          ),
 
           // ── Settings list ─────────────────────────────────────────────
           Expanded(
@@ -603,29 +592,6 @@ class _ProfileHero extends StatelessWidget {
   }
 }
 
-class _StatCell extends StatelessWidget {
-  final String value, label;
-  const _StatCell({required this.value, required this.label});
-
-  @override
-  Widget build(BuildContext context) => Expanded(
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            border: Border(
-                right: BorderSide(color: AppColors.surfaceAlt, width: 1)),
-          ),
-          child: Column(children: [
-            Text(value,
-                style: AppTypography.statValue.copyWith(fontSize: 18)),
-            const SizedBox(height: 3),
-            Text(label,
-                style: AppTypography.caption
-                    .copyWith(fontWeight: FontWeight.w600)),
-          ]),
-        ),
-      );
-}
 
 class _SettingsGroup extends StatelessWidget {
   final List<Widget> rows;

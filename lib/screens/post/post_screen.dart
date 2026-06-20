@@ -181,7 +181,7 @@ class _PostScreenState extends State<PostScreen>
   }
 
   // ── preserved: delete post + comments + image from Supabase ──────────────
-  void superbaseDeletePost(String id, String imageUrl) async {
+  Future<void> superbaseDeletePost(String id, String imageUrl) async {
     try {
       await supabase.from('Comments').delete().match({'PostId': id});
       await supabase.from('Posts').delete().match({'id': id});
@@ -332,11 +332,11 @@ class _PostScreenState extends State<PostScreen>
                                 onPressedDelete: () {
                                   alertDelete(context, "Delete Post?",
                                       () async {
-                                    superbaseDeletePost(
+                                    await superbaseDeletePost(
                                       post['id'].toString(),
                                       post['ImageUrl'] ?? '',
                                     );
-                                    streamDelegate();
+                                    if (mounted) setState(() => streamDelegate());
                                   });
                                 },
                               ),

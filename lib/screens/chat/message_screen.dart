@@ -1,6 +1,7 @@
 import 'dart:async';
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
+import 'package:master/services/socket/io_service.dart';
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:js_util' as js_util;
 import 'dart:typed_data';
@@ -82,6 +83,9 @@ class _MessageScreenState extends State<MessageScreen> {
     scrollController.addListener(_onScroll);
     if (mounted) initChat();
     MessageScreen.scrollToMessageId = _scrollToMessageId;
+    IOService.onMessageDeleted = (id) {
+      if (mounted) setState(() => _messages.removeWhere((m) => m.id == id));
+    };
   }
 
   Future<void> _scrollToMessageId(String msgId) async {
@@ -194,9 +198,9 @@ class _MessageScreenState extends State<MessageScreen> {
 
   void _onMessageUpdate() {
     final providerMsgs = Provider.of<MessageProvider>(context, listen: false).messages;
-    if (providerMsgs.isEmpty) return;
 
     if (!_initialLoadDone) {
+      if (providerMsgs.isEmpty) return;
       _initialLoadDone = true;
       setState(() {
         _messages = List.from(providerMsgs);
@@ -206,6 +210,8 @@ class _MessageScreenState extends State<MessageScreen> {
       return;
     }
 
+    // Only add new incoming messages — never remove here, because _messages
+    // includes paginated old pages that the provider doesn't know about.
     final existingIds = _messages.map((m) => m.id).toSet();
     final newOnes = providerMsgs.where((m) => !existingIds.contains(m.id)).toList();
     if (newOnes.isEmpty) return;
@@ -232,6 +238,7 @@ class _MessageScreenState extends State<MessageScreen> {
     scrollController.removeListener(_onScroll);
     scrollController.dispose();
     controller.dispose();
+    if (IOService.onMessageDeleted != null) IOService.onMessageDeleted = null;
     super.dispose();
   }
 
@@ -431,6 +438,17 @@ class _MessageScreenState extends State<MessageScreen> {
   }
 
   Future<void> deleteMessage({id, uniqueId}) async {
+    // Save scroll offset before removing so we can restore it after.
+    final savedOffset = scrollController.hasClients ? scrollController.offset : 0.0;
+    if (mounted) setState(() => _messages.removeWhere((m) => m.id == id));
+    // Restore scroll position after the list rebuilds.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (scrollController.hasClients) {
+        scrollController.jumpTo(
+          savedOffset.clamp(0.0, scrollController.position.maxScrollExtent),
+        );
+      }
+    });
     await ChatService.deleteMessage(id: id, uniqueId: uniqueId);
   }
 
@@ -588,7 +606,12 @@ class _MessageScreenState extends State<MessageScreen> {
         final msg = _messages[_messages.length - 1 - index];
         final isSender = (msg.phoneNumber ?? '') == (currentUser?.phoneNumber ?? '');
         final msgId = msg.id ?? '';
-        final msgKey = _messageKeys.putIfAbsent(msgId, () => GlobalKey());
+        // Only create/reuse a GlobalKey when the id is non-empty; null ids would
+        // all share the same key and trigger a "Multiple widgets used the same
+        // GlobalKey" error.
+        final msgKey = msgId.isNotEmpty
+            ? _messageKeys.putIfAbsent(msgId, () => GlobalKey())
+            : null;
         final isHighlighted = _highlightedMessageId == msgId;
 
         DateTime? dateTime;

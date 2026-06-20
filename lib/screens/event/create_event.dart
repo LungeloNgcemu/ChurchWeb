@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:master/classes/push_notification/notification.dart';
+import 'package:master/services/socket/io_service.dart';
 import 'package:master/componants/global_booking.dart';
 import 'package:master/providers/url_provider.dart';
 import 'package:master/services/api/token_service.dart';
@@ -160,6 +161,16 @@ class _CreateEventState extends State<CreateEvent> {
         title: 'New Event',
         body: title,
       );
+
+      // Write in-app notification row and broadcast via socket
+      await supabase.from('Notifications').insert({
+        'UniqueChurchId': _uniqueChurchId,
+        'Type': 'event',
+        'Title': title,
+        'Body': description.isNotEmpty ? description : 'A new event has been scheduled.',
+      });
+      IOService.socket.emit('new_notification', _uniqueChurchId);
+      IOService.onNewNotification?.call();
 
       if (mounted) Navigator.of(context).pop();
     } catch (e) {

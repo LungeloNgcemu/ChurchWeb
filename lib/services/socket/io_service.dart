@@ -14,6 +14,12 @@ class IOService {
   static late IO.Socket socket;
   static final String serverUrl = BaseUrl.baseUrl!;
 
+  /// Called whenever a `new_notification` socket event arrives.
+  static void Function()? onNewNotification;
+
+  /// Called when another device deletes a message via socket.
+  static void Function(String messageId)? onMessageDeleted;
+
   IOService();
 
   static Future<void> initializeWithProvider(BuildContext context) async {
@@ -80,9 +86,14 @@ class IOService {
 
     socket.on('delete message', (data) {
       print('deleted data message: $data');
-      final messageId = data;
+      final messageId = data is Map
+          ? data['messageId']?.toString()
+          : data?.toString();
       if (messageProvider != null) {
         messageProvider!.removeMessage(messageId);
+      }
+      if (messageId != null) {
+        IOService.onMessageDeleted?.call(messageId);
       }
     });
 
@@ -90,6 +101,11 @@ class IOService {
       final messageId = data['id'];
       final error = data['error'];
     });
+
+    socket.on('new_notification', (_) {
+      IOService.onNewNotification?.call();
+    });
+
     socket.connect();
   }
 
