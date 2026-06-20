@@ -196,8 +196,9 @@ class _PostsSheet extends StatelessWidget {
             title: 'Recent Posts',
             actionLabel: 'See all',
             onAction: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/posts');
+              final nav = Navigator.of(context);
+              nav.pop();
+              nav.pushNamed('/posts');
             },
           ),
           // Line H: divider → themeManager.colors.backgroundAlt
@@ -382,8 +383,9 @@ class _MembersSheet extends StatelessWidget {
                 title: 'Members',
                 actionLabel: 'View all',
                 onAction: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/members');
+                  final nav = Navigator.of(context);
+                  nav.pop();
+                  nav.pushNamed('/members');
                 },
               ),
               // Line N: divider → themeManager.colors.backgroundAlt
@@ -538,8 +540,9 @@ class _EventsSheet extends StatelessWidget {
             title: 'Upcoming Events',
             actionLabel: 'See all',
             onAction: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/posts');
+              final nav = Navigator.of(context);
+              nav.pop();
+              nav.pushNamed('/posts');
             },
           ),
           Divider(height: 1, color: colors.backgroundAlt),
