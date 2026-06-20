@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:master/componants/global_booking.dart';
 import 'package:master/providers/url_provider.dart';
 import 'package:master/services/api/token_service.dart';
+import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_typography.dart';
 import 'package:master/theme/connect_theme_data.dart';
 import 'package:master/theme/theme_manager.dart';
@@ -22,16 +24,11 @@ void showPostsModal(BuildContext context) {
 }
 
 void showEventsModal(BuildContext context) {
-  _openSheet(
-    context,
-    const _ComingSoonSheet(
-      icon: Icons.calendar_month_rounded,
-      badge: 'Events',
-      title: 'Events are on the way',
-      subtitle: 'Stay tuned — upcoming gatherings will appear here.',
-      useAccent: false,
-    ),
-  );
+  final churchName =
+      Provider.of<christProvider>(context, listen: false)
+              .myMap['Project']?['ChurchName'] ??
+          '';
+  _openSheet(context, _EventsSheet(churchName: churchName));
 }
 
 void showMembersModal(BuildContext context) {
@@ -513,7 +510,223 @@ class _MembersSheet extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3 & 4. COMING SOON modal builder  (Events + Requests)
+// 3. EVENTS modal builder
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _EventsSheet extends StatelessWidget {
+  final String churchName;
+  const _EventsSheet({required this.churchName});
+
+  static const _months = [
+    'Jan','Feb','Mar','Apr','May','Jun',
+    'Jul','Aug','Sep','Oct','Nov','Dec'
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final themeManager = Provider.of<ThemeManager>(context, listen: false);
+    final colors = themeManager.colors;
+    final today = DateTime.now();
+
+    return _SheetShell(
+      maxHeightFactor: 0.75,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ModalHeader(
+            title: 'Upcoming Events',
+            actionLabel: 'See all',
+            onAction: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/posts');
+            },
+          ),
+          Divider(height: 1, color: colors.backgroundAlt),
+          StreamBuilder<List<Map<String, dynamic>>>(
+            stream: supabase
+                .from('Events')
+                .stream(primaryKey: ['id'])
+                .eq('ChurchName', churchName),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Center(child: ConnectLoader()),
+                );
+              }
+
+              final all = snapshot.data ?? [];
+
+              // Filter to upcoming events and sort by date
+              final upcoming = all.where((e) {
+                final dateStr = e['EventDate'] as String?;
+                if (dateStr == null || dateStr.isEmpty) return false;
+                final date = DateTime.tryParse(dateStr);
+                return date != null &&
+                    !date.isBefore(DateTime(today.year, today.month, today.day));
+              }).toList()
+                ..sort((a, b) {
+                  final da = DateTime.tryParse(a['EventDate'] as String? ?? '');
+                  final db = DateTime.tryParse(b['EventDate'] as String? ?? '');
+                  if (da == null || db == null) return 0;
+                  return da.compareTo(db);
+                });
+
+              if (upcoming.isEmpty) {
+                return _EmptyState(
+                  icon: Icons.event_outlined,
+                  message: 'No upcoming events',
+                  colors: colors,
+                );
+              }
+
+              final visible = upcoming.take(5).toList();
+              return ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: visible.length,
+                separatorBuilder: (_, __) =>
+                    Divider(height: 1, indent: 76, color: colors.backgroundAlt),
+                itemBuilder: (context, i) {
+                  final ev       = visible[i];
+                  final title    = (ev['Title']       as String?) ?? '';
+                  final location = (ev['Location']    as String?) ?? '';
+                  final time     = (ev['StartTime']   as String?) ?? '';
+                  final date     = DateTime.tryParse((ev['EventDate'] as String?) ?? '');
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18, vertical: 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Orange date block
+                        if (date != null)
+                          Container(
+                            width: 46,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              gradient: AppColors.orangeGradient,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '${date.day}',
+                                  style: AppTypography.headingSmall.copyWith(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Text(
+                                  _months[date.month - 1],
+                                  style: AppTypography.labelTiny.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          Container(
+                            width: 46,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: colors.backgroundAlt,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(Icons.event_outlined,
+                                size: 22, color: colors.textMuted),
+                          ),
+
+                        const SizedBox(width: 14),
+
+                        // Text info
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: AppTypography.bodyMedium.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  color: colors.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (location.isNotEmpty || time.isNotEmpty) ...[
+                                const SizedBox(height: 3),
+                                Row(
+                                  children: [
+                                    if (location.isNotEmpty) ...[
+                                      Icon(Icons.location_on_outlined,
+                                          size: 11, color: colors.textMuted),
+                                      const SizedBox(width: 3),
+                                      Flexible(
+                                        child: Text(
+                                          location,
+                                          style: AppTypography.caption.copyWith(
+                                              fontSize: 11,
+                                              color: colors.textMuted),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                    if (location.isNotEmpty && time.isNotEmpty)
+                                      const SizedBox(width: 8),
+                                    if (time.isNotEmpty) ...[
+                                      Icon(Icons.access_time_rounded,
+                                          size: 11, color: colors.textMuted),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        time,
+                                        style: AppTypography.caption.copyWith(
+                                            fontSize: 11,
+                                            color: colors.textMuted),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ],
+                              if (date != null) ...[
+                                const SizedBox(height: 3),
+                                Text(
+                                  DateFormat('EEEE, MMMM d').format(date),
+                                  style: AppTypography.caption.copyWith(
+                                    fontSize: 10,
+                                    color: AppColors.orange,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 12),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. COMING SOON modal builder  (Requests)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ComingSoonSheet extends StatelessWidget {
