@@ -59,6 +59,9 @@ const _kFilters = ['All', 'Announcement', 'Event', 'Update', 'Request'];
 class PostScreen extends StatefulWidget {
   const PostScreen({super.key});
 
+  /// Call this to programmatically switch the filter (e.g. 'Event', 'All').
+  static void Function(String filter)? switchToFilter;
+
   @override
   State<PostScreen> createState() => _PostScreenState();
 }
@@ -84,6 +87,7 @@ class _PostScreenState extends State<PostScreen>
 
   @override
   void dispose() {
+    if (PostScreen.switchToFilter != null) PostScreen.switchToFilter = null;
     _searchController.dispose();
     super.dispose();
   }
@@ -109,6 +113,9 @@ class _PostScreenState extends State<PostScreen>
   void initState() {
     super.initState();
     streamDelegate();
+    PostScreen.switchToFilter = (filter) {
+      if (mounted) setState(() => _selectedFilter = filter);
+    };
     Provider.of<BackImageUrlProvider>(context, listen: false)
         .loadImageUrlLocally();
     Provider.of<ProfileImageUrlProvider>(context, listen: false)
