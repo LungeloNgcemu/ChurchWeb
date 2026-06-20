@@ -93,20 +93,31 @@ class _MessageScreenState extends State<MessageScreen> {
     }
   }
 
+  /// Waits for the next rendered frame — more reliable than a fixed delay.
+  Future<void> _waitForFrame() {
+    final c = Completer<void>();
+    WidgetsBinding.instance.addPostFrameCallback((_) => c.complete());
+    return c.future;
+  }
+
   Future<void> _doScrollToMessage(String msgId) async {
-    // 1. If not loaded yet, pull more pages until we find it (max 15 pages)
+    // 1. Load pages until the message is in the list (max 15 pages).
     var idx = _messages.indexWhere((m) => m.id == msgId);
     int attempts = 0;
     while (idx == -1 && _hasMore && attempts < 15) {
       await _loadMoreMessages();
+      await _waitForFrame(); // let ListView rebuild with new items
       idx = _messages.indexWhere((m) => m.id == msgId);
       attempts++;
     }
     if (idx == -1 || !mounted) return;
 
-    // 2. Rough jump so the item enters the build window.
-    //    In a reverse:true list, index 0 = newest (pixels=0).
-    //    Older items live at higher pixel offsets.
+    // 2. Wait one more frame so maxScrollExtent is up to date.
+    await _waitForFrame();
+    if (!mounted) return;
+
+    // 3. Rough jump: reverse:true list → pixels=0 is newest (bottom).
+    //    Older messages sit at higher offsets.
     final reversedIdx = _messages.length - 1 - idx;
     if (scrollController.hasClients) {
       final approx = (reversedIdx * 80.0)
@@ -114,11 +125,12 @@ class _MessageScreenState extends State<MessageScreen> {
       scrollController.jumpTo(approx);
     }
 
-    // 3. Wait one frame so the builder assigns the key.
-    await Future.delayed(const Duration(milliseconds: 80));
+    // 4. Wait two frames for the item to be built at the new position.
+    await _waitForFrame();
+    await _waitForFrame();
     if (!mounted) return;
 
-    // 4. Precise scroll once the key has a context.
+    // 5. Precise scroll once the GlobalKey has a live context.
     final key = _messageKeys[msgId];
     if (key?.currentContext != null) {
       await Scrollable.ensureVisible(
@@ -129,7 +141,7 @@ class _MessageScreenState extends State<MessageScreen> {
       );
     }
 
-    // 5. Highlight flash.
+    // 6. Highlight flash.
     if (mounted) {
       setState(() => _highlightedMessageId = msgId);
       Future.delayed(const Duration(milliseconds: 1800), () {
