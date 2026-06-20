@@ -1074,10 +1074,25 @@ class _EventCalendarViewState extends State<_EventCalendarView> {
                   : ListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
                       itemCount: selectedEvents.length,
-                      itemBuilder: (context, i) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _EventCard(event: selectedEvents[i]),
-                      ),
+                      itemBuilder: (context, i) {
+                        final ev = selectedEvents[i];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _EventCard(
+                            event: ev,
+                            onDelete: () => alertDelete(
+                              context,
+                              'Delete Event?',
+                              () async {
+                                await supabase
+                                    .from('Events')
+                                    .delete()
+                                    .match({'id': ev['id']});
+                              },
+                            ),
+                          ),
+                        );
+                      },
                     ),
             ),
           ],
@@ -1090,7 +1105,8 @@ class _EventCalendarViewState extends State<_EventCalendarView> {
 // ── Event Card ────────────────────────────────────────────────────────────────
 class _EventCard extends StatelessWidget {
   final Map<String, dynamic> event;
-  const _EventCard({required this.event});
+  final VoidCallback? onDelete;
+  const _EventCard({required this.event, this.onDelete});
 
   static const _months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -1174,8 +1190,28 @@ class _EventCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
-                          style: AppTypography.cardTitle.copyWith(fontSize: 14)),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(title,
+                                style: AppTypography.cardTitle.copyWith(fontSize: 14)),
+                          ),
+                          if (ChurchInit.visibilityToggle(context) && onDelete != null)
+                            GestureDetector(
+                              onTap: onDelete,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.error.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(Icons.delete_outline_rounded,
+                                    size: 14, color: AppColors.error),
+                              ),
+                            ),
+                        ],
+                      ),
                       if (description.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Text(
