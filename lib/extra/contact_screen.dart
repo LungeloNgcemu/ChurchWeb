@@ -283,7 +283,7 @@ class _SearchResultsPanel extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
             child: isLoading
                 ? Row(children: [
-                    const SizedBox(
+                    SizedBox(
                       width: 14, height: 14,
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: AppColors.purple),
