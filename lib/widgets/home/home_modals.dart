@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:master/componants/global_booking.dart';
+import 'package:master/screens/home/church_screen.dart';
 import 'package:master/providers/url_provider.dart';
 import 'package:master/services/api/token_service.dart';
 import 'package:master/theme/app_colors.dart';
@@ -196,9 +197,8 @@ class _PostsSheet extends StatelessWidget {
             title: 'Recent Posts',
             actionLabel: 'See all',
             onAction: () {
-              final nav = Navigator.of(context);
-              nav.pop();
-              nav.pushNamed('/posts');
+              Navigator.of(context).pop();
+              ChurchScreen.switchTab?.call(1);
             },
           ),
           // Line H: divider → themeManager.colors.backgroundAlt
@@ -381,11 +381,10 @@ class _MembersSheet extends StatelessWidget {
             children: [
               _ModalHeader(
                 title: 'Members',
-                actionLabel: 'View all',
+                actionLabel: 'View chat',
                 onAction: () {
-                  final nav = Navigator.of(context);
-                  nav.pop();
-                  nav.pushNamed('/members');
+                  Navigator.of(context).pop();
+                  ChurchScreen.switchTab?.call(3);
                 },
               ),
               // Line N: divider → themeManager.colors.backgroundAlt
@@ -540,9 +539,8 @@ class _EventsSheet extends StatelessWidget {
             title: 'Upcoming Events',
             actionLabel: 'See all',
             onAction: () {
-              final nav = Navigator.of(context);
-              nav.pop();
-              nav.pushNamed('/posts');
+              Navigator.of(context).pop();
+              ChurchScreen.switchTab?.call(1);
             },
           ),
           Divider(height: 1, color: colors.backgroundAlt),
