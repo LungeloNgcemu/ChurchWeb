@@ -594,6 +594,7 @@ class _EventsSheet extends StatelessWidget {
                   final title    = (ev['Title']       as String?) ?? '';
                   final location = (ev['Location']    as String?) ?? '';
                   final time     = (ev['StartTime']   as String?) ?? '';
+                  final imageUrl = (ev['Image']       as String?) ?? '';
                   final date     = DateTime.tryParse((ev['EventDate'] as String?) ?? '');
 
                   return Padding(
@@ -711,6 +712,22 @@ class _EventsSheet extends StatelessWidget {
                             ],
                           ),
                         ),
+
+                        // Cover image thumbnail
+                        if (imageUrl.isNotEmpty) ...[
+                          const SizedBox(width: 12),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.network(
+                              imageUrl,
+                              width: 56,
+                              height: 56,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  const SizedBox.shrink(),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   );
