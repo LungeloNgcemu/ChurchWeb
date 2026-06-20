@@ -30,7 +30,7 @@ class MessageScreen extends StatefulWidget {
   const MessageScreen({super.key});
 
   /// Called by the search panel to scroll to and highlight a message by id.
-  static void Function(int msgId)? scrollToMessageId;
+  static void Function(String msgId)? scrollToMessageId;
 
   @override
   State<MessageScreen> createState() => _MessageScreenState();
@@ -60,8 +60,8 @@ class _MessageScreenState extends State<MessageScreen> {
   bool _isUploading = false;
 
   // ── Per-message GlobalKeys for scroll-to ─────────────────────────────────
-  final Map<int, GlobalKey> _messageKeys = {};
-  int? _highlightedMessageId;
+  final Map<String, GlobalKey> _messageKeys = {};
+  String? _highlightedMessageId;
 
   // ── Voice recording state ─────────────────────────────────────────────────
   html.MediaRecorder? _mediaRecorder;
@@ -83,7 +83,7 @@ class _MessageScreenState extends State<MessageScreen> {
     MessageScreen.scrollToMessageId = _scrollToMessageId;
   }
 
-  void _scrollToMessageId(int msgId) {
+  void _scrollToMessageId(String msgId) {
     final key = _messageKeys[msgId];
     if (key?.currentContext != null) {
       Scrollable.ensureVisible(
@@ -500,7 +500,7 @@ class _MessageScreenState extends State<MessageScreen> {
 
         final msg = _messages[_messages.length - 1 - index];
         final isSender = (msg.phoneNumber ?? '') == (currentUser?.phoneNumber ?? '');
-        final msgId = msg.id as int? ?? 0;
+        final msgId = msg.id ?? '';
         final msgKey = _messageKeys.putIfAbsent(msgId, () => GlobalKey());
         final isHighlighted = _highlightedMessageId == msgId;
 

@@ -65,7 +65,7 @@ class _ContactScreenState extends State<ContactScreen> {
     setState(() { _isSearching = false; _searchResults = []; _searchLoading = false; });
   }
 
-  void _jumpToMessage(int msgId) {
+  void _jumpToMessage(String msgId) {
     _closeSearch();
     // Give the search overlay a frame to close before scrolling
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -248,7 +248,7 @@ class _SearchResultsPanel extends StatelessWidget {
   final List<Map<String, dynamic>> results;
   final bool isLoading;
   final String query;
-  final void Function(int msgId) onTap;
+  final void Function(String msgId) onTap;
 
   const _SearchResultsPanel({
     required this.results,
@@ -314,7 +314,7 @@ class _SearchResultsPanel extends StatelessWidget {
                     Divider(height: 1, indent: 66, color: colors.backgroundAlt),
                 itemBuilder: (context, i) {
                   final r = results[i];
-                  final msgId = r['id'] as int? ?? 0;
+                  final msgId = r['id']?.toString() ?? '';
                   final sender = (r['Sender'] as String?) ?? 'Member';
                   final message = (r['Message'] as String?) ?? '';
                   final image = r['ProfileImage'] as String?;
