@@ -168,11 +168,7 @@ class _MediaScreenState extends State<MediaScreen>
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.active) {
                   if (snapshot.hasError) {
-                    return Center(
-                      child: Text('Connecting...',
-                          style: AppTypography.bodyMedium
-                              .copyWith(color: AppColors.textMuted)),
-                    );
+                    return const Center(child: ConnectLoader());
                   }
                   if (!snapshot.hasData ||
                       snapshot.data?.isEmpty == true) {
