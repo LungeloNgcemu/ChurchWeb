@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:master/classes/push_notification/notification.dart';
 import 'package:master/componants/global_booking.dart';
 import 'package:master/providers/url_provider.dart';
+import 'package:master/services/api/token_service.dart';
 import 'package:master/theme/app_colors.dart';
 import 'package:master/theme/app_spacing.dart';
 import 'package:master/theme/app_typography.dart';
@@ -29,6 +31,20 @@ class _CreateEventState extends State<CreateEvent> {
   TimeOfDay?  _selectedTime;
   Uint8List?  _image;
   bool        _isLoading = false;
+  String      _uniqueChurchId = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final user = await TokenService.tokenUser();
+    if (user != null && mounted) {
+      setState(() => _uniqueChurchId = user.uniqueChurchId ?? '');
+    }
+  }
 
   @override
   void dispose() {
@@ -138,6 +154,12 @@ class _CreateEventState extends State<CreateEvent> {
         'Category':    'Event',
         if (imageUrl != null) 'Image': imageUrl,
       });
+
+      await PushNotifications.sendMessageToTopic(
+        topic: PushNotifications.buildTopic(_uniqueChurchId, 'event'),
+        title: 'New Event',
+        body: title,
+      );
 
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
