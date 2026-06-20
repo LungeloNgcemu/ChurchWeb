@@ -97,7 +97,7 @@ class _NotificationCentreState extends State<NotificationCentre> {
       width: 42,
       height: 42,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(icon, size: 20, color: color),
@@ -175,7 +175,7 @@ class _NotificationCentreState extends State<NotificationCentre> {
                           children: [
                             Icon(Icons.notifications_off_rounded,
                                 size: 40,
-                                color: AppColors.textMuted.withValues(alpha: 0.4)),
+                                color: AppColors.textMuted.withOpacity(0.4)),
                             const SizedBox(height: 10),
                             Text('No notifications yet',
                                 style: AppTypography.bodyText.copyWith(
