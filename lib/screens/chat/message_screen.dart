@@ -29,6 +29,9 @@ import '../../classes/message_class.dart';
 class MessageScreen extends StatefulWidget {
   const MessageScreen({super.key});
 
+  /// Called by the search panel to scroll to and highlight a message by id.
+  static void Function(int msgId)? scrollToMessageId;
+
   @override
   State<MessageScreen> createState() => _MessageScreenState();
 }
@@ -56,6 +59,10 @@ class _MessageScreenState extends State<MessageScreen> {
   String? _pendingImageUrl;
   bool _isUploading = false;
 
+  // ── Per-message GlobalKeys for scroll-to ─────────────────────────────────
+  final Map<int, GlobalKey> _messageKeys = {};
+  int? _highlightedMessageId;
+
   // ── Voice recording state ─────────────────────────────────────────────────
   html.MediaRecorder? _mediaRecorder;
   html.MediaStream? _mediaStream;
@@ -73,6 +80,23 @@ class _MessageScreenState extends State<MessageScreen> {
     scrollController = ScrollController();
     scrollController.addListener(_onScroll);
     if (mounted) initChat();
+    MessageScreen.scrollToMessageId = _scrollToMessageId;
+  }
+
+  void _scrollToMessageId(int msgId) {
+    final key = _messageKeys[msgId];
+    if (key?.currentContext != null) {
+      Scrollable.ensureVisible(
+        key!.currentContext!,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeInOut,
+        alignment: 0.5,
+      );
+      setState(() => _highlightedMessageId = msgId);
+      Future.delayed(const Duration(milliseconds: 1800), () {
+        if (mounted) setState(() => _highlightedMessageId = null);
+      });
+    }
   }
 
   void _onScroll() {
@@ -476,6 +500,9 @@ class _MessageScreenState extends State<MessageScreen> {
 
         final msg = _messages[_messages.length - 1 - index];
         final isSender = (msg.phoneNumber ?? '') == (currentUser?.phoneNumber ?? '');
+        final msgId = msg.id as int? ?? 0;
+        final msgKey = _messageKeys.putIfAbsent(msgId, () => GlobalKey());
+        final isHighlighted = _highlightedMessageId == msgId;
 
         DateTime? dateTime;
         try { dateTime = DateTime.parse(msg.time ?? ''); } catch (_) {}
@@ -483,7 +510,7 @@ class _MessageScreenState extends State<MessageScreen> {
             ? '${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}'
             : '';
 
-        return isSender
+        final bubble = isSender
             ? MessageBubbleRight(
                 key: ValueKey(msg.id),
                 text: msg.message ?? '',
@@ -509,6 +536,15 @@ class _MessageScreenState extends State<MessageScreen> {
                   () async => deleteMessage(id: msg.id ?? '', uniqueId: msg.uniqueChurchId ?? ''),
                 ),
               );
+
+        return AnimatedContainer(
+          key: msgKey,
+          duration: const Duration(milliseconds: 300),
+          color: isHighlighted
+              ? AppColors.purple.withValues(alpha: 0.15)
+              : Colors.transparent,
+          child: bubble,
+        );
       },
     );
   }

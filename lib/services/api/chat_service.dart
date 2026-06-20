@@ -47,6 +47,22 @@ class ChatService {
     }
   }
 
+  /// Search messages by text content for an org. Returns newest matches first.
+  static Future<List<Map<String, dynamic>>> searchMessages({
+    required String uniqueId,
+    required String query,
+  }) async {
+    final uri = Uri.parse(
+      '${BaseUrl.baseUrl}/api/chat/search/$uniqueId?q=${Uri.encodeQueryComponent(query)}',
+    );
+    final response = await http.get(uri, headers: {'Content-Type': 'application/json'});
+    if (response.statusCode == 200) {
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      return List<Map<String, dynamic>>.from(body['messages'] as List);
+    }
+    throw Exception('Search failed: ${response.statusCode}');
+  }
+
   /// Fetch paginated message history.
   /// Page 1 = newest [limit] messages, page 2 = next [limit] older ones, etc.
   /// Messages are returned oldest-first so they can be prepended to the list.
